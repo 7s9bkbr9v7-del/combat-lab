@@ -1,0 +1,67 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = 'combat-lab'
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		combatlab {
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+	test {
+		compileClasspath += sourceSets.client.output
+		runtimeClasspath += sourceSets.client.output
+	}
+}
+
+processResources {
+	inputs.property 'version', project.version
+	filesMatching('fabric.mod.json') {
+		expand version: project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.release = 25
+}
+
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
+	systemProperty 'combatlab.clientClasses', sourceSets.client.output.classesDirs.asPath
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+tasks.register('verifyRendererCompatibility') {
+	group = 'verification'
+	description = 'Runs bytecode-level graphics-backend compatibility verification.'
+	dependsOn tasks.named('test')
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyRendererCompatibility')
+}

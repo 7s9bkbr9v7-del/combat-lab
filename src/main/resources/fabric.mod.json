@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "combatlab",
+  "version": "${version}",
+  "name": "Combat Lab",
+  "description": "A transparent PvP telemetry and training client foundation.",
+  "authors": [
+    "Combat Lab contributors"
+  ],
+  "license": "CC0-1.0",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.combatlab.client.CombatLabClient"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "combatlab.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

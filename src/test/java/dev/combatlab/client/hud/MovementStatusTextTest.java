@@ -1,0 +1,23 @@
+package dev.combatlab.client.hud;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class MovementStatusTextTest {
+	@Test
+	void crouchingTakesPriority() {
+		assertEquals("Crouched", MovementStatusText.resolve(true, true, true));
+	}
+
+	@Test
+	void distinguishesHoldAndToggleSprintModes() {
+		assertEquals("Sprinting", MovementStatusText.resolve(false, true, false));
+		assertEquals("Sprinting (Toggled)", MovementStatusText.resolve(false, true, true));
+	}
+
+	@Test
+	void returnsNoVisibleStatusWhenNeitherMovementStateIsActive() {
+		assertEquals("", MovementStatusText.resolve(false, false, false));
+	}
+}
