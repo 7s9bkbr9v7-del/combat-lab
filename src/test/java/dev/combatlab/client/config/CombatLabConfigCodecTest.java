@@ -35,6 +35,7 @@ class CombatLabConfigCodecTest {
 		module.enabled = false;
 		module.normalizedX = 0.2;
 		module.normalizedY = 0.8;
+		module.scale = 1.75;
 		original.hudModules.put("combatlab:fps", module);
 
 		CombatLabConfig decoded = codec.decode(codec.encode(original));
@@ -44,6 +45,25 @@ class CombatLabConfigCodecTest {
 		assertFalse(roundTripped.enabled);
 		assertEquals(0.2, roundTripped.normalizedX, 0.0001);
 		assertEquals(0.8, roundTripped.normalizedY, 0.0001);
+		assertEquals(1.75, roundTripped.scale, 0.0001);
+	}
+
+	@Test
+	void defaultsMissingModuleScale() {
+		CombatLabConfig decoded = codec.decode("""
+				{
+				  "schemaVersion": 2,
+				  "hudModules": {
+				    "combatlab:fps": {
+				      "enabled": true,
+				      "normalizedX": 0.1,
+				      "normalizedY": 0.2
+				    }
+				  }
+				}
+				""");
+
+		assertEquals(1.0, decoded.hudModules.get("combatlab:fps").scale, 0.0001);
 	}
 
 	@Test

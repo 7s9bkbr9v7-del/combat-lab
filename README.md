@@ -11,7 +11,7 @@ Combat Lab is the beginning of a transparent Minecraft PvP telemetry and trainin
 
 ## In game
 
-Combat Lab starts with no HUD elements visible. Press `Right Shift` (rebindable under Minecraft Controls) to open the HUD editor. Drag module previews to reposition them, or use the centered **HUD Options** button to enable and disable modules. Options and positions are saved to `config/combatlab.json`.
+Combat Lab starts with no HUD elements visible. Press `Right Shift` (rebindable under Minecraft Controls) to open the HUD editor. Drag module previews to reposition them, drag their bottom-right handles to resize them, or use the centered **HUD Options** button to enable and disable modules. Options, positions, and scales are saved to `config/combatlab.json`.
 
 Available modules currently include FPS, rolling one-second left-click CPS, and movement status. Movement status appears only while crouching or sprinting and distinguishes held sprint from Minecraft's toggle-sprint mode. All modules are disabled by default.
 
@@ -22,6 +22,8 @@ The options menu is divided into General and HUD submenus. General contains Full
 The HUD editor snaps nearby modules together and also aligns their left, right, center, top, bottom, or vertical center axes across the screen. Editor-outline pixels are hidden wherever they touch or overlap another HUD module, including perpendicular corner extensions.
 
 HUD features implement a shared module contract and are registered centrally, so future modules automatically participate in rendering, enablement, editor previews, hit-testing, and dragging.
+
+HUD modules can also reuse the shared orientation resolver to mirror their internal layout based on where they are on screen. For example, a future armor HUD can place durability text on the horizontal side facing the screen center while the editor uses the same resolver for resize-handle placement.
 
 HUD positions are stored as normalized coordinates, preserving relative placement across window sizes and GUI scales. Legacy flat configuration files are migrated automatically to the versioned module schema.
 

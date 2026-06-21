@@ -22,6 +22,11 @@ public final class CombatLabConfigCodec {
 			if (decoded.hudModules == null) {
 				decoded.hudModules = new java.util.HashMap<>();
 			}
+			for (HudModuleConfig module : decoded.hudModules.values()) {
+				if (module.scale <= 0.0) {
+					module.scale = 1.0;
+				}
+			}
 			decoded.schemaVersion = CombatLabConfig.CURRENT_SCHEMA_VERSION;
 			return decoded;
 		}

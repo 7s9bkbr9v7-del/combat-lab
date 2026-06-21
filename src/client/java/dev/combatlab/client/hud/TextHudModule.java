@@ -9,14 +9,14 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-abstract class TextHudModule implements HudModule {
+abstract class TextHudModule implements ResizableHudModule {
 	private static final int PADDING = 1;
 	private final Identifier id;
 	private final Component displayName;
 	private final CombatLabOptions options;
 	private final DebugLogger debug;
 	private String text;
-	private HudSize size;
+	private HudSize unscaledSize;
 
 	protected TextHudModule(
 			Identifier id,
@@ -30,7 +30,7 @@ abstract class TextHudModule implements HudModule {
 		this.id = id;
 		this.displayName = displayName;
 		this.text = initialText;
-		this.size = new HudSize(initialText.length() * 6 + PADDING * 2, 9 + PADDING * 2);
+		this.unscaledSize = new HudSize(initialText.length() * 6 + PADDING * 2, 9 + PADDING * 2);
 		this.options = options;
 		this.debug = debug;
 		options.ensureHudDefaults(id.toString(), defaultX, defaultY);
@@ -59,16 +59,46 @@ abstract class TextHudModule implements HudModule {
 
 	@Override
 	public final HudPosition position(int screenWidth, int screenHeight) {
-		return HudLayout.resolve(options.hudX(id.toString()), options.hudY(id.toString()), screenWidth, screenHeight, size);
+		return HudLayout.resolve(options.hudX(id.toString()), options.hudY(id.toString()), screenWidth, screenHeight, size());
 	}
 
 	@Override
 	public final HudSize size() {
-		return size;
+		double scale = scale();
+		return new HudSize(
+				(int) Math.ceil(unscaledSize.width() * scale),
+				(int) Math.ceil(unscaledSize.height() * scale)
+		);
+	}
+
+	@Override
+	public final HudSize unscaledSize() {
+		return unscaledSize;
+	}
+
+	@Override
+	public final double scale() {
+		return options.hudScale(id.toString());
+	}
+
+	@Override
+	public final void updateScale(double scale) {
+		options.updateHudScale(id.toString(), scale);
+	}
+
+	@Override
+	public final double minScale() {
+		return options.minHudScale();
+	}
+
+	@Override
+	public final double maxScale() {
+		return options.maxHudScale();
 	}
 
 	@Override
 	public final void updatePosition(int x, int y, int screenWidth, int screenHeight) {
+		HudSize size = size();
 		options.updateHudPosition(
 				id.toString(),
 				HudLayout.normalizeX(x, screenWidth, size),
@@ -102,7 +132,7 @@ abstract class TextHudModule implements HudModule {
 		this.text = text;
 		Font font = Minecraft.getInstance().font;
 		if (font != null) {
-			this.size = new HudSize(font.width(text) + PADDING * 2, font.lineHeight + PADDING * 2);
+			this.unscaledSize = new HudSize(font.width(text) + PADDING * 2, font.lineHeight + PADDING * 2);
 		}
 	}
 
@@ -111,6 +141,16 @@ abstract class TextHudModule implements HudModule {
 	}
 
 	private void renderAt(GuiGraphicsExtractor graphics, Font font, HudPosition position) {
-		graphics.text(font, text, position.x() + PADDING, position.y() + PADDING, 0xFFF3F4F6, true);
+		double scale = scale();
+		if (scale == 1.0) {
+			graphics.text(font, text, position.x() + PADDING, position.y() + PADDING, 0xFFF3F4F6, true);
+			return;
+		}
+
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(position.x(), position.y());
+		graphics.pose().scale((float) scale, (float) scale);
+		graphics.text(font, text, PADDING, PADDING, 0xFFF3F4F6, true);
+		graphics.pose().popMatrix();
 	}
 }

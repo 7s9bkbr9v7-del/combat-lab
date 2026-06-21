@@ -1,6 +1,10 @@
 package dev.combatlab.client.config;
 
 public final class CombatLabOptions {
+	private static final double DEFAULT_HUD_SCALE = 1.0;
+	private static final double MIN_HUD_SCALE = 0.5;
+	private static final double MAX_HUD_SCALE = 4.0;
+
 	private final CombatLabConfig config;
 	private final ConfigStore store;
 
@@ -55,6 +59,7 @@ public final class CombatLabOptions {
 			HudModuleConfig module = new HudModuleConfig();
 			module.normalizedX = clamp(normalizedX);
 			module.normalizedY = clamp(normalizedY);
+			module.scale = DEFAULT_HUD_SCALE;
 			config.hudModules.put(id, module);
 		}
 	}
@@ -73,15 +78,41 @@ public final class CombatLabOptions {
 		module.normalizedY = clamp(normalizedY);
 	}
 
+	public double hudScale(String id) {
+		return module(id).scale;
+	}
+
+	public double minHudScale() {
+		return MIN_HUD_SCALE;
+	}
+
+	public double maxHudScale() {
+		return MAX_HUD_SCALE;
+	}
+
+	public void updateHudScale(String id, double scale) {
+		module(id).scale = clampScale(scale);
+	}
+
 	public void save() {
 		store.save(config);
 	}
 
 	private HudModuleConfig module(String id) {
-		return config.hudModules.computeIfAbsent(id, ignored -> new HudModuleConfig());
+		HudModuleConfig module = config.hudModules.computeIfAbsent(id, ignored -> new HudModuleConfig());
+		if (module.scale <= 0.0) {
+			module.scale = DEFAULT_HUD_SCALE;
+		} else {
+			module.scale = clampScale(module.scale);
+		}
+		return module;
 	}
 
 	private static double clamp(double value) {
 		return Math.clamp(value, 0.0, 1.0);
+	}
+
+	private static double clampScale(double value) {
+		return Math.clamp(value, MIN_HUD_SCALE, MAX_HUD_SCALE);
 	}
 }
