@@ -6,6 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
+import java.util.Objects;
+
 abstract class TextHudModule extends ResizableBaseHudModule {
 	private static final int PADDING = 1;
 	private String text;
@@ -28,6 +30,10 @@ abstract class TextHudModule extends ResizableBaseHudModule {
 	}
 
 	protected final void setText(String text) {
+		Objects.requireNonNull(text, "text");
+		if (text.equals(this.text)) {
+			return;
+		}
 		this.text = text;
 		Font font = Minecraft.getInstance().font;
 		if (font != null) {

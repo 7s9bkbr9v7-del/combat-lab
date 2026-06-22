@@ -19,6 +19,9 @@ public final class HudOutlineResolver {
 		int rightX = module.right();
 
 		for (HudRectangle other : others) {
+			if (other == module) {
+				continue;
+			}
 			if (containsY(other, topY)) {
 				top = subtract(top, other.x(), other.right());
 			}

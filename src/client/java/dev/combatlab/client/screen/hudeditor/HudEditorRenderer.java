@@ -2,6 +2,8 @@ package dev.combatlab.client.screen.hudeditor;
 
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleRegistry;
+import dev.combatlab.client.hud.HudOrientation;
+import dev.combatlab.client.hud.HudOrientationResolver;
 import dev.combatlab.client.hud.HudOutlineResolver;
 import dev.combatlab.client.hud.HudOutlineSegment;
 import dev.combatlab.client.hud.HudOutlineSegments;
@@ -11,6 +13,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class HudEditorRenderer {
@@ -34,7 +37,7 @@ public final class HudEditorRenderer {
 		this.handleSize = handleSize;
 	}
 
-	public void renderEditorLayer(
+	public boolean renderEditorLayer(
 			GuiGraphicsExtractor graphics,
 			Font font,
 			int screenWidth,
@@ -42,41 +45,62 @@ public final class HudEditorRenderer {
 			int mouseX,
 			int mouseY
 	) {
+		List<ModuleLayout> layouts = new ArrayList<>();
+		List<HudRectangle> rectangles = new ArrayList<>();
 		for (HudModule module : modules.modules()) {
 			if (module.enabled()) {
-				module.renderEditorPreview(graphics, font);
+				HudRectangle bounds = selection.rectangle(module, screenWidth, screenHeight);
+				layouts.add(new ModuleLayout(
+						module,
+						bounds,
+						HudOrientationResolver.resolve(bounds, screenWidth, screenHeight)
+				));
+				rectangles.add(bounds);
 			}
 		}
-		renderModuleOutlines(graphics, screenWidth, screenHeight);
-		renderResizeHandles(graphics, screenWidth, screenHeight);
+
+		for (ModuleLayout layout : layouts) {
+			layout.module().renderEditorPreview(graphics, font, layout.bounds());
+		}
+		renderModuleOutlines(graphics, layouts, rectangles);
+		renderResizeHandles(graphics, layouts);
 		renderResizePercent(graphics, font, screenWidth, screenHeight, mouseX, mouseY);
+		return !layouts.isEmpty();
 	}
 
 	public void renderLabels(
 			GuiGraphicsExtractor graphics,
 			Font font,
 			Component title,
-			int screenWidth
+			int screenWidth,
+			boolean hasEnabledModules
 	) {
 		graphics.centeredText(font, title, screenWidth / 2, 18, 0xFFFFFFFF);
-		String guidance = modules.hasEnabledModules()
+		String guidance = hasEnabledModules
 				? "Drag HUD modules to reposition them; drag a corner handle to resize"
 				: "No HUD modules enabled";
 		graphics.centeredText(font, guidance, screenWidth / 2, 32, 0xFF9CA3AF);
 	}
 
-	private void renderModuleOutlines(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight) {
-		List<HudRectangle> rectangles = selection.enabledRectangles(screenWidth, screenHeight);
-		for (HudRectangle rectangle : rectangles) {
-			List<HudRectangle> others = rectangles.stream().filter(other -> other != rectangle).toList();
-			drawOutline(graphics, rectangle, HudOutlineResolver.visibleSegments(rectangle, others));
+	private void renderModuleOutlines(
+			GuiGraphicsExtractor graphics,
+			List<ModuleLayout> layouts,
+			List<HudRectangle> rectangles
+	) {
+		for (ModuleLayout layout : layouts) {
+			HudRectangle rectangle = layout.bounds();
+			drawOutline(graphics, rectangle, HudOutlineResolver.visibleSegments(rectangle, rectangles));
 		}
 	}
 
-	private void renderResizeHandles(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight) {
-		for (HudModule module : modules.modules()) {
-			if (module.enabled() && module instanceof ResizableHudModule) {
-				HudRectangle handle = selection.resizeHandle(module, screenWidth, screenHeight, handleSize);
+	private void renderResizeHandles(GuiGraphicsExtractor graphics, List<ModuleLayout> layouts) {
+		for (ModuleLayout layout : layouts) {
+			if (layout.module() instanceof ResizableHudModule) {
+				HudRectangle handle = selection.resizeHandle(
+						layout.bounds(),
+						layout.orientation().cornerFacingCenter(),
+						handleSize
+				);
 				graphics.fill(handle.x(), handle.y(), handle.right(), handle.bottom(), RESIZE_HANDLE_COLOR);
 			}
 		}
@@ -119,5 +143,8 @@ public final class HudEditorRenderer {
 
 	private static int clamp(int value, int minimum, int maximum) {
 		return Math.clamp(value, minimum, maximum);
+	}
+
+	private record ModuleLayout(HudModule module, HudRectangle bounds, HudOrientation orientation) {
 	}
 }

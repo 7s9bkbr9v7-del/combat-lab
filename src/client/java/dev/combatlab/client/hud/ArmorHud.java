@@ -39,13 +39,12 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 
 	@Override
 	public void unlockLayout() {
-		String configId = id().toString();
 		ArmorHudLayout finalLayout = ArmorHudLayout.resolve(
-				options().hudX(configId),
-				options().hudY(configId),
-				lockedLayout != null ? lockedLayout : storedLayout(configId)
+				settings().normalizedX(),
+				settings().normalizedY(),
+				lockedLayout != null ? lockedLayout : storedLayout()
 		);
-		options().updateHudLayout(configId, finalLayout.name());
+		settings().updateLayout(finalLayout.name());
 		lockedLayout = null;
 	}
 
@@ -78,15 +77,14 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 	}
 
 	private ArmorHudLayout resolvedLayout() {
-		String configId = id().toString();
 		return ArmorHudLayout.resolve(
-				options().hudX(configId),
-				options().hudY(configId),
-				storedLayout(configId)
+				settings().normalizedX(),
+				settings().normalizedY(),
+				storedLayout()
 		);
 	}
 
-	private ArmorHudLayout storedLayout(String configId) {
-		return ArmorHudLayout.fromStored(options().hudLayout(configId));
+	private ArmorHudLayout storedLayout() {
+		return ArmorHudLayout.fromStored(settings().layout());
 	}
 }

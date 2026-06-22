@@ -6,8 +6,6 @@ import net.minecraft.client.gui.Font;
 public record HudRenderContext(
 		Minecraft client,
 		Font font,
-		HudRectangle bounds,
-		HudOrientation orientation,
-		boolean editorPreview
+		HudRectangle bounds
 ) {
 }

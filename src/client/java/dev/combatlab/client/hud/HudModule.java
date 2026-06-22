@@ -1,6 +1,5 @@
 package dev.combatlab.client.hud;
 
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -10,7 +9,7 @@ import net.minecraft.resources.Identifier;
  * A self-contained HUD module that can be registered, configured, and moved
  * without teaching the editor about its concrete type.
  */
-public interface HudModule extends HudElement {
+public interface HudModule {
 	Identifier id();
 
 	Component displayName();
@@ -23,21 +22,26 @@ public interface HudModule extends HudElement {
 
 	HudSize size();
 
+	HudRectangle bounds(int screenWidth, int screenHeight);
+
 	HudOrientation orientation(int screenWidth, int screenHeight);
 
 	void updatePosition(int x, int y, int screenWidth, int screenHeight);
 
 	void savePosition();
 
-	void renderEditorPreview(GuiGraphicsExtractor graphics, Font font);
+	void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context);
+
+	void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds);
 
 	default void tick() {
 	}
 
+	default boolean ticksWhenDisabled() {
+		return false;
+	}
+
 	default boolean contains(double mouseX, double mouseY, int screenWidth, int screenHeight) {
-		HudPosition position = position(screenWidth, screenHeight);
-		HudSize size = size();
-		return mouseX >= position.x() && mouseX < position.x() + size.width()
-				&& mouseY >= position.y() && mouseY < position.y() + size.height();
+		return bounds(screenWidth, screenHeight).contains(mouseX, mouseY);
 	}
 }

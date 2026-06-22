@@ -1,6 +1,7 @@
 package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 
 public abstract class ResizableBaseHudModule extends BaseHudModule implements ResizableHudModule {
@@ -27,21 +28,21 @@ public abstract class ResizableBaseHudModule extends BaseHudModule implements Re
 
 	@Override
 	public final double scale() {
-		return options().hudScale(id().toString());
+		return settings().scale();
 	}
 
 	@Override
 	public final void updateScale(double scale) {
-		options().updateHudScale(id().toString(), scale);
+		settings().updateScale(scale);
 	}
 
 	@Override
 	public final double minScale() {
-		return options().minHudScale();
+		return HudModuleSettings.MIN_SCALE;
 	}
 
 	@Override
 	public final double maxScale() {
-		return options().maxHudScale();
+		return HudModuleSettings.MAX_SCALE;
 	}
 }

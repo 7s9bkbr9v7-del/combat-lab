@@ -22,9 +22,11 @@ public final class HudEditorScreen extends Screen {
 	private final HudResizeController resizeController;
 	private final HudEditorRenderer renderer;
 	private final HudOptionsNavigation navigation;
+	private final HudModuleRegistry modules;
 
 	public HudEditorScreen(CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
 		super(TITLE);
+		this.modules = modules;
 		HudSelection selection = new HudSelection(modules);
 		this.dragController = new HudDragController(selection, SNAP_THRESHOLD);
 		this.resizeController = new HudResizeController(selection, debug, RESIZE_HANDLE_SIZE);
@@ -34,14 +36,21 @@ public final class HudEditorScreen extends Screen {
 
 	@Override
 	protected void init() {
+		modules.setEditorOpen(true);
 		navigation.createButtons(this, minecraft, width, height, this::onClose).forEach(this::addRenderableWidget);
 	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		renderer.renderEditorLayer(graphics, font, width, height, mouseX, mouseY);
+		boolean hasEnabledModules = renderer.renderEditorLayer(graphics, font, width, height, mouseX, mouseY);
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-		renderer.renderLabels(graphics, font, title, width);
+		renderer.renderLabels(graphics, font, title, width, hasEnabledModules);
+	}
+
+	@Override
+	public void removed() {
+		modules.setEditorOpen(false);
+		super.removed();
 	}
 
 	@Override

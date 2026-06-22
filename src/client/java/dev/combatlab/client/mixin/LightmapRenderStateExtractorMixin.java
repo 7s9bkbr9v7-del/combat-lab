@@ -21,11 +21,13 @@ abstract class LightmapRenderStateExtractorMixin {
 	@Inject(method = "extract", at = @At("RETURN"))
 	private void combatlab$applyFullbright(LightmapRenderState state, float partialTick, CallbackInfo callbackInfo) {
 		if (FullbrightController.enabled()) {
-			state.needsUpdate = true;
-			state.nightVisionEffectIntensity = 1.0F;
-			state.nightVisionColor = LightmapRenderStateExtractor.WHITE;
-			state.darknessEffectScale = 0.0F;
-			state.bossOverlayWorldDarkening = 0.0F;
+			if (state.needsUpdate || !combatlab$wasFullbright) {
+				state.needsUpdate = true;
+				state.nightVisionEffectIntensity = 1.0F;
+				state.nightVisionColor = LightmapRenderStateExtractor.WHITE;
+				state.darknessEffectScale = 0.0F;
+				state.bossOverlayWorldDarkening = 0.0F;
+			}
 			combatlab$wasFullbright = true;
 		} else if (combatlab$wasFullbright) {
 			needsUpdate = true;
