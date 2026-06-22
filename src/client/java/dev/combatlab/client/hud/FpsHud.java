@@ -7,13 +7,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class FpsHud extends TextHudModule {
+	private static final HudModuleDefinition DEFINITION = new HudModuleDefinition(
+			Identifier.fromNamespaceAndPath("combatlab", "fps"),
+			Component.literal("FPS HUD"),
+			1.0,
+			0.02,
+			true
+	);
+
 	public FpsHud(CombatLabOptions options, DebugLogger debug) {
 		super(
-				Identifier.fromNamespaceAndPath("combatlab", "fps"),
-				Component.literal("FPS HUD"),
+				DEFINITION,
 				"-- FPS",
-				1.0,
-				0.02,
 				options,
 				debug
 		);

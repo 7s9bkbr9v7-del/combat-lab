@@ -11,9 +11,14 @@ class MovementStatusTextTest {
 	}
 
 	@Test
-	void distinguishesHoldAndToggleSprintModes() {
+	void distinguishesHoldAndToggleSprintStates() {
 		assertEquals("Sprinting", MovementStatusText.resolve(false, true, false));
 		assertEquals("Sprinting (Toggled)", MovementStatusText.resolve(false, true, true));
+	}
+
+	@Test
+	void showsToggledSprintWheneverToggleSprintIsActive() {
+		assertEquals("Sprinting (Toggled)", MovementStatusText.resolve(false, false, true));
 	}
 
 	@Test

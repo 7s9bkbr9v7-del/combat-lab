@@ -8,15 +8,20 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class MovementStatusHud extends TextHudModule {
+	private static final HudModuleDefinition DEFINITION = new HudModuleDefinition(
+			Identifier.fromNamespaceAndPath("combatlab", "movement_status"),
+			Component.literal("Movement status HUD"),
+			1.0,
+			0.14,
+			true
+	);
+
 	private boolean active;
 
 	public MovementStatusHud(CombatLabOptions options, DebugLogger debug) {
 		super(
-				Identifier.fromNamespaceAndPath("combatlab", "movement_status"),
-				Component.literal("Movement status HUD"),
+				DEFINITION,
 				"Movement status",
-				1.0,
-				0.14,
 				options,
 				debug
 		);
@@ -35,14 +40,14 @@ public final class MovementStatusHud extends TextHudModule {
 		String status = MovementStatusText.resolve(
 				player.isCrouching(),
 				player.isSprinting(),
-				client.options.toggleSprint().get()
+				client.options.toggleSprint().get() && client.options.keySprint.isDown()
 		);
 		active = !status.isEmpty();
 		setText(active ? status : "Movement status");
 	}
 
 	@Override
-	protected boolean shouldRenderInGame() {
+	protected boolean shouldRenderInGame(HudRenderContext context) {
 		return active;
 	}
 }

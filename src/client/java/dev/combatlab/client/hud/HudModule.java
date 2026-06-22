@@ -23,6 +23,8 @@ public interface HudModule extends HudElement {
 
 	HudSize size();
 
+	HudOrientation orientation(int screenWidth, int screenHeight);
+
 	void updatePosition(int x, int y, int screenWidth, int screenHeight);
 
 	void savePosition();
