@@ -2,10 +2,13 @@ package dev.combatlab.client.screen.hudeditor;
 
 import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudModule;
+import dev.combatlab.client.hud.HudAttachmentSide;
 import dev.combatlab.client.hud.HudPosition;
 import dev.combatlab.client.hud.HudRectangle;
 import dev.combatlab.client.hud.HudSize;
 import dev.combatlab.client.hud.HudSnapper;
+
+import java.util.List;
 
 public final class HudDragController {
 	private final HudSelection selection;
@@ -28,6 +31,7 @@ public final class HudDragController {
 			adaptive.lockLayout();
 		}
 
+		draggedModule.detach(screenWidth, screenHeight);
 		HudPosition position = draggedModule.position(screenWidth, screenHeight);
 		dragOffsetX = (int) mouseX - position.x();
 		dragOffsetY = (int) mouseY - position.y();
@@ -42,19 +46,27 @@ public final class HudDragController {
 		HudSize size = draggedModule.size();
 		int x = clamp((int) mouseX - dragOffsetX, 0, Math.max(0, screenWidth - size.width()));
 		int y = clamp((int) mouseY - dragOffsetY, 0, Math.max(0, screenHeight - size.height()));
+		List<HudSelection.ModuleRectangle> others = selection.enabledModuleRectanglesExcept(
+				draggedModule,
+				screenWidth,
+				screenHeight
+		);
 		HudPosition snapped = HudSnapper.snap(
 				new HudRectangle(x, y, size.width(), size.height()),
-				selection.enabledRectanglesExcept(draggedModule, screenWidth, screenHeight),
+				others.stream().map(HudSelection.ModuleRectangle::rectangle).toList(),
 				snapThreshold,
 				screenWidth,
 				screenHeight
 		);
+		int finalX = clamp(snapped.x(), 0, Math.max(0, screenWidth - size.width()));
+		int finalY = clamp(snapped.y(), 0, Math.max(0, screenHeight - size.height()));
 		draggedModule.updatePosition(
-				clamp(snapped.x(), 0, Math.max(0, screenWidth - size.width())),
-				clamp(snapped.y(), 0, Math.max(0, screenHeight - size.height())),
+				finalX,
+				finalY,
 				screenWidth,
 				screenHeight
 		);
+		updateAttachment(new HudRectangle(finalX, finalY, size.width(), size.height()), others);
 		return true;
 	}
 
@@ -72,5 +84,46 @@ public final class HudDragController {
 
 	private static int clamp(int value, int minimum, int maximum) {
 		return Math.clamp(value, minimum, maximum);
+	}
+
+	private void updateAttachment(
+			HudRectangle moving,
+			List<HudSelection.ModuleRectangle> others
+	) {
+		draggedModule.clearAttachment();
+		for (HudSelection.ModuleRectangle candidate : others) {
+			HudRectangle target = candidate.rectangle();
+			if (!selection.canAttach(draggedModule, candidate.module())) {
+				continue;
+			}
+			if (verticalRangesNear(moving, target)) {
+				if (moving.right() == target.x()) {
+					draggedModule.attachTo(candidate.module(), HudAttachmentSide.LEFT_OF, moving.y() - target.y());
+					return;
+				}
+				if (moving.x() == target.right()) {
+					draggedModule.attachTo(candidate.module(), HudAttachmentSide.RIGHT_OF, moving.y() - target.y());
+					return;
+				}
+			}
+			if (horizontalRangesNear(moving, target)) {
+				if (moving.bottom() == target.y()) {
+					draggedModule.attachTo(candidate.module(), HudAttachmentSide.ABOVE, moving.x() - target.x());
+					return;
+				}
+				if (moving.y() == target.bottom()) {
+					draggedModule.attachTo(candidate.module(), HudAttachmentSide.BELOW, moving.x() - target.x());
+					return;
+				}
+			}
+		}
+	}
+
+	private boolean verticalRangesNear(HudRectangle first, HudRectangle second) {
+		return first.bottom() + snapThreshold >= second.y() && second.bottom() + snapThreshold >= first.y();
+	}
+
+	private boolean horizontalRangesNear(HudRectangle first, HudRectangle second) {
+		return first.right() + snapThreshold >= second.x() && second.right() + snapThreshold >= first.x();
 	}
 }

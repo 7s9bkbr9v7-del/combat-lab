@@ -29,12 +29,12 @@ public final class CombatLabOptionsScreen extends Screen {
 		int top = height / 2 - 40;
 		addRenderableWidget(Button.builder(
 				Component.literal("General"),
-				button -> minecraft.setScreenAndShow(new GeneralOptionsScreen(this, options, debug))
+				button -> minecraft.gui.setScreen(new GeneralOptionsScreen(this, options, debug))
 		).bounds(left, top, 200, 20).build());
 
 		addRenderableWidget(Button.builder(
 				Component.literal("HUD"),
-				button -> minecraft.setScreenAndShow(new HudOptionsScreen(this, modules))
+				button -> minecraft.gui.setScreen(new HudOptionsScreen(this, modules))
 		).bounds(left, top + 30, 200, 20).build());
 
 		addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
@@ -51,7 +51,7 @@ public final class CombatLabOptionsScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreenAndShow(parent);
+			minecraft.gui.setScreen(parent);
 		}
 	}
 

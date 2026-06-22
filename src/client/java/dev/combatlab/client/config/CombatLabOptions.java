@@ -45,6 +45,15 @@ public final class CombatLabOptions {
 		store.save(config);
 	}
 
+	public boolean dynamicFovEnabled() {
+		return config.dynamicFovEnabled;
+	}
+
+	public void setDynamicFovEnabled(boolean enabled) {
+		config.dynamicFovEnabled = enabled;
+		store.save(config);
+	}
+
 	public HudModuleSettings bindHudModule(String id, double defaultX, double defaultY) {
 		return hudModuleSettings.computeIfAbsent(id, ignored -> {
 			HudModuleConfig module = config.hudModules.get(id);

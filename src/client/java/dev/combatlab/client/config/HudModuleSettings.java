@@ -51,6 +51,30 @@ public final class HudModuleSettings {
 		config.layout = layout;
 	}
 
+	public String attachedTo() {
+		return config.attachedTo;
+	}
+
+	public String attachmentSide() {
+		return config.attachmentSide;
+	}
+
+	public int attachmentOffset() {
+		return config.attachmentOffset;
+	}
+
+	public void updateAttachment(String targetId, String side, int offset) {
+		config.attachedTo = targetId;
+		config.attachmentSide = side;
+		config.attachmentOffset = offset;
+	}
+
+	public void clearAttachment() {
+		config.attachedTo = null;
+		config.attachmentSide = null;
+		config.attachmentOffset = 0;
+	}
+
 	public void save() {
 		saveAction.run();
 	}

@@ -30,6 +30,14 @@ public interface HudModule {
 
 	void savePosition();
 
+	String attachmentTargetId();
+
+	void attachTo(HudModule target, HudAttachmentSide side, int offset);
+
+	void clearAttachment();
+
+	void detach(int screenWidth, int screenHeight);
+
 	void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context);
 
 	void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds);

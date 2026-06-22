@@ -17,16 +17,19 @@ public final class HudEditorScreen extends Screen {
 	private static final Component TITLE = Component.literal("Combat Lab HUD Editor");
 	private static final int SNAP_THRESHOLD = 6;
 	private static final int RESIZE_HANDLE_SIZE = 3;
+	private static final long OPEN_ANIMATION_NANOS = 180_000_000L;
 
 	private final HudDragController dragController;
 	private final HudResizeController resizeController;
 	private final HudEditorRenderer renderer;
 	private final HudOptionsNavigation navigation;
 	private final HudModuleRegistry modules;
+	private final long openedAtNanos;
 
 	public HudEditorScreen(CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
 		super(TITLE);
 		this.modules = modules;
+		this.openedAtNanos = System.nanoTime();
 		HudSelection selection = new HudSelection(modules);
 		this.dragController = new HudDragController(selection, SNAP_THRESHOLD);
 		this.resizeController = new HudResizeController(selection, debug, RESIZE_HANDLE_SIZE);
@@ -42,9 +45,18 @@ public final class HudEditorScreen extends Screen {
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		boolean hasEnabledModules = renderer.renderEditorLayer(graphics, font, width, height, mouseX, mouseY);
+		float animationProgress = openingAnimationProgress(System.nanoTime());
+		boolean hasEnabledModules = renderer.renderEditorLayer(
+				graphics,
+				font,
+				width,
+				height,
+				mouseX,
+				mouseY
+		);
+		fadeWidgets(animationProgress);
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-		renderer.renderLabels(graphics, font, title, width, hasEnabledModules);
+		renderer.renderLabels(graphics, font, title, width, hasEnabledModules, animationProgress);
 	}
 
 	@Override
@@ -86,12 +98,18 @@ public final class HudEditorScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreenAndShow(null);
+			minecraft.gui.setScreen(null);
 		}
 	}
 
 	@Override
 	public boolean isPauseScreen() {
 		return false;
+	}
+
+	private float openingAnimationProgress(long nowNanos) {
+		float elapsed = Math.clamp((float) (nowNanos - openedAtNanos) / OPEN_ANIMATION_NANOS, 0.0F, 1.0F);
+		float remaining = 1.0F - elapsed;
+		return 1.0F - remaining * remaining * remaining;
 	}
 }

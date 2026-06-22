@@ -33,7 +33,7 @@ public final class HudOptionsNavigation {
 				Component.literal("HUD Options"),
 				button -> {
 					debug.info("Opening HUD options screen");
-					minecraft.setScreenAndShow(new CombatLabOptionsScreen(editor, options, modules, debug));
+					minecraft.gui.setScreen(new CombatLabOptionsScreen(editor, options, modules, debug));
 				}
 		).bounds(screenWidth / 2 - 75, screenHeight / 2 - 10, 150, 20).build();
 

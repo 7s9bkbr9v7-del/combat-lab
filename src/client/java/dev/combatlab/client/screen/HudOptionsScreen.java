@@ -47,7 +47,7 @@ public final class HudOptionsScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreenAndShow(parent);
+			minecraft.gui.setScreen(parent);
 		}
 	}
 

@@ -103,6 +103,23 @@ class HudModuleRegistryTest {
 		}
 
 		@Override
+		public String attachmentTargetId() {
+			return null;
+		}
+
+		@Override
+		public void attachTo(HudModule target, HudAttachmentSide side, int offset) {
+		}
+
+		@Override
+		public void clearAttachment() {
+		}
+
+		@Override
+		public void detach(int screenWidth, int screenHeight) {
+		}
+
+		@Override
 		public void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context) {
 			renderCount++;
 		}

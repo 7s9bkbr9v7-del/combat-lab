@@ -2,6 +2,7 @@ package dev.combatlab.client.screen;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.feature.DynamicFovController;
 import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.feature.AchievementToastController;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -39,7 +40,7 @@ public final class GeneralOptionsScreen extends Screen {
 				.build());
 
 		addRenderableWidget(Checkbox.builder(Component.literal("Debug logging"), font)
-				.pos(left, y + 30)
+				.pos(left, y + 60)
 				.maxWidth(200)
 				.selected(options.debugLoggingEnabled())
 				.onValueChange((checkbox, selected) -> {
@@ -49,18 +50,29 @@ public final class GeneralOptionsScreen extends Screen {
 				.build());
 
 		addRenderableWidget(Checkbox.builder(Component.literal("Disable achievement notifications"), font)
-				.pos(left, y + 60)
+				.pos(left, y + 90)
 				.maxWidth(200)
 				.selected(options.achievementToastsDisabled())
 				.onValueChange((checkbox, selected) -> {
 					options.setAchievementToastsDisabled(selected);
 					AchievementToastController.setDisabled(selected);
 					debug.info("Achievement notifications {}", selected ? "disabled" : "enabled");
+					})
+					.build());
+
+		addRenderableWidget(Checkbox.builder(Component.literal("Dynamic FOV"), font)
+				.pos(left, y + 30)
+				.maxWidth(200)
+				.selected(options.dynamicFovEnabled())
+				.onValueChange((checkbox, selected) -> {
+					options.setDynamicFovEnabled(selected);
+					DynamicFovController.setEnabled(selected);
+					debug.info("Dynamic FOV {}", selected ? "enabled" : "disabled");
 				})
 				.build());
 
 		addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
-				.bounds(left, y + 105, 200, 20)
+				.bounds(left, y + 135, 200, 20)
 				.build());
 	}
 
@@ -73,7 +85,7 @@ public final class GeneralOptionsScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreenAndShow(parent);
+			minecraft.gui.setScreen(parent);
 		}
 	}
 

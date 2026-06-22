@@ -73,13 +73,14 @@ public final class HudEditorRenderer {
 			Font font,
 			Component title,
 			int screenWidth,
-			boolean hasEnabledModules
+			boolean hasEnabledModules,
+			float animationProgress
 	) {
-		graphics.centeredText(font, title, screenWidth / 2, 18, 0xFFFFFFFF);
+		graphics.centeredText(font, title, screenWidth / 2, 18, withAlpha(0xFFFFFFFF, animationProgress));
 		String guidance = hasEnabledModules
 				? "Drag HUD modules to reposition them; drag a corner handle to resize"
 				: "No HUD modules enabled";
-		graphics.centeredText(font, guidance, screenWidth / 2, 32, 0xFF9CA3AF);
+		graphics.centeredText(font, guidance, screenWidth / 2, 32, withAlpha(0xFF9CA3AF, animationProgress));
 	}
 
 	private void renderModuleOutlines(
@@ -143,6 +144,12 @@ public final class HudEditorRenderer {
 
 	private static int clamp(int value, int minimum, int maximum) {
 		return Math.clamp(value, minimum, maximum);
+	}
+
+	private static int withAlpha(int color, float alpha) {
+		int originalAlpha = color >>> 24;
+		int animatedAlpha = Math.round(originalAlpha * Math.clamp(alpha, 0.0F, 1.0F));
+		return (animatedAlpha << 24) | (color & 0x00FFFFFF);
 	}
 
 	private record ModuleLayout(HudModule module, HudRectangle bounds, HudOrientation orientation) {

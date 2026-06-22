@@ -15,10 +15,13 @@ public final class CombatLabConfigCodec {
 			if (schemaVersion > CombatLabConfig.CURRENT_SCHEMA_VERSION) {
 				throw new IllegalArgumentException("Unsupported future config schema: " + schemaVersion);
 			}
-			if (schemaVersion < CombatLabConfig.CURRENT_SCHEMA_VERSION) {
+			if (schemaVersion < 2) {
 				throw new IllegalArgumentException("Unsupported config schema: " + schemaVersion);
 			}
 			CombatLabConfig decoded = GSON.fromJson(root, CombatLabConfig.class);
+			if (schemaVersion < 3 || !root.has("dynamicFovEnabled")) {
+				decoded.dynamicFovEnabled = true;
+			}
 			if (decoded.hudModules == null) {
 				decoded.hudModules = new java.util.HashMap<>();
 			}
@@ -35,6 +38,7 @@ public final class CombatLabConfigCodec {
 		migrated.debugLoggingEnabled = booleanValue(root, "debugLoggingEnabled", false);
 		migrated.fullbrightEnabled = booleanValue(root, "fullbrightEnabled", false);
 		migrated.achievementToastsDisabled = booleanValue(root, "achievementToastsDisabled", false);
+		migrated.dynamicFovEnabled = booleanValue(root, "dynamicFovEnabled", true);
 		return migrated;
 	}
 

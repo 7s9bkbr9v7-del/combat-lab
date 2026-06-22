@@ -6,12 +6,14 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.debug.DebugTelemetry;
 import dev.combatlab.client.feature.AchievementToastController;
+import dev.combatlab.client.feature.DynamicFovController;
 import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.CpsHud;
 import dev.combatlab.client.hud.FpsHud;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.hud.MovementStatusHud;
+import dev.combatlab.client.hud.PingHud;
 import dev.combatlab.client.input.CpsTracker;
 import dev.combatlab.client.model.AttackEvent;
 import dev.combatlab.client.model.AttackHistory;
@@ -64,13 +66,16 @@ public final class CombatLabRuntime {
 		CombatLabOptions options = CombatLabOptions.load();
 		FullbrightController.setEnabled(options.fullbrightEnabled());
 		AchievementToastController.setDisabled(options.achievementToastsDisabled());
+		DynamicFovController.setEnabled(options.dynamicFovEnabled());
 
 		DebugLogger debug = new DebugLogger(options::debugLoggingEnabled);
 		CpsTracker cpsTracker = new CpsTracker();
+		CombatState combatState = new CombatState();
 		HudModuleRegistry hudModules = new HudModuleRegistry();
 		hudModules.register(new FpsHud(options, debug));
 		hudModules.register(new CpsHud(cpsTracker, options, debug));
 		hudModules.register(new MovementStatusHud(options, debug));
+		hudModules.register(new PingHud(combatState, options, debug));
 		hudModules.register(new ArmorHud(options, debug));
 		hudModules.freeze();
 
@@ -78,7 +83,7 @@ public final class CombatLabRuntime {
 				options,
 				debug,
 				openOptions,
-				new CombatState(),
+				combatState,
 				new AttackHistory(64),
 				new MinecraftCombatBridge(),
 				new MinecraftAttackRecorder(),
@@ -94,7 +99,7 @@ public final class CombatLabRuntime {
 		debugTelemetry.update(combatState, options.debugLoggingEnabled(), debug);
 		while (openOptions.consumeClick()) {
 			debug.info("Opening HUD editor");
-			client.setScreenAndShow(new HudEditorScreen(options, hudModules, debug));
+			client.gui.setScreen(new HudEditorScreen(options, hudModules, debug));
 		}
 	}
 

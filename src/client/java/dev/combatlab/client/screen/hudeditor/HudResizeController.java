@@ -33,6 +33,7 @@ public final class HudResizeController {
 		}
 		resizedModule = selected.module();
 		resizedCorner = selected.corner();
+		resizedModule.detach(screenWidth, screenHeight);
 		if (resizedModule instanceof AdaptiveLayoutHudModule adaptive) {
 			adaptive.lockLayout();
 		}

@@ -3,6 +3,7 @@
   "package": "dev.combatlab.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "CameraMixin",
     "LightmapRenderStateExtractorMixin",
     "ToastManagerMixin"
   ],

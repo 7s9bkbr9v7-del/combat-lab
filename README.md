@@ -13,13 +13,13 @@ Combat Lab is the beginning of a transparent Minecraft PvP telemetry and trainin
 
 Combat Lab starts with no HUD elements visible. Press `Right Shift` (rebindable under Minecraft Controls) to open the HUD editor. Drag module previews to reposition them, drag their bottom-right handles to resize them, or use the centered **HUD Options** button to enable and disable modules. Options, positions, and scales are saved to `config/combatlab.json`.
 
-Available modules currently include FPS, rolling one-second left-click CPS, and movement status. Movement status appears only while crouching or sprinting and distinguishes held sprint from Minecraft's toggle-sprint mode. All modules are disabled by default.
+Available modules currently include FPS, rolling one-second left-click CPS, ping, armor, and movement status. Movement status appears only while crouching or sprinting and distinguishes held sprint from Minecraft's toggle-sprint mode. All modules are disabled by default.
 
 Compact text modules render without background boxes and use Minecraft's native text shadow for contrast.
 
-The options menu is divided into General and HUD submenus. General contains Fullbright, debug logging, and achievement-notification suppression; HUD contains module toggles. Fullbright modifies Minecraft's renderer-neutral lightmap state and does not add a visible potion effect. Achievement suppression hides client-side advancement toasts without changing server-side progress.
+The options menu is divided into General and HUD submenus. General contains Fullbright, Dynamic FOV, debug logging, and achievement-notification suppression; HUD contains module toggles. Fullbright modifies Minecraft's renderer-neutral lightmap state and does not add a visible potion effect. Dynamic FOV is enabled by default and can be disabled without changing Minecraft's own FOV-effects slider. Achievement suppression hides client-side advancement toasts without changing server-side progress.
 
-The HUD editor snaps nearby modules together and also aligns their left, right, center, top, bottom, or vertical center axes across the screen. Editor-outline pixels are hidden wherever they touch or overlap another HUD module, including perpendicular corner extensions.
+The HUD editor snaps nearby modules together and also aligns their left, right, center, top, bottom, or vertical center axes across the screen. Edge-snapped modules retain their attachment across window and GUI-scale changes. Editor-outline pixels are hidden wherever they touch or overlap another HUD module, including perpendicular corner extensions.
 
 HUD features implement a shared module contract and are registered centrally, so future modules automatically participate in rendering, enablement, editor previews, hit-testing, and dragging.
 

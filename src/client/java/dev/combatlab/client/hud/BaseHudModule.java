@@ -9,10 +9,14 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
+import java.util.function.Function;
+
 public abstract class BaseHudModule implements HudModule {
 	private final HudModuleDefinition definition;
 	private final HudModuleSettings settings;
 	private final DebugLogger debug;
+	private Function<String, HudModule> moduleLookup = ignored -> null;
+	private boolean resolvingBounds;
 
 	protected BaseHudModule(HudModuleDefinition definition, CombatLabOptions options, DebugLogger debug) {
 		this.definition = definition;
@@ -51,13 +55,8 @@ public abstract class BaseHudModule implements HudModule {
 
 	@Override
 	public final HudPosition position(int screenWidth, int screenHeight) {
-		return HudLayout.resolve(
-				settings.normalizedX(),
-				settings.normalizedY(),
-				screenWidth,
-				screenHeight,
-				size()
-		);
+		HudRectangle bounds = bounds(screenWidth, screenHeight);
+		return new HudPosition(bounds.x(), bounds.y());
 	}
 
 	@Override
@@ -78,6 +77,31 @@ public abstract class BaseHudModule implements HudModule {
 	public final void savePosition() {
 		settings.save();
 		debug.info("{} position saved", displayName().getString());
+	}
+
+	@Override
+	public final String attachmentTargetId() {
+		return settings.attachedTo();
+	}
+
+	@Override
+	public final void attachTo(HudModule target, HudAttachmentSide side, int offset) {
+		settings.updateAttachment(target.id().toString(), side.name(), offset);
+	}
+
+	@Override
+	public final void clearAttachment() {
+		settings.clearAttachment();
+	}
+
+	@Override
+	public final void detach(int screenWidth, int screenHeight) {
+		if (settings.attachedTo() == null) {
+			return;
+		}
+		HudRectangle currentBounds = bounds(screenWidth, screenHeight);
+		clearAttachment();
+		updatePosition(currentBounds.x(), currentBounds.y(), screenWidth, screenHeight);
 	}
 
 	@Override
@@ -110,13 +134,43 @@ public abstract class BaseHudModule implements HudModule {
 	@Override
 	public final HudRectangle bounds(int screenWidth, int screenHeight) {
 		HudSize size = size();
-		HudPosition position = HudLayout.resolve(
+		HudPosition fallback = HudLayout.resolve(
 				settings.normalizedX(),
 				settings.normalizedY(),
 				screenWidth,
 				screenHeight,
 				size
 		);
+		HudPosition attached = attachedPosition(size, screenWidth, screenHeight);
+		HudPosition position = attached != null ? attached : fallback;
 		return new HudRectangle(position.x(), position.y(), size.width(), size.height());
+	}
+
+	void bindModuleLookup(Function<String, HudModule> moduleLookup) {
+		this.moduleLookup = moduleLookup;
+	}
+
+	private HudPosition attachedPosition(
+			HudSize size,
+			int screenWidth,
+			int screenHeight
+	) {
+		if (resolvingBounds) {
+			return null;
+		}
+
+		String targetId = settings.attachedTo();
+		HudAttachmentSide side = HudAttachmentSide.fromStored(settings.attachmentSide());
+		HudModule target = targetId == null ? null : moduleLookup.apply(targetId);
+		if (target == null || target == this || side == null) {
+			return null;
+		}
+
+		resolvingBounds = true;
+		try {
+			return side.resolve(target.bounds(screenWidth, screenHeight), size, settings.attachmentOffset());
+		} finally {
+			resolvingBounds = false;
+		}
 	}
 }

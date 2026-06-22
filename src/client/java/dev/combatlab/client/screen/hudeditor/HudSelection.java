@@ -50,11 +50,33 @@ public final class HudSelection {
 		return null;
 	}
 
-	public List<HudRectangle> enabledRectanglesExcept(HudModule excluded, int screenWidth, int screenHeight) {
+	public List<ModuleRectangle> enabledModuleRectanglesExcept(
+			HudModule excluded,
+			int screenWidth,
+			int screenHeight
+	) {
 		return modules.modules().stream()
 				.filter(module -> module != excluded && module.enabled())
-				.map(module -> rectangle(module, screenWidth, screenHeight))
+				.map(module -> new ModuleRectangle(module, rectangle(module, screenWidth, screenHeight)))
 				.toList();
+	}
+
+	public boolean canAttach(HudModule moving, HudModule target) {
+		HudModule current = target;
+		for (int depth = 0; depth <= modules.modules().size(); depth++) {
+			if (current == moving) {
+				return false;
+			}
+			String parentId = current.attachmentTargetId();
+			if (parentId == null) {
+				return true;
+			}
+			current = modules.module(parentId);
+			if (current == null) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public HudRectangle rectangle(HudModule module, int screenWidth, int screenHeight) {
@@ -91,5 +113,8 @@ public final class HudSelection {
 	}
 
 	public record ResizeSelection(ResizableHudModule module, HudCorner corner) {
+	}
+
+	public record ModuleRectangle(HudModule module, HudRectangle rectangle) {
 	}
 }
