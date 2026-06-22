@@ -13,6 +13,12 @@ import net.minecraft.network.chat.Component;
 
 public final class GeneralOptionsScreen extends Screen {
 	private static final Component TITLE = Component.literal("General Options");
+	private static final Component FULLBRIGHT_DESCRIPTION = Component.literal(
+			"Brightens dark areas without applying a potion effect."
+	);
+	private static final Component DYNAMIC_FOV_DESCRIPTION = Component.literal(
+			"Controls movement-based FOV changes, including sprinting and speed effects."
+	);
 	private final Screen parent;
 	private final CombatLabOptions options;
 	private final DebugLogger debug;
@@ -28,7 +34,7 @@ public final class GeneralOptionsScreen extends Screen {
 	protected void init() {
 		int left = width / 2 - 100;
 		int y = height / 2 - 35;
-		addRenderableWidget(Checkbox.builder(Component.literal("Fullbright"), font)
+		addRenderableWidget(OptionTooltip.describe(Checkbox.builder(Component.literal("Fullbright"), font)
 				.pos(left, y)
 				.maxWidth(200)
 				.selected(options.fullbrightEnabled())
@@ -37,7 +43,18 @@ public final class GeneralOptionsScreen extends Screen {
 					FullbrightController.setEnabled(selected);
 					debug.info("Fullbright {}", selected ? "enabled" : "disabled");
 				})
-				.build());
+				.build(), FULLBRIGHT_DESCRIPTION));
+
+		addRenderableWidget(OptionTooltip.describe(Checkbox.builder(Component.literal("Dynamic FOV"), font)
+				.pos(left, y + 30)
+				.maxWidth(200)
+				.selected(options.dynamicFovEnabled())
+				.onValueChange((checkbox, selected) -> {
+					options.setDynamicFovEnabled(selected);
+					DynamicFovController.setEnabled(selected);
+					debug.info("Dynamic FOV {}", selected ? "enabled" : "disabled");
+				})
+				.build(), DYNAMIC_FOV_DESCRIPTION));
 
 		addRenderableWidget(Checkbox.builder(Component.literal("Debug logging"), font)
 				.pos(left, y + 60)
@@ -57,17 +74,6 @@ public final class GeneralOptionsScreen extends Screen {
 					options.setAchievementToastsDisabled(selected);
 					AchievementToastController.setDisabled(selected);
 					debug.info("Achievement notifications {}", selected ? "disabled" : "enabled");
-					})
-					.build());
-
-		addRenderableWidget(Checkbox.builder(Component.literal("Dynamic FOV"), font)
-				.pos(left, y + 30)
-				.maxWidth(200)
-				.selected(options.dynamicFovEnabled())
-				.onValueChange((checkbox, selected) -> {
-					options.setDynamicFovEnabled(selected);
-					DynamicFovController.setEnabled(selected);
-					debug.info("Dynamic FOV {}", selected ? "enabled" : "disabled");
 				})
 				.build());
 
@@ -80,6 +86,7 @@ public final class GeneralOptionsScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
+		OptionHelpHint.render(graphics, font, width, height);
 	}
 
 	@Override

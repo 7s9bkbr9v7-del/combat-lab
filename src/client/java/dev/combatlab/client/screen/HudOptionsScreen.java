@@ -24,12 +24,12 @@ public final class HudOptionsScreen extends Screen {
 		int left = width / 2 - 100;
 		int y = height / 2 - (modules.modules().size() * 30) / 2;
 		for (HudModule module : modules.modules()) {
-			addRenderableWidget(Checkbox.builder(module.displayName(), font)
+			addRenderableWidget(OptionTooltip.describe(Checkbox.builder(module.displayName(), font)
 					.pos(left, y)
 					.maxWidth(200)
 					.selected(module.enabled())
 					.onValueChange((checkbox, selected) -> module.setEnabled(selected))
-					.build());
+					.build(), Component.literal("Show or hide this module in game and in the HUD editor.")));
 			y += 30;
 		}
 
@@ -42,6 +42,7 @@ public final class HudOptionsScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
+		OptionHelpHint.render(graphics, font, width, height);
 	}
 
 	@Override

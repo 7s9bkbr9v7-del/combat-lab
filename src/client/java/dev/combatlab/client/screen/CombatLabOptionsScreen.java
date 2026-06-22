@@ -27,15 +27,19 @@ public final class CombatLabOptionsScreen extends Screen {
 	protected void init() {
 		int left = width / 2 - 100;
 		int top = height / 2 - 40;
-		addRenderableWidget(Button.builder(
+		addRenderableWidget(OptionTooltip.describe(Button.builder(
 				Component.literal("General"),
 				button -> minecraft.gui.setScreen(new GeneralOptionsScreen(this, options, debug))
-		).bounds(left, top, 200, 20).build());
+		).bounds(left, top, 200, 20).build(), Component.literal(
+				"Configure visual, camera, logging, and notification options."
+		)));
 
-		addRenderableWidget(Button.builder(
+		addRenderableWidget(OptionTooltip.describe(Button.builder(
 				Component.literal("HUD"),
 				button -> minecraft.gui.setScreen(new HudOptionsScreen(this, modules))
-		).bounds(left, top + 30, 200, 20).build());
+		).bounds(left, top + 30, 200, 20).build(), Component.literal(
+				"Choose which HUD modules are visible."
+		)));
 
 		addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
 				.bounds(left, top + 75, 200, 20)
@@ -46,6 +50,7 @@ public final class CombatLabOptionsScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
+		OptionHelpHint.render(graphics, font, width, height);
 	}
 
 	@Override
