@@ -1,5 +1,6 @@
 package dev.combatlab.client.screen.hudeditor;
 
+import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudPosition;
 import dev.combatlab.client.hud.HudRectangle;
@@ -23,6 +24,9 @@ public final class HudDragController {
 		if (draggedModule == null) {
 			return false;
 		}
+		if (draggedModule instanceof AdaptiveLayoutHudModule adaptive) {
+			adaptive.lockLayout();
+		}
 
 		HudPosition position = draggedModule.position(screenWidth, screenHeight);
 		dragOffsetX = (int) mouseX - position.x();
@@ -41,7 +45,9 @@ public final class HudDragController {
 		HudPosition snapped = HudSnapper.snap(
 				new HudRectangle(x, y, size.width(), size.height()),
 				selection.enabledRectanglesExcept(draggedModule, screenWidth, screenHeight),
-				snapThreshold
+				snapThreshold,
+				screenWidth,
+				screenHeight
 		);
 		draggedModule.updatePosition(
 				clamp(snapped.x(), 0, Math.max(0, screenWidth - size.width())),
@@ -55,6 +61,9 @@ public final class HudDragController {
 	public boolean release() {
 		if (draggedModule == null) {
 			return false;
+		}
+		if (draggedModule instanceof AdaptiveLayoutHudModule adaptive) {
+			adaptive.unlockLayout();
 		}
 		draggedModule.savePosition();
 		draggedModule = null;

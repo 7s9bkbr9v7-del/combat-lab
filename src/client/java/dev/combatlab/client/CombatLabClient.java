@@ -7,6 +7,7 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugTelemetry;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.CpsHud;
+import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.FpsHud;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.hud.MovementStatusHud;
@@ -47,6 +48,7 @@ public final class CombatLabClient implements ClientModInitializer {
 		hudModules.register(new FpsHud(options, debug));
 		hudModules.register(new CpsHud(cpsTracker, options, debug));
 		hudModules.register(new MovementStatusHud(options, debug));
+		hudModules.register(new ArmorHud(options, debug));
 		hudModules.freeze();
 		KeyMapping openOptions = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.combatlab.open_options",

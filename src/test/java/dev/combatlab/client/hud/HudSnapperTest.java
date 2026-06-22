@@ -40,4 +40,46 @@ class HudSnapperTest {
 
 		assertEquals(new HudPosition(110, 300), snapped);
 	}
+
+	@Test
+	void snapsToScreenEdgesAndCorners() {
+		HudPosition left = HudSnapper.snap(
+				new HudRectangle(5, 40, 60, 20),
+				List.of(),
+				6,
+				300,
+				200
+		);
+		assertEquals(new HudPosition(0, 40), left);
+
+		HudPosition bottomRight = HudSnapper.snap(
+				new HudRectangle(236, 177, 60, 20),
+				List.of(),
+				6,
+				300,
+				200
+		);
+		assertEquals(new HudPosition(240, 180), bottomRight);
+	}
+
+	@Test
+	void snapsToHorizontalAndVerticalScreenCentersIndependently() {
+		HudPosition horizontalCenter = HudSnapper.snap(
+				new HudRectangle(124, 30, 60, 20),
+				List.of(),
+				6,
+				300,
+				200
+		);
+		assertEquals(new HudPosition(120, 30), horizontalCenter);
+
+		HudPosition verticalCenter = HudSnapper.snap(
+				new HudRectangle(30, 86, 60, 20),
+				List.of(),
+				6,
+				300,
+				200
+		);
+		assertEquals(new HudPosition(30, 90), verticalCenter);
+	}
 }

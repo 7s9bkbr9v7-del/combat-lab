@@ -94,6 +94,14 @@ public final class CombatLabOptions {
 		module(id).scale = clampScale(scale);
 	}
 
+	public String hudLayout(String id) {
+		return module(id).layout;
+	}
+
+	public void updateHudLayout(String id, String layout) {
+		module(id).layout = layout;
+	}
+
 	public void save() {
 		store.save(config);
 	}

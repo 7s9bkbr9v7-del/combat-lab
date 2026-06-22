@@ -5,4 +5,5 @@ public final class HudModuleConfig {
 	double normalizedX;
 	double normalizedY;
 	double scale = 1.0;
+	String layout;
 }

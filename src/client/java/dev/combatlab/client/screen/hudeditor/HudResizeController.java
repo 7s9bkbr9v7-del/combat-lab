@@ -1,6 +1,7 @@
 package dev.combatlab.client.screen.hudeditor;
 
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudCorner;
 import dev.combatlab.client.hud.HudRectangle;
 import dev.combatlab.client.hud.HudSize;
@@ -32,6 +33,9 @@ public final class HudResizeController {
 		}
 		resizedModule = selected.module();
 		resizedCorner = selected.corner();
+		if (resizedModule instanceof AdaptiveLayoutHudModule adaptive) {
+			adaptive.lockLayout();
+		}
 		return true;
 	}
 
@@ -71,6 +75,9 @@ public final class HudResizeController {
 	public boolean release() {
 		if (resizedModule == null) {
 			return false;
+		}
+		if (resizedModule instanceof AdaptiveLayoutHudModule adaptive) {
+			adaptive.unlockLayout();
 		}
 		resizedModule.savePosition();
 		debug.info("{} resized to {}%", resizedModule.displayName().getString(), Math.round(resizedModule.scale() * 100.0));

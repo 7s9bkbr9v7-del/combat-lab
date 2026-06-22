@@ -7,7 +7,17 @@ public final class HudSnapper {
 	}
 
 	public static HudPosition snap(HudRectangle moving, List<HudRectangle> others, int threshold) {
-		SnapResult nearby = snapNearby(moving, others, threshold);
+		return snap(moving, others, threshold, -1, -1);
+	}
+
+	public static HudPosition snap(
+			HudRectangle moving,
+			List<HudRectangle> others,
+			int threshold,
+			int screenWidth,
+			int screenHeight
+	) {
+		SnapResult nearby = snapNearby(moving, others, threshold, screenWidth, screenHeight);
 		HudRectangle nearbyRectangle = new HudRectangle(
 				nearby.position().x(),
 				nearby.position().y(),
@@ -18,7 +28,22 @@ public final class HudSnapper {
 	}
 
 	static SnapResult snapNearby(HudRectangle moving, List<HudRectangle> others, int threshold) {
+		return snapNearby(moving, others, threshold, -1, -1);
+	}
+
+	private static SnapResult snapNearby(
+			HudRectangle moving,
+			List<HudRectangle> others,
+			int threshold,
+			int screenWidth,
+			int screenHeight
+	) {
 		AxisSnap xSnap = AxisSnap.none(moving.x(), threshold);
+		if (screenWidth >= moving.width()) {
+			xSnap = xSnap.nearest(moving.x(), 0);
+			xSnap = xSnap.nearest(moving.x(), screenWidth - moving.width());
+			xSnap = xSnap.nearest(moving.x(), (screenWidth - moving.width()) / 2);
+		}
 		for (HudRectangle other : others) {
 			if (rangesNear(moving.y(), moving.bottom(), other.y(), other.bottom(), threshold)) {
 				xSnap = xSnap.nearest(moving.x(), other.x());
@@ -30,6 +55,11 @@ public final class HudSnapper {
 
 		HudRectangle horizontal = new HudRectangle(xSnap.value(), moving.y(), moving.width(), moving.height());
 		AxisSnap ySnap = AxisSnap.none(moving.y(), threshold);
+		if (screenHeight >= moving.height()) {
+			ySnap = ySnap.nearest(moving.y(), 0);
+			ySnap = ySnap.nearest(moving.y(), screenHeight - moving.height());
+			ySnap = ySnap.nearest(moving.y(), (screenHeight - moving.height()) / 2);
+		}
 		for (HudRectangle other : others) {
 			if (rangesNear(horizontal.x(), horizontal.right(), other.x(), other.right(), threshold)) {
 				ySnap = ySnap.nearest(moving.y(), other.y());
