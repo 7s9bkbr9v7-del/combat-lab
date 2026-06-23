@@ -1,6 +1,6 @@
 package dev.combatlab.client.hud;
 
-import net.minecraft.client.Minecraft;
+import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
@@ -16,9 +16,9 @@ final class HudFrameSnapshot {
 		this.moduleFrames = modules.stream().map(ModuleFrame::new).toList();
 	}
 
-	void capture(Minecraft client, Font font, int screenWidth, int screenHeight) {
+	void capture(ClientGameState gameState, Font font, int screenWidth, int screenHeight) {
 		for (ModuleFrame moduleFrame : moduleFrames) {
-			moduleFrame.capture(client, font, screenWidth, screenHeight);
+			moduleFrame.capture(gameState, font, screenWidth, screenHeight);
 		}
 	}
 
@@ -36,9 +36,9 @@ final class HudFrameSnapshot {
 			this.module = module;
 		}
 
-		private void capture(Minecraft client, Font font, int screenWidth, int screenHeight) {
+		private void capture(ClientGameState gameState, Font font, int screenWidth, int screenHeight) {
 			context = module.enabled()
-					? new HudRenderContext(client, font, module.bounds(screenWidth, screenHeight))
+					? new HudRenderContext(font, module.bounds(screenWidth, screenHeight), gameState)
 					: null;
 		}
 

@@ -60,7 +60,7 @@ public final class HudEditorRenderer {
 		}
 
 		for (ModuleLayout layout : layouts) {
-			layout.module().renderEditorPreview(graphics, font, layout.bounds());
+			layout.module().renderEditorPreview(graphics, font, layout.bounds(), modules.gameState());
 		}
 		renderModuleOutlines(graphics, layouts, rectangles);
 		renderResizeHandles(graphics, layouts);

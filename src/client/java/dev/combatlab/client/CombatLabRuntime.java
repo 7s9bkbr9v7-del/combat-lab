@@ -2,6 +2,7 @@ package dev.combatlab.client;
 
 import dev.combatlab.client.bridge.MinecraftAttackRecorder;
 import dev.combatlab.client.bridge.MinecraftCombatBridge;
+import dev.combatlab.client.bridge.MinecraftHudGameStateProvider;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.debug.DebugTelemetry;
@@ -38,6 +39,7 @@ public final class CombatLabRuntime {
 	private final CombatState combatState;
 	private final AttackHistory attackHistory;
 	private final MinecraftCombatBridge bridge;
+	private final MinecraftHudGameStateProvider hudGameStateProvider;
 	private final MinecraftAttackRecorder attackRecorder;
 	private final DebugTelemetry debugTelemetry;
 	private final CpsTracker cpsTracker;
@@ -52,6 +54,7 @@ public final class CombatLabRuntime {
 			CombatState combatState,
 			AttackHistory attackHistory,
 			MinecraftCombatBridge bridge,
+			MinecraftHudGameStateProvider hudGameStateProvider,
 			MinecraftAttackRecorder attackRecorder,
 			DebugTelemetry debugTelemetry,
 			CpsTracker cpsTracker,
@@ -65,6 +68,7 @@ public final class CombatLabRuntime {
 		this.combatState = combatState;
 		this.attackHistory = attackHistory;
 		this.bridge = bridge;
+		this.hudGameStateProvider = hudGameStateProvider;
 		this.attackRecorder = attackRecorder;
 		this.debugTelemetry = debugTelemetry;
 		this.cpsTracker = cpsTracker;
@@ -82,9 +86,9 @@ public final class CombatLabRuntime {
 		CombatState combatState = new CombatState();
 		HudModuleRegistry hudModules = new HudModuleRegistry();
 		hudModules.register(new FpsHud(options, debug));
-		hudModules.register(new CpsHud(cpsTracker, options, debug));
+		hudModules.register(new CpsHud(options, debug));
 		hudModules.register(new MovementStatusHud(options, debug));
-		hudModules.register(new PingHud(combatState, options, debug));
+		hudModules.register(new PingHud(options, debug));
 		hudModules.register(new ArmorHud(options, debug));
 		hudModules.freeze();
 
@@ -97,6 +101,7 @@ public final class CombatLabRuntime {
 				combatState,
 				new AttackHistory(64),
 				new MinecraftCombatBridge(),
+				new MinecraftHudGameStateProvider(),
 				new MinecraftAttackRecorder(),
 				new DebugTelemetry(),
 				cpsTracker,
@@ -106,9 +111,10 @@ public final class CombatLabRuntime {
 
 	public void tick(Minecraft client) {
 		bridge.update(client, combatState);
+		long nowNanos = System.nanoTime();
 		ZoomController.tick(client, zoom);
 		FreelookController.tick(client, freelook);
-		hudModules.tick();
+		hudModules.tick(hudGameStateProvider.snapshot(client, combatState, cpsTracker, nowNanos));
 		debugTelemetry.update(combatState, options.debugLoggingEnabled(), debug);
 		while (openOptions.consumeClick()) {
 			debug.info("Opening HUD editor");

@@ -1,35 +1,35 @@
 package dev.combatlab.client.hud;
 
-import net.minecraft.world.entity.EquipmentSlot;
+import dev.combatlab.client.state.ArmorSlot;
 
 import java.util.List;
 
 enum ArmorHudLayout {
 	VERTICAL(1, 4, List.of(
-			EquipmentSlot.HEAD,
-			EquipmentSlot.CHEST,
-			EquipmentSlot.LEGS,
-			EquipmentSlot.FEET
+			ArmorSlot.HEAD,
+			ArmorSlot.CHEST,
+			ArmorSlot.LEGS,
+			ArmorSlot.FEET
 	)),
 	HORIZONTAL(4, 1, List.of(
-			EquipmentSlot.HEAD,
-			EquipmentSlot.CHEST,
-			EquipmentSlot.LEGS,
-			EquipmentSlot.FEET
+			ArmorSlot.HEAD,
+			ArmorSlot.CHEST,
+			ArmorSlot.LEGS,
+			ArmorSlot.FEET
 	)),
 	GRID(2, 2, List.of(
-			EquipmentSlot.HEAD,
-			EquipmentSlot.LEGS,
-			EquipmentSlot.CHEST,
-			EquipmentSlot.FEET
+			ArmorSlot.HEAD,
+			ArmorSlot.LEGS,
+			ArmorSlot.CHEST,
+			ArmorSlot.FEET
 	));
 
 	private static final double EDGE_EPSILON = 1.0E-6;
 	private final int columns;
 	private final int rows;
-	private final List<EquipmentSlot> slots;
+	private final List<ArmorSlot> slots;
 
-	ArmorHudLayout(int columns, int rows, List<EquipmentSlot> slots) {
+	ArmorHudLayout(int columns, int rows, List<ArmorSlot> slots) {
 		this.columns = columns;
 		this.rows = rows;
 		this.slots = slots;
@@ -77,7 +77,7 @@ enum ArmorHudLayout {
 		return rows;
 	}
 
-	List<EquipmentSlot> slots() {
+	List<ArmorSlot> slots() {
 		return slots;
 	}
 

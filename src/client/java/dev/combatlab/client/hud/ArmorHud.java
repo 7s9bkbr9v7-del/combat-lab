@@ -5,9 +5,7 @@ import dev.combatlab.client.debug.DebugLogger;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLayoutHudModule {
 	private static final int PADDING = 1;
@@ -52,44 +50,22 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 
 	@Override
 	protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
-		if (context.client().player == null) {
-			return;
-		}
-
 		graphics.pose().pushMatrix();
 		graphics.pose().translate(context.bounds().x(), context.bounds().y());
 		graphics.pose().scale((float) scale(), (float) scale());
 		ArmorHudLayout layout = layout();
 		for (int index = 0; index < layout.slots().size(); index++) {
-			ItemStack stack = stackForSlot(context, layout.slots().get(index));
+			ItemStack stack = context.hud().armor().stack(layout.slots().get(index));
 			if (stack.isEmpty()) {
 				continue;
 			}
 
 			int x = PADDING + index % layout.columns() * ITEM_SIZE;
 			int y = PADDING + index / layout.columns() * ITEM_SIZE;
-			if (context.editorPreview()) {
-				graphics.item(stack, x, y, 0);
-			} else {
-				graphics.item(context.client().player, stack, x, y, 0);
-			}
+			graphics.item(stack, x, y, 0);
 			graphics.itemDecorations(context.font(), stack, x, y);
 		}
 		graphics.pose().popMatrix();
-	}
-
-	private ItemStack stackForSlot(HudRenderContext context, EquipmentSlot slot) {
-		ItemStack equipped = context.client().player.getItemBySlot(slot);
-		if (!context.editorPreview() || !equipped.isEmpty()) {
-			return equipped;
-		}
-		return switch (slot) {
-			case HEAD -> Items.IRON_HELMET.getDefaultInstance();
-			case CHEST -> Items.IRON_CHESTPLATE.getDefaultInstance();
-			case LEGS -> Items.IRON_LEGGINGS.getDefaultInstance();
-			case FEET -> Items.IRON_BOOTS.getDefaultInstance();
-			default -> ItemStack.EMPTY;
-		};
 	}
 
 	private ArmorHudLayout layout() {

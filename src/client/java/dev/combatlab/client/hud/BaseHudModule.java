@@ -3,7 +3,7 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
-import net.minecraft.client.Minecraft;
+import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -113,8 +113,8 @@ public abstract class BaseHudModule implements HudModule {
 	}
 
 	@Override
-	public final void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds) {
-		renderModule(graphics, new HudRenderContext(Minecraft.getInstance(), font, bounds, true));
+	public final void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds, ClientGameState gameState) {
+		renderModule(graphics, new HudRenderContext(font, bounds, true, gameState.withHud(gameState.hud().forEditorPreview())));
 	}
 
 	protected final HudModuleSettings settings() {

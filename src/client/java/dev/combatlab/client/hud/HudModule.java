@@ -4,6 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import dev.combatlab.client.state.ClientGameState;
 
 /**
  * A self-contained HUD module that can be registered, configured, and moved
@@ -40,9 +41,9 @@ public interface HudModule {
 
 	void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context);
 
-	void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds);
+	void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds, ClientGameState gameState);
 
-	default void tick() {
+	default void tick(ClientGameState gameState) {
 	}
 
 	default boolean ticksWhenDisabled() {

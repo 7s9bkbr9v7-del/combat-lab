@@ -4,6 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import dev.combatlab.client.state.ClientGameState;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +19,7 @@ class HudModuleRegistryTest {
 		CountingModule enabled = registry.register(new CountingModule("enabled", true, false));
 		CountingModule background = registry.register(new CountingModule("background", false, true));
 
-		registry.tick();
+		registry.tick(ClientGameState.empty());
 
 		assertEquals(0, disabled.tickCount);
 		assertEquals(1, enabled.tickCount);
@@ -31,7 +32,7 @@ class HudModuleRegistryTest {
 		CountingModule enabled = new CountingModule("enabled", true, false);
 		HudFrameSnapshot snapshot = new HudFrameSnapshot(List.of(disabled, enabled));
 
-		snapshot.capture(null, null, 320, 180);
+		snapshot.capture(ClientGameState.empty(), null, 320, 180);
 		snapshot.render(null);
 
 		assertEquals(0, disabled.boundsCount);
@@ -125,11 +126,11 @@ class HudModuleRegistryTest {
 		}
 
 		@Override
-		public void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds) {
+		public void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds, ClientGameState gameState) {
 		}
 
 		@Override
-		public void tick() {
+		public void tick(ClientGameState gameState) {
 			tickCount++;
 		}
 

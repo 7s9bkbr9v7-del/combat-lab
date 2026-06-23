@@ -1,15 +1,19 @@
 package dev.combatlab.client.hud;
 
-import net.minecraft.client.Minecraft;
+import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.client.gui.Font;
 
 public record HudRenderContext(
-		Minecraft client,
 		Font font,
 		HudRectangle bounds,
-		boolean editorPreview
+		boolean editorPreview,
+		ClientGameState gameState
 ) {
-	public HudRenderContext(Minecraft client, Font font, HudRectangle bounds) {
-		this(client, font, bounds, false);
+	public HudRenderContext(Font font, HudRectangle bounds, ClientGameState gameState) {
+		this(font, bounds, false, gameState);
+	}
+
+	public HudGameState hud() {
+		return gameState.hud();
 	}
 }

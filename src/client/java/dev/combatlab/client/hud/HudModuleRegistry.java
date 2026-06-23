@@ -1,5 +1,6 @@
 package dev.combatlab.client.hud;
 
+import dev.combatlab.client.state.ClientGameState;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -21,6 +22,7 @@ public final class HudModuleRegistry implements HudElement {
 	private final Map<String, HudModule> modulesById = new HashMap<>();
 	private boolean frozen;
 	private boolean editorOpen;
+	private ClientGameState gameState = ClientGameState.empty();
 	private HudFrameSnapshot frameSnapshot;
 
 	public <T extends HudModule> T register(T module) {
@@ -47,12 +49,17 @@ public final class HudModuleRegistry implements HudElement {
 		return modulesById.get(id);
 	}
 
-	public void tick() {
+	public void tick(ClientGameState gameState) {
+		this.gameState = gameState;
 		for (HudModule module : modules) {
 			if (module.enabled() || module.ticksWhenDisabled()) {
-				module.tick();
+				module.tick(gameState);
 			}
 		}
+	}
+
+	public ClientGameState gameState() {
+		return gameState;
 	}
 
 	public void freeze() {
@@ -75,7 +82,7 @@ public final class HudModuleRegistry implements HudElement {
 			return;
 		}
 
-		frameSnapshot.capture(client, client.font, graphics.guiWidth(), graphics.guiHeight());
+		frameSnapshot.capture(gameState, client.font, graphics.guiWidth(), graphics.guiHeight());
 		frameSnapshot.render(graphics);
 	}
 }

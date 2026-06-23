@@ -2,7 +2,7 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.model.CombatState;
+import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -15,15 +15,12 @@ public final class PingHud extends TextHudModule {
 			true
 	);
 
-	private final CombatState combatState;
-
-	public PingHud(CombatState combatState, CombatLabOptions options, DebugLogger debug) {
+	public PingHud(CombatLabOptions options, DebugLogger debug) {
 		super(DEFINITION, "-- ms", options, debug);
-		this.combatState = combatState;
 	}
 
 	@Override
-	public void tick() {
-		setText(PingText.resolve(combatState.ping()));
+	public void tick(ClientGameState gameState) {
+		setText(PingText.resolve(gameState.combat().ping()));
 	}
 }
