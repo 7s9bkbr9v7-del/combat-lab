@@ -16,6 +16,10 @@ public final class MovementStatusHud extends TextHudModule {
 			true
 	);
 
+	public static HudModuleDescriptor descriptor() {
+		return new HudModuleDescriptor(DEFINITION, dependencies -> new MovementStatusHud(dependencies.options(), dependencies.debug()));
+	}
+
 	private boolean active;
 
 	public MovementStatusHud(CombatLabOptions options, DebugLogger debug) {

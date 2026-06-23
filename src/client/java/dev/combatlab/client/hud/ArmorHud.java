@@ -17,6 +17,11 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 			0.50,
 			true
 	);
+
+	public static HudModuleDescriptor descriptor() {
+		return new HudModuleDescriptor(DEFINITION, dependencies -> new ArmorHud(dependencies.options(), dependencies.debug()));
+	}
+
 	private ArmorHudLayout lockedLayout;
 
 	public ArmorHud(CombatLabOptions options, DebugLogger debug) {

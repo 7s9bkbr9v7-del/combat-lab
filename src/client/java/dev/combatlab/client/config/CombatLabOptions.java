@@ -18,6 +18,10 @@ public final class CombatLabOptions {
 		return new CombatLabOptions(store.load(), store);
 	}
 
+	public static CombatLabOptions load(ConfigStore store) {
+		return new CombatLabOptions(store.load(), store);
+	}
+
 	public boolean debugLoggingEnabled() {
 		return config.debugLoggingEnabled;
 	}

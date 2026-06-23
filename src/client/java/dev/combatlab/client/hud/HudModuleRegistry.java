@@ -1,6 +1,9 @@
 package dev.combatlab.client.hud;
 
 import dev.combatlab.client.state.ClientGameState;
+import dev.combatlab.client.config.CombatLabOptions;
+import dev.combatlab.client.config.HudModuleSettings;
+import dev.combatlab.client.debug.DebugLogger;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -17,6 +20,13 @@ import java.util.Map;
 
 public final class HudModuleRegistry implements HudElement {
 	private static final Identifier HUD_ID = Identifier.fromNamespaceAndPath("combatlab", "hud");
+	private final HudModuleDependencies dependencies;
+	private final CombatLabOptions options;
+	private final DebugLogger debug;
+	private final List<HudModuleDescriptor> descriptors = new ArrayList<>();
+	private final List<HudModuleDescriptor> descriptorView = Collections.unmodifiableList(descriptors);
+	private final Map<String, HudModuleDescriptor> descriptorsById = new HashMap<>();
+	private final Map<String, HudModuleSettings> settingsById = new HashMap<>();
 	private final List<HudModule> modules = new ArrayList<>();
 	private final List<HudModule> moduleView = Collections.unmodifiableList(modules);
 	private final Map<String, HudModule> modulesById = new HashMap<>();
@@ -25,20 +35,38 @@ public final class HudModuleRegistry implements HudElement {
 	private ClientGameState gameState = ClientGameState.empty();
 	private HudFrameSnapshot frameSnapshot;
 
-	public <T extends HudModule> T register(T module) {
+	public HudModuleRegistry(CombatLabOptions options, DebugLogger debug) {
+		this.options = options;
+		this.debug = debug;
+		this.dependencies = new HudModuleDependencies(options, debug);
+	}
+
+	public HudModuleRegistry() {
+		this(CombatLabOptions.load(), new DebugLogger(() -> false));
+	}
+
+	public void registerDescriptor(HudModuleDescriptor descriptor) {
 		if (frozen) {
 			throw new IllegalStateException("HUD module registration is frozen");
 		}
-		String id = module.id().toString();
-		if (modulesById.putIfAbsent(id, module) != null) {
+		String id = descriptor.id();
+		if (descriptorsById.putIfAbsent(id, descriptor) != null) {
 			throw new IllegalArgumentException("Duplicate HUD module id: " + id);
 		}
 
-		modules.add(module);
-		if (module instanceof BaseHudModule baseModule) {
-			baseModule.bindModuleLookup(modulesById::get);
+		descriptors.add(descriptor);
+		settingsById.put(id, options.bindHudModule(
+				id,
+				descriptor.definition().defaultX(),
+				descriptor.definition().defaultY()
+		));
+		if (enabled(id) || descriptor.loadWhenDisabled()) {
+			load(id);
 		}
-		return module;
+	}
+
+	public List<HudModuleDescriptor> descriptors() {
+		return descriptorView;
 	}
 
 	public List<HudModule> modules() {
@@ -47,6 +75,27 @@ public final class HudModuleRegistry implements HudElement {
 
 	public HudModule module(String id) {
 		return modulesById.get(id);
+	}
+
+	public boolean enabled(String id) {
+		HudModuleSettings settings = settingsById.get(id);
+		return settings != null && settings.enabled();
+	}
+
+	public void setEnabled(String id, boolean enabled) {
+		HudModuleSettings settings = requireSettings(id);
+		if (settings.enabled() == enabled) {
+			return;
+		}
+
+		settings.setEnabled(enabled);
+		HudModuleDescriptor descriptor = descriptorsById.get(id);
+		if (enabled) {
+			load(id);
+		} else if (!descriptor.loadWhenDisabled()) {
+			unload(id);
+		}
+		debug.info("{} {}", descriptor.definition().displayName().getString(), enabled ? "enabled" : "disabled");
 	}
 
 	public void tick(ClientGameState gameState) {
@@ -66,7 +115,7 @@ public final class HudModuleRegistry implements HudElement {
 		if (frozen) {
 			return;
 		}
-		frameSnapshot = new HudFrameSnapshot(moduleView);
+		refreshFrameSnapshot();
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, HUD_ID, this);
 		frozen = true;
 	}
@@ -84,5 +133,46 @@ public final class HudModuleRegistry implements HudElement {
 
 		frameSnapshot.capture(gameState, client.font, graphics.guiWidth(), graphics.guiHeight());
 		frameSnapshot.render(graphics);
+	}
+
+	private HudModule load(String id) {
+		HudModule loaded = modulesById.get(id);
+		if (loaded != null) {
+			return loaded;
+		}
+
+		HudModuleDescriptor descriptor = descriptorsById.get(id);
+		if (descriptor == null) {
+			throw new IllegalArgumentException("Unknown HUD module id: " + id);
+		}
+		HudModule module = descriptor.factory().create(dependencies);
+		modulesById.put(id, module);
+		modules.add(module);
+		if (module instanceof BaseHudModule baseModule) {
+			baseModule.bindModuleLookup(modulesById::get);
+		}
+		refreshFrameSnapshot();
+		return module;
+	}
+
+	private void unload(String id) {
+		HudModule module = modulesById.remove(id);
+		if (module == null) {
+			return;
+		}
+		modules.remove(module);
+		refreshFrameSnapshot();
+	}
+
+	private HudModuleSettings requireSettings(String id) {
+		HudModuleSettings settings = settingsById.get(id);
+		if (settings == null) {
+			throw new IllegalArgumentException("Unknown HUD module id: " + id);
+		}
+		return settings;
+	}
+
+	private void refreshFrameSnapshot() {
+		frameSnapshot = new HudFrameSnapshot(moduleView);
 	}
 }

@@ -1,6 +1,6 @@
 package dev.combatlab.client.screen;
 
-import dev.combatlab.client.hud.HudModule;
+import dev.combatlab.client.hud.HudModuleDescriptor;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -22,13 +22,14 @@ public final class HudOptionsScreen extends Screen {
 	@Override
 	protected void init() {
 		int left = width / 2 - 100;
-		int y = height / 2 - (modules.modules().size() * 30) / 2;
-		for (HudModule module : modules.modules()) {
-			addRenderableWidget(OptionTooltip.describe(Checkbox.builder(module.displayName(), font)
+		int y = height / 2 - (modules.descriptors().size() * 30) / 2;
+		for (HudModuleDescriptor module : modules.descriptors()) {
+			String id = module.id();
+			addRenderableWidget(OptionTooltip.describe(Checkbox.builder(module.definition().displayName(), font)
 					.pos(left, y)
 					.maxWidth(200)
-					.selected(module.enabled())
-					.onValueChange((checkbox, selected) -> module.setEnabled(selected))
+					.selected(modules.enabled(id))
+					.onValueChange((checkbox, selected) -> modules.setEnabled(id, selected))
 					.build(), Component.literal("Show or hide this module in game and in the HUD editor.")));
 			y += 30;
 		}

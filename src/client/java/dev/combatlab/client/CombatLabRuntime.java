@@ -93,12 +93,12 @@ public final class CombatLabRuntime {
 		DebugTelemetry debugTelemetry = new DebugTelemetry();
 		combatEvents.subscribe(TargetChangedEvent.class, event -> debugTelemetry.onTargetChanged(event, options.debugLoggingEnabled(), debug));
 		combatEvents.subscribe(AttackRecordedEvent.class, event -> debugTelemetry.onAttackRecorded(event, options.debugLoggingEnabled(), debug));
-		HudModuleRegistry hudModules = new HudModuleRegistry();
-		hudModules.register(new FpsHud(options, debug));
-		hudModules.register(new CpsHud(options, debug));
-		hudModules.register(new MovementStatusHud(options, debug));
-		hudModules.register(new PingHud(options, debug));
-		hudModules.register(new ArmorHud(options, debug));
+		HudModuleRegistry hudModules = new HudModuleRegistry(options, debug);
+		hudModules.registerDescriptor(FpsHud.descriptor());
+		hudModules.registerDescriptor(CpsHud.descriptor());
+		hudModules.registerDescriptor(MovementStatusHud.descriptor());
+		hudModules.registerDescriptor(PingHud.descriptor());
+		hudModules.registerDescriptor(ArmorHud.descriptor());
 		hudModules.freeze();
 
 		return new CombatLabRuntime(
@@ -160,6 +160,6 @@ public final class CombatLabRuntime {
 	}
 
 	public int hudModuleCount() {
-		return hudModules.modules().size();
+		return hudModules.descriptors().size();
 	}
 }

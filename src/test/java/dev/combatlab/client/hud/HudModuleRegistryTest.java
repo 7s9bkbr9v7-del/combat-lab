@@ -1,29 +1,58 @@
 package dev.combatlab.client.hud;
 
+import dev.combatlab.client.config.CombatLabOptions;
+import dev.combatlab.client.config.CombatLabConfigCodec;
+import dev.combatlab.client.config.ConfigStore;
+import dev.combatlab.client.debug.DebugLogger;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import dev.combatlab.client.state.ClientGameState;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.util.List;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class HudModuleRegistryTest {
+	@TempDir
+	Path temporaryDirectory;
+
 	@Test
-	void ticksOnlyEnabledOrExplicitBackgroundModules() {
-		HudModuleRegistry registry = new HudModuleRegistry();
-		CountingModule disabled = registry.register(new CountingModule("disabled", false, false));
-		CountingModule enabled = registry.register(new CountingModule("enabled", true, false));
-		CountingModule background = registry.register(new CountingModule("background", false, true));
+	void loadsOnlyEnabledOrExplicitBackgroundModules() {
+		HudModuleRegistry registry = registry();
+		registry.registerDescriptor(descriptor("disabled", false));
+		registry.registerDescriptor(descriptor("enabled", false));
+		registry.registerDescriptor(descriptor("background", true));
+
+		registry.setEnabled("combatlab:enabled", true);
 
 		registry.tick(ClientGameState.empty());
 
-		assertEquals(0, disabled.tickCount);
-		assertEquals(1, enabled.tickCount);
-		assertEquals(1, background.tickCount);
+		assertNull(registry.module("combatlab:disabled"));
+		assertNotNull(registry.module("combatlab:enabled"));
+		assertNotNull(registry.module("combatlab:background"));
+		assertEquals(1, ((CountingModule) registry.module("combatlab:enabled")).tickCount);
+		assertEquals(1, ((CountingModule) registry.module("combatlab:background")).tickCount);
+	}
+
+	@Test
+	void disablingModuleUnloadsItsInstanceButKeepsDescriptorAvailable() {
+		HudModuleRegistry registry = registry();
+		registry.registerDescriptor(descriptor("enabled", false));
+
+		registry.setEnabled("combatlab:enabled", true);
+		assertNotNull(registry.module("combatlab:enabled"));
+
+		registry.setEnabled("combatlab:enabled", false);
+
+		assertNull(registry.module("combatlab:enabled"));
+		assertEquals(1, registry.descriptors().size());
 	}
 
 	@Test
@@ -41,9 +70,32 @@ class HudModuleRegistryTest {
 		assertEquals(1, enabled.renderCount);
 	}
 
+	private HudModuleRegistry registry() {
+		ConfigStore store = new ConfigStore(
+				temporaryDirectory.resolve("combatlab.json"),
+				new CombatLabConfigCodec()
+		);
+		return new HudModuleRegistry(CombatLabOptions.load(store), new DebugLogger(() -> false));
+	}
+
+	private static HudModuleDescriptor descriptor(String path, boolean loadWhenDisabled) {
+		HudModuleDefinition definition = new HudModuleDefinition(
+				Identifier.fromNamespaceAndPath("combatlab", path),
+				Component.literal(path),
+				0.0,
+				0.0,
+				false
+		);
+		return new HudModuleDescriptor(
+				definition,
+				dependencies -> new CountingModule(path, !loadWhenDisabled, loadWhenDisabled),
+				loadWhenDisabled
+		);
+	}
+
 	private static final class CountingModule implements HudModule {
 		private final Identifier id;
-		private final boolean enabled;
+		private boolean enabled;
 		private final boolean ticksWhenDisabled;
 		private int tickCount;
 		private int boundsCount;
@@ -72,6 +124,7 @@ class HudModuleRegistryTest {
 
 		@Override
 		public void setEnabled(boolean enabled) {
+			this.enabled = enabled;
 		}
 
 		@Override

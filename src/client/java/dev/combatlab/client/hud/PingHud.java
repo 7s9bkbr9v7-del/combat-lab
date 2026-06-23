@@ -15,6 +15,10 @@ public final class PingHud extends TextHudModule {
 			true
 	);
 
+	public static HudModuleDescriptor descriptor() {
+		return new HudModuleDescriptor(DEFINITION, dependencies -> new PingHud(dependencies.options(), dependencies.debug()));
+	}
+
 	public PingHud(CombatLabOptions options, DebugLogger debug) {
 		super(DEFINITION, "-- ms", options, debug);
 	}

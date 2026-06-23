@@ -15,6 +15,10 @@ public final class FpsHud extends TextHudModule {
 			true
 	);
 
+	public static HudModuleDescriptor descriptor() {
+		return new HudModuleDescriptor(DEFINITION, dependencies -> new FpsHud(dependencies.options(), dependencies.debug()));
+	}
+
 	public FpsHud(CombatLabOptions options, DebugLogger debug) {
 		super(
 				DEFINITION,

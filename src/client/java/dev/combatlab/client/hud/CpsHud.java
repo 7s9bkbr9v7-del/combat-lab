@@ -15,6 +15,10 @@ public final class CpsHud extends TextHudModule {
 			true
 	);
 
+	public static HudModuleDescriptor descriptor() {
+		return new HudModuleDescriptor(DEFINITION, dependencies -> new CpsHud(dependencies.options(), dependencies.debug()));
+	}
+
 	public CpsHud(CombatLabOptions options, DebugLogger debug) {
 		super(
 				DEFINITION,
