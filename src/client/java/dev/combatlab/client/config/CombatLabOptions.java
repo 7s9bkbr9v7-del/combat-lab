@@ -26,6 +26,10 @@ public final class CombatLabOptions {
 		return config.debugLoggingEnabled;
 	}
 
+	public int schemaVersion() {
+		return config.schemaVersion;
+	}
+
 	public void setDebugLoggingEnabled(boolean enabled) {
 		config.debugLoggingEnabled = enabled;
 		store.save(config);

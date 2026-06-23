@@ -77,6 +77,10 @@ public final class HudModuleRegistry implements HudElement {
 		return modulesById.get(id);
 	}
 
+	public HudModuleSettings settings(String id) {
+		return requireSettings(id);
+	}
+
 	public boolean enabled(String id) {
 		HudModuleSettings settings = settingsById.get(id);
 		return settings != null && settings.enabled();

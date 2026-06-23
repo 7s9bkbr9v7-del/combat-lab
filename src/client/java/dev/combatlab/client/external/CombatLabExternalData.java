@@ -1,0 +1,91 @@
+package dev.combatlab.client.external;
+
+import dev.combatlab.client.config.CombatLabOptions;
+import dev.combatlab.client.config.HudModuleSettings;
+import dev.combatlab.client.hud.HudModuleDescriptor;
+import dev.combatlab.client.hud.HudModuleRegistry;
+import dev.combatlab.client.state.ClientGameState;
+import dev.combatlab.client.state.TargetState;
+
+import java.util.List;
+
+public final class CombatLabExternalData {
+	private CombatLabExternalData() {
+	}
+
+	public static ExternalCombatLabSettingsDocument settingsDocument(
+			CombatLabOptions options,
+			HudModuleRegistry modules
+	) {
+		return new ExternalCombatLabSettingsDocument(
+				CombatLabExternalSchema.SETTINGS_SCHEMA_VERSION,
+				options.debugLoggingEnabled(),
+				options.fullbrightEnabled(),
+				options.achievementToastsDisabled(),
+				options.dynamicFovEnabled(),
+				moduleSettings(modules)
+		);
+	}
+
+	public static ExternalHudModuleManifest moduleManifest(HudModuleRegistry modules) {
+		return new ExternalHudModuleManifest(
+				CombatLabExternalSchema.MODULE_MANIFEST_SCHEMA_VERSION,
+				modules.descriptors().stream()
+						.map(CombatLabExternalData::moduleDefinition)
+						.toList()
+		);
+	}
+
+	public static ExternalTelemetrySnapshot telemetrySnapshot(ClientGameState state) {
+		return new ExternalTelemetrySnapshot(
+				CombatLabExternalSchema.TELEMETRY_SCHEMA_VERSION,
+				state.fps(),
+				state.input().cps(),
+				state.combat().ping(),
+				state.combat().attackStrength(),
+				target(state.combat().target())
+		);
+	}
+
+	private static List<ExternalHudModuleSettings> moduleSettings(HudModuleRegistry modules) {
+		return modules.descriptors().stream()
+				.map(descriptor -> moduleSettings(modules, descriptor))
+				.toList();
+	}
+
+	private static ExternalHudModuleSettings moduleSettings(HudModuleRegistry modules, HudModuleDescriptor descriptor) {
+		HudModuleSettings settings = modules.settings(descriptor.id());
+		return new ExternalHudModuleSettings(
+				descriptor.id(),
+				descriptor.definition().displayName().getString(),
+				settings.enabled(),
+				settings.normalizedX(),
+				settings.normalizedY(),
+				settings.scale(),
+				settings.layout(),
+				settings.attachedTo(),
+				settings.attachmentSide(),
+				settings.attachmentOffset()
+		);
+	}
+
+	private static ExternalHudModuleDefinition moduleDefinition(HudModuleDescriptor descriptor) {
+		return new ExternalHudModuleDefinition(
+				descriptor.id(),
+				descriptor.definition().displayName().getString(),
+				descriptor.definition().defaultX(),
+				descriptor.definition().defaultY(),
+				descriptor.definition().resizable(),
+				descriptor.loadWhenDisabled()
+		);
+	}
+
+	private static ExternalTargetSnapshot target(TargetState target) {
+		return new ExternalTargetSnapshot(
+				target.present(),
+				target.id() == null ? null : target.id().toString(),
+				target.name(),
+				target.distance()
+		);
+	}
+}
