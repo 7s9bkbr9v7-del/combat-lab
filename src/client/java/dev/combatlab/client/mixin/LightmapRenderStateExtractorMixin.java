@@ -1,6 +1,6 @@
 package dev.combatlab.client.mixin;
 
-import dev.combatlab.client.feature.FullbrightController;
+import dev.combatlab.client.feature.FullbrightFeatureHooks;
 import net.minecraft.client.renderer.LightmapRenderStateExtractor;
 import net.minecraft.client.renderer.state.LightmapRenderState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,18 +20,10 @@ abstract class LightmapRenderStateExtractorMixin {
 
 	@Inject(method = "extract", at = @At("RETURN"))
 	private void combatlab$applyFullbright(LightmapRenderState state, float partialTick, CallbackInfo callbackInfo) {
-		if (FullbrightController.enabled()) {
-			if (state.needsUpdate || !combatlab$wasFullbright) {
-				state.needsUpdate = true;
-				state.nightVisionEffectIntensity = 1.0F;
-				state.nightVisionColor = LightmapRenderStateExtractor.WHITE;
-				state.darknessEffectScale = 0.0F;
-				state.bossOverlayWorldDarkening = 0.0F;
-			}
-			combatlab$wasFullbright = true;
-		} else if (combatlab$wasFullbright) {
+		FullbrightFeatureHooks.Result result = FullbrightFeatureHooks.apply(state, combatlab$wasFullbright);
+		combatlab$wasFullbright = result.wasFullbright();
+		if (result.extractorNeedsUpdate()) {
 			needsUpdate = true;
-			combatlab$wasFullbright = false;
 		}
 	}
 }

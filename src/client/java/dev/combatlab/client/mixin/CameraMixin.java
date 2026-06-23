@@ -1,8 +1,6 @@
 package dev.combatlab.client.mixin;
 
-import dev.combatlab.client.feature.DynamicFovController;
-import dev.combatlab.client.feature.FreelookController;
-import dev.combatlab.client.feature.ZoomController;
+import dev.combatlab.client.feature.CameraFeatureHooks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.OptionInstance;
@@ -21,8 +19,7 @@ abstract class CameraMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/OptionInstance;get()Ljava/lang/Object;")
 	)
 	private Object combatlab$dynamicFovScale(OptionInstance<?> option) {
-		Object configuredScale = option.get();
-		return DynamicFovController.enabled() ? configuredScale : 0.0D;
+		return CameraFeatureHooks.dynamicFovScale(option);
 	}
 
 	@Redirect(
@@ -30,7 +27,7 @@ abstract class CameraMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Options;getCameraType()Lnet/minecraft/client/CameraType;")
 	)
 	private CameraType combatlab$freelookCameraType(Options options) {
-		return FreelookController.active() ? CameraType.THIRD_PERSON_BACK : options.getCameraType();
+		return CameraFeatureHooks.cameraType(options);
 	}
 
 	@ModifyArg(
@@ -39,7 +36,7 @@ abstract class CameraMixin {
 			index = 0
 	)
 	private float combatlab$freelookYaw(float yaw) {
-		return FreelookController.active() ? FreelookController.yaw() : yaw;
+		return CameraFeatureHooks.yaw(yaw);
 	}
 
 	@ModifyArg(
@@ -48,11 +45,11 @@ abstract class CameraMixin {
 			index = 1
 	)
 	private float combatlab$freelookPitch(float pitch) {
-		return FreelookController.active() ? FreelookController.pitch() : pitch;
+		return CameraFeatureHooks.pitch(pitch);
 	}
 
 	@Inject(method = "calculateFov", at = @At("RETURN"), cancellable = true)
 	private void combatlab$applyZoom(float partialTick, CallbackInfoReturnable<Float> callbackInfo) {
-		callbackInfo.setReturnValue(ZoomController.apply(callbackInfo.getReturnValueF()));
+		callbackInfo.setReturnValue(CameraFeatureHooks.fov(callbackInfo.getReturnValueF()));
 	}
 }

@@ -1,6 +1,6 @@
 package dev.combatlab.client.mixin;
 
-import dev.combatlab.client.feature.FreelookController;
+import dev.combatlab.client.feature.CameraFeatureHooks;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Options;
 import net.minecraft.client.renderer.GameRenderer;
@@ -15,6 +15,6 @@ abstract class GameRendererMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Options;getCameraType()Lnet/minecraft/client/CameraType;")
 	)
 	private CameraType combatlab$freelookRenderCameraType(Options options) {
-		return FreelookController.active() ? CameraType.THIRD_PERSON_BACK : options.getCameraType();
+		return CameraFeatureHooks.cameraType(options);
 	}
 }
