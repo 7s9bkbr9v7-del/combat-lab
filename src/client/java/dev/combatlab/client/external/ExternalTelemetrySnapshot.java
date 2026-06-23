@@ -8,6 +8,7 @@ public record ExternalTelemetrySnapshot(
 		int cps,
 		int ping,
 		float attackStrength,
+		ExternalInputSnapshot input,
 		ExternalTargetSnapshot target,
 		List<ExternalEffectTimer> effects
 ) {

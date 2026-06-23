@@ -12,6 +12,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 public final class HudEditorScreen extends Screen {
 	private static final Component TITLE = Component.literal("Combat Lab HUD Editor");
@@ -33,7 +34,7 @@ public final class HudEditorScreen extends Screen {
 		HudSelection selection = new HudSelection(modules);
 		this.dragController = new HudDragController(selection, SNAP_THRESHOLD);
 		this.resizeController = new HudResizeController(selection, debug, RESIZE_HANDLE_SIZE);
-		this.renderer = new HudEditorRenderer(modules, selection, resizeController, RESIZE_HANDLE_SIZE);
+		this.renderer = new HudEditorRenderer(modules, selection, dragController, resizeController, RESIZE_HANDLE_SIZE);
 		this.navigation = new HudOptionsNavigation(options, modules, debug);
 	}
 
@@ -81,7 +82,7 @@ public final class HudEditorScreen extends Screen {
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
 		if (resizeController.resize(event.x(), event.y(), width, height)
-				|| dragController.drag(event.x(), event.y(), width, height)) {
+				|| dragController.drag(event.x(), event.y(), width, height, leftShiftDown())) {
 			return true;
 		}
 		return super.mouseDragged(event, deltaX, deltaY);
@@ -109,5 +110,11 @@ public final class HudEditorScreen extends Screen {
 		float elapsed = Math.clamp((float) (nowNanos - openedAtNanos) / OPEN_ANIMATION_NANOS, 0.0F, 1.0F);
 		float remaining = 1.0F - elapsed;
 		return 1.0F - remaining * remaining * remaining;
+	}
+
+	private boolean leftShiftDown() {
+		return minecraft != null
+				&& minecraft.getWindow() != null
+				&& GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS;
 	}
 }

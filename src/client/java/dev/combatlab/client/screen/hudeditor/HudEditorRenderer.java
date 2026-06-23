@@ -8,31 +8,38 @@ import dev.combatlab.client.hud.HudOutlineResolver;
 import dev.combatlab.client.hud.HudOutlineSegment;
 import dev.combatlab.client.hud.HudOutlineSegments;
 import dev.combatlab.client.hud.HudRectangle;
+import dev.combatlab.client.hud.HudSnapGuide;
 import dev.combatlab.client.hud.ResizableHudModule;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class HudEditorRenderer {
 	private static final int OUTLINE_COLOR = 0xFF60A5FA;
+	private static final int ATTACHMENT_ANCHOR_OUTLINE_COLOR = 0xFFFBBF24;
 	private static final int RESIZE_HANDLE_COLOR = 0xFF22C55E;
 
 	private final HudModuleRegistry modules;
 	private final HudSelection selection;
+	private final HudDragController dragController;
 	private final HudResizeController resizeController;
 	private final int handleSize;
 
 	public HudEditorRenderer(
 			HudModuleRegistry modules,
 			HudSelection selection,
+			HudDragController dragController,
 			HudResizeController resizeController,
 			int handleSize
 	) {
 		this.modules = modules;
 		this.selection = selection;
+		this.dragController = dragController;
 		this.resizeController = resizeController;
 		this.handleSize = handleSize;
 	}
@@ -58,11 +65,13 @@ public final class HudEditorRenderer {
 				rectangles.add(bounds);
 			}
 		}
+		Set<String> attachmentRootIds = attachmentRootIds(layouts);
 
+		renderSnapGuide(graphics, screenWidth, screenHeight);
 		for (ModuleLayout layout : layouts) {
 			layout.module().renderEditorPreview(graphics, font, layout.bounds(), modules.gameState());
 		}
-		renderModuleOutlines(graphics, layouts, rectangles);
+		renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
 		renderResizeHandles(graphics, layouts);
 		renderResizePercent(graphics, font, screenWidth, screenHeight, mouseX, mouseY);
 		return !layouts.isEmpty();
@@ -86,12 +95,43 @@ public final class HudEditorRenderer {
 	private void renderModuleOutlines(
 			GuiGraphicsExtractor graphics,
 			List<ModuleLayout> layouts,
-			List<HudRectangle> rectangles
+			List<HudRectangle> rectangles,
+			Set<String> attachedTargetIds
 	) {
 		for (ModuleLayout layout : layouts) {
 			HudRectangle rectangle = layout.bounds();
-			drawOutline(graphics, rectangle, HudOutlineResolver.visibleSegments(rectangle, rectangles));
+			int color = attachedTargetIds.contains(layout.module().id().toString())
+					? ATTACHMENT_ANCHOR_OUTLINE_COLOR
+					: OUTLINE_COLOR;
+			drawOutline(graphics, rectangle, HudOutlineResolver.visibleSegments(rectangle, rectangles), color);
 		}
+	}
+
+	private static Set<String> attachmentRootIds(List<ModuleLayout> layouts) {
+		Set<String> attachedModuleIds = new HashSet<>();
+		Set<String> roots = new HashSet<>();
+		for (ModuleLayout layout : layouts) {
+			if (layout.module().attachmentTargetId() != null) {
+				attachedModuleIds.add(layout.module().id().toString());
+			}
+		}
+
+		for (ModuleLayout layout : layouts) {
+			String moduleId = layout.module().id().toString();
+			if (!attachedModuleIds.contains(moduleId) && hasAttachedDescendant(moduleId, layouts)) {
+				roots.add(moduleId);
+			}
+		}
+		return roots;
+	}
+
+	private static boolean hasAttachedDescendant(String moduleId, List<ModuleLayout> layouts) {
+		for (ModuleLayout layout : layouts) {
+			if (moduleId.equals(layout.module().attachmentTargetId())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void renderResizeHandles(GuiGraphicsExtractor graphics, List<ModuleLayout> layouts) {
@@ -103,6 +143,16 @@ public final class HudEditorRenderer {
 						handleSize
 				);
 				graphics.fill(handle.x(), handle.y(), handle.right(), handle.bottom(), RESIZE_HANDLE_COLOR);
+			}
+		}
+	}
+
+	private void renderSnapGuide(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight) {
+		for (HudSnapGuide guide : dragController.snapGuides()) {
+			if (guide.axis() == HudSnapGuide.Axis.VERTICAL) {
+				graphics.fill(guide.coordinate(), 0, guide.coordinate() + 1, screenHeight, ATTACHMENT_ANCHOR_OUTLINE_COLOR);
+			} else {
+				graphics.fill(0, guide.coordinate(), screenWidth, guide.coordinate() + 1, ATTACHMENT_ANCHOR_OUTLINE_COLOR);
 			}
 		}
 	}
@@ -127,18 +177,23 @@ public final class HudEditorRenderer {
 		graphics.text(font, percent, textX, textY, 0xFFFFFFFF, true);
 	}
 
-	private static void drawOutline(GuiGraphicsExtractor graphics, HudRectangle rectangle, HudOutlineSegments segments) {
+	private static void drawOutline(
+			GuiGraphicsExtractor graphics,
+			HudRectangle rectangle,
+			HudOutlineSegments segments,
+			int color
+	) {
 		for (HudOutlineSegment segment : segments.top()) {
-			graphics.fill(segment.start(), rectangle.y() - 1, segment.end(), rectangle.y(), OUTLINE_COLOR);
+			graphics.fill(segment.start(), rectangle.y() - 1, segment.end(), rectangle.y(), color);
 		}
 		for (HudOutlineSegment segment : segments.right()) {
-			graphics.fill(rectangle.right(), segment.start(), rectangle.right() + 1, segment.end(), OUTLINE_COLOR);
+			graphics.fill(rectangle.right(), segment.start(), rectangle.right() + 1, segment.end(), color);
 		}
 		for (HudOutlineSegment segment : segments.bottom()) {
-			graphics.fill(segment.start(), rectangle.bottom(), segment.end(), rectangle.bottom() + 1, OUTLINE_COLOR);
+			graphics.fill(segment.start(), rectangle.bottom(), segment.end(), rectangle.bottom() + 1, color);
 		}
 		for (HudOutlineSegment segment : segments.left()) {
-			graphics.fill(rectangle.x() - 1, segment.start(), rectangle.x(), segment.end(), OUTLINE_COLOR);
+			graphics.fill(rectangle.x() - 1, segment.start(), rectangle.x(), segment.end(), color);
 		}
 	}
 

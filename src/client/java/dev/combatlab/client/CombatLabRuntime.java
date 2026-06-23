@@ -19,6 +19,7 @@ import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.CpsHud;
 import dev.combatlab.client.hud.FpsHud;
 import dev.combatlab.client.hud.HudModuleRegistry;
+import dev.combatlab.client.hud.KeystrokesHud;
 import dev.combatlab.client.hud.MovementStatusHud;
 import dev.combatlab.client.hud.PingHud;
 import dev.combatlab.client.hud.PotionEffectsHud;
@@ -101,6 +102,7 @@ public final class CombatLabRuntime {
 		hudModules.registerDescriptor(PingHud.descriptor());
 		hudModules.registerDescriptor(ArmorHud.descriptor());
 		hudModules.registerDescriptor(PotionEffectsHud.descriptor());
+		hudModules.registerDescriptor(KeystrokesHud.descriptor());
 		hudModules.freeze();
 
 		return new CombatLabRuntime(

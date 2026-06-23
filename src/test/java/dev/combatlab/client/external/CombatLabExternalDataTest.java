@@ -88,6 +88,7 @@ class CombatLabExternalDataTest {
 		assertEquals(12, snapshot.cps());
 		assertEquals(42, snapshot.ping());
 		assertEquals(0.75F, snapshot.attackStrength());
+		assertEquals(false, snapshot.input().forward());
 		assertTrue(snapshot.target().present());
 		assertEquals(targetId.toString(), snapshot.target().id());
 		assertTrue(snapshot.effects().isEmpty());

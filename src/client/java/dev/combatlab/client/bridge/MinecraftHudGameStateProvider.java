@@ -29,7 +29,7 @@ public final class MinecraftHudGameStateProvider {
 	public ClientGameState snapshot(Minecraft client, CombatState combatState, CpsTracker cpsTracker, long nowNanos) {
 		LocalPlayer player = client.player;
 		PlayerState playerState = playerState(client, player);
-		InputState inputState = new InputState(cpsTracker.currentCps(nowNanos));
+		InputState inputState = inputState(client, cpsTracker, nowNanos);
 		CombatSnapshot combatSnapshot = combatSnapshot(combatState);
 		int fps = client.getFps();
 		return new ClientGameState(
@@ -56,6 +56,21 @@ public final class MinecraftHudGameStateProvider {
 				player.isCrouching(),
 				player.isSprinting(),
 				client.options.toggleSprint().get() && client.options.keySprint.isDown()
+		);
+	}
+
+	private static InputState inputState(Minecraft client, CpsTracker cpsTracker, long nowNanos) {
+		return new InputState(
+				cpsTracker.currentCps(nowNanos),
+				client.options.keyUp.isDown(),
+				client.options.keyLeft.isDown(),
+				client.options.keyDown.isDown(),
+				client.options.keyRight.isDown(),
+				client.options.keyJump.isDown(),
+				client.options.keyShift.isDown(),
+				client.options.keySprint.isDown(),
+				client.options.keyAttack.isDown(),
+				client.options.keyUse.isDown()
 		);
 	}
 

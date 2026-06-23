@@ -17,21 +17,63 @@ public final class HudSnapper {
 			int screenWidth,
 			int screenHeight
 	) {
-		SnapResult nearby = snapNearby(moving, others, threshold, screenWidth, screenHeight);
+		return snapWithGuides(moving, others, threshold, screenWidth, screenHeight).position();
+	}
+
+	public static HudSnapResult snapWithGuides(
+			HudRectangle moving,
+			List<HudRectangle> others,
+			int threshold,
+			int screenWidth,
+			int screenHeight
+	) {
+		AxisSnapResult nearby = snapNearby(moving, others, threshold, screenWidth, screenHeight);
 		HudRectangle nearbyRectangle = new HudRectangle(
 				nearby.position().x(),
 				nearby.position().y(),
 				moving.width(),
 				moving.height()
 		);
-		return snapAligned(nearbyRectangle, others, threshold, !nearby.snappedX(), !nearby.snappedY());
+		HudPosition position = snapAligned(nearbyRectangle, others, threshold, !nearby.snappedX(), !nearby.snappedY());
+		HudRectangle snapped = new HudRectangle(position.x(), position.y(), moving.width(), moving.height());
+		return new HudSnapResult(
+				position,
+				guidesForAlignment(moving, snapped, others, threshold, screenWidth, screenHeight)
+		);
 	}
 
-	static SnapResult snapNearby(HudRectangle moving, List<HudRectangle> others, int threshold) {
+	public static HudPosition snapToGrid(HudRectangle moving, int gridSize, int screenWidth, int screenHeight) {
+		if (gridSize <= 1) {
+			return new HudPosition(moving.x(), moving.y());
+		}
+
+		int maxX = screenWidth >= moving.width() ? screenWidth - moving.width() : moving.x();
+		int maxY = screenHeight >= moving.height() ? screenHeight - moving.height() : moving.y();
+		return new HudPosition(
+				Math.clamp(nearestGridLine(moving.x(), gridSize), 0, Math.max(0, maxX)),
+				Math.clamp(nearestGridLine(moving.y(), gridSize), 0, Math.max(0, maxY))
+		);
+	}
+
+	public static List<HudSnapGuide> guidesForAlignment(
+			HudRectangle original,
+			HudRectangle snapped,
+			List<HudRectangle> others,
+			int threshold,
+			int screenWidth,
+			int screenHeight
+	) {
+		List<HudSnapGuide> guides = new java.util.ArrayList<>(2);
+		addScreenCenterGuides(guides, original, snapped, threshold, screenWidth, screenHeight);
+		addDistantModuleEdgeGuides(guides, original, snapped, others, threshold);
+		return List.copyOf(guides);
+	}
+
+	static AxisSnapResult snapNearby(HudRectangle moving, List<HudRectangle> others, int threshold) {
 		return snapNearby(moving, others, threshold, -1, -1);
 	}
 
-	private static SnapResult snapNearby(
+	private static AxisSnapResult snapNearby(
 			HudRectangle moving,
 			List<HudRectangle> others,
 			int threshold,
@@ -46,10 +88,7 @@ public final class HudSnapper {
 		}
 		for (HudRectangle other : others) {
 			if (rangesNear(moving.y(), moving.bottom(), other.y(), other.bottom(), threshold)) {
-				xSnap = xSnap.nearest(moving.x(), other.x());
-				xSnap = xSnap.nearest(moving.x(), other.right() - moving.width());
-				xSnap = xSnap.nearest(moving.x(), other.x() - moving.width());
-				xSnap = xSnap.nearest(moving.x(), other.right());
+				xSnap = xSnap.nearest(moving.x(), xGeometry(moving, other).edgeAlignedPositions());
 			}
 		}
 
@@ -62,14 +101,11 @@ public final class HudSnapper {
 		}
 		for (HudRectangle other : others) {
 			if (rangesNear(horizontal.x(), horizontal.right(), other.x(), other.right(), threshold)) {
-				ySnap = ySnap.nearest(moving.y(), other.y());
-				ySnap = ySnap.nearest(moving.y(), other.bottom() - moving.height());
-				ySnap = ySnap.nearest(moving.y(), other.y() - moving.height());
-				ySnap = ySnap.nearest(moving.y(), other.bottom());
+				ySnap = ySnap.nearest(moving.y(), yGeometry(moving, other).edgeAlignedPositions());
 			}
 		}
 
-		return new SnapResult(new HudPosition(xSnap.value(), ySnap.value()), xSnap.snapped(), ySnap.snapped());
+		return new AxisSnapResult(new HudPosition(xSnap.value(), ySnap.value()), xSnap.snapped(), ySnap.snapped());
 	}
 
 	static HudPosition snapAligned(
@@ -84,13 +120,11 @@ public final class HudSnapper {
 
 		for (HudRectangle other : others) {
 			if (allowXAlignment) {
-				xSnap = xSnap.nearest(moving.x(), other.x());
-				xSnap = xSnap.nearest(moving.x(), other.right() - moving.width());
+				xSnap = xSnap.nearest(moving.x(), xGeometry(moving, other).edgeAlignedPositions());
 				xSnap = xSnap.nearest(moving.x(), other.x() + (other.width() - moving.width()) / 2);
 			}
 			if (allowYAlignment) {
-				ySnap = ySnap.nearest(moving.y(), other.y());
-				ySnap = ySnap.nearest(moving.y(), other.bottom() - moving.height());
+				ySnap = ySnap.nearest(moving.y(), yGeometry(moving, other).edgeAlignedPositions());
 				ySnap = ySnap.nearest(moving.y(), other.y() + (other.height() - moving.height()) / 2);
 			}
 		}
@@ -102,7 +136,79 @@ public final class HudSnapper {
 		return firstEnd + threshold >= secondStart && secondEnd + threshold >= firstStart;
 	}
 
-	record SnapResult(HudPosition position, boolean snappedX, boolean snappedY) {
+	private static int nearestGridLine(int value, int gridSize) {
+		return Math.round((float) value / gridSize) * gridSize;
+	}
+
+	private static void addScreenCenterGuides(
+			List<HudSnapGuide> guides,
+			HudRectangle original,
+			HudRectangle snapped,
+			int threshold,
+			int screenWidth,
+			int screenHeight
+	) {
+		if (screenWidth >= snapped.width()) {
+			int centeredX = (screenWidth - snapped.width()) / 2;
+			if (snapped.x() == centeredX && Math.abs(original.x() - centeredX) <= threshold) {
+				guides.add(new HudSnapGuide(HudSnapGuide.Axis.VERTICAL, screenWidth / 2));
+			}
+		}
+		if (screenHeight >= snapped.height()) {
+			int centeredY = (screenHeight - snapped.height()) / 2;
+			if (snapped.y() == centeredY && Math.abs(original.y() - centeredY) <= threshold) {
+				guides.add(new HudSnapGuide(HudSnapGuide.Axis.HORIZONTAL, screenHeight / 2));
+			}
+		}
+	}
+
+	private static void addDistantModuleEdgeGuides(
+			List<HudSnapGuide> guides,
+			HudRectangle original,
+			HudRectangle snapped,
+			List<HudRectangle> others,
+			int threshold
+	) {
+		for (HudRectangle other : others) {
+			if (!rangesNear(snapped.y(), snapped.bottom(), other.y(), other.bottom(), threshold)) {
+				addEdgeGuides(guides, HudSnapGuide.Axis.VERTICAL, xGeometry(snapped, other), original.x(), snapped.x(), threshold);
+			}
+			if (!rangesNear(snapped.x(), snapped.right(), other.x(), other.right(), threshold)) {
+				addEdgeGuides(guides, HudSnapGuide.Axis.HORIZONTAL, yGeometry(snapped, other), original.y(), snapped.y(), threshold);
+			}
+		}
+	}
+
+	private static void addEdgeGuides(
+			List<HudSnapGuide> guides,
+			HudSnapGuide.Axis axis,
+			AxisGeometry geometry,
+			int originalPosition,
+			int snappedPosition,
+			int threshold
+	) {
+		for (EdgeSnapTarget target : geometry.edgeTargets()) {
+			if (snappedPosition == target.position() && Math.abs(originalPosition - target.position()) <= threshold) {
+				addGuide(guides, new HudSnapGuide(axis, target.guideCoordinate()));
+			}
+		}
+	}
+
+	private static void addGuide(List<HudSnapGuide> guides, HudSnapGuide guide) {
+		if (!guides.contains(guide)) {
+			guides.add(guide);
+		}
+	}
+
+	private static AxisGeometry xGeometry(HudRectangle moving, HudRectangle other) {
+		return new AxisGeometry(moving.width(), other.x(), other.right());
+	}
+
+	private static AxisGeometry yGeometry(HudRectangle moving, HudRectangle other) {
+		return new AxisGeometry(moving.height(), other.y(), other.bottom());
+	}
+
+	record AxisSnapResult(HudPosition position, boolean snappedX, boolean snappedY) {
 	}
 
 	private record AxisSnap(int value, int distance, int threshold) {
@@ -117,8 +223,39 @@ public final class HudSnapper {
 					: this;
 		}
 
+		AxisSnap nearest(int original, int[] candidates) {
+			AxisSnap nearest = this;
+			for (int candidate : candidates) {
+				nearest = nearest.nearest(original, candidate);
+			}
+			return nearest;
+		}
+
 		boolean snapped() {
 			return distance <= threshold;
 		}
+	}
+
+	private record AxisGeometry(int movingSize, int otherStart, int otherEnd) {
+		int[] edgeAlignedPositions() {
+			return new int[] {
+					otherStart,
+					otherEnd - movingSize,
+					otherEnd,
+					otherStart - movingSize
+			};
+		}
+
+		EdgeSnapTarget[] edgeTargets() {
+			return new EdgeSnapTarget[] {
+					new EdgeSnapTarget(otherStart, otherStart),
+					new EdgeSnapTarget(otherEnd - movingSize, otherEnd),
+					new EdgeSnapTarget(otherEnd, otherEnd),
+					new EdgeSnapTarget(otherStart - movingSize, otherStart)
+			};
+		}
+	}
+
+	private record EdgeSnapTarget(int position, int guideCoordinate) {
 	}
 }

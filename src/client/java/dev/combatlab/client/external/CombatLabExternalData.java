@@ -44,6 +44,17 @@ public final class CombatLabExternalData {
 				state.input().cps(),
 				state.combat().ping(),
 				state.combat().attackStrength(),
+				new ExternalInputSnapshot(
+						state.input().forward(),
+						state.input().left(),
+						state.input().back(),
+						state.input().right(),
+						state.input().jump(),
+						state.input().sneak(),
+						state.input().sprint(),
+						state.input().attack(),
+						state.input().use()
+				),
 				target(state.combat().target()),
 				state.player().effects().active().stream()
 						.map(CombatLabExternalData::effect)
