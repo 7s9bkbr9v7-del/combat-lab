@@ -97,9 +97,7 @@ public final class HudEditorScreen extends Screen {
 
 	@Override
 	public void onClose() {
-		if (minecraft != null) {
-			minecraft.gui.setScreen(null);
-		}
+		ScreenNavigator.open(minecraft, null);
 	}
 
 	@Override

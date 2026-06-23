@@ -11,13 +11,11 @@ import java.time.Duration;
  */
 public final class OptionTooltip {
 	private static final Duration HOVER_DELAY = Duration.ofMillis(350);
-	private static final String INDICATOR = " ⓘ";
 
 	private OptionTooltip() {
 	}
 
 	public static <T extends AbstractWidget> T describe(T widget, Component description) {
-		widget.setMessage(widget.getMessage().copy().append(INDICATOR));
 		widget.setTooltip(Tooltip.create(description));
 		widget.setTooltipDelay(HOVER_DELAY);
 		return widget;

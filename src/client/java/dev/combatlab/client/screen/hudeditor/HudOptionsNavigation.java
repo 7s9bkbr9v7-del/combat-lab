@@ -4,6 +4,7 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.screen.CombatLabOptionsScreen;
+import dev.combatlab.client.screen.ScreenNavigator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -33,7 +34,7 @@ public final class HudOptionsNavigation {
 				Component.literal("HUD Options"),
 				button -> {
 					debug.info("Opening HUD options screen");
-					minecraft.gui.setScreen(new CombatLabOptionsScreen(editor, options, modules, debug));
+					ScreenNavigator.open(minecraft, new CombatLabOptionsScreen(editor, options, modules, debug));
 				}
 		).bounds(screenWidth / 2 - 75, screenHeight / 2 - 10, 150, 20).build();
 

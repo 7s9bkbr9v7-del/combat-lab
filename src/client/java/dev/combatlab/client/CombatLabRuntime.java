@@ -19,6 +19,7 @@ import dev.combatlab.client.model.AttackEvent;
 import dev.combatlab.client.model.AttackHistory;
 import dev.combatlab.client.model.CombatState;
 import dev.combatlab.client.screen.HudEditorScreen;
+import dev.combatlab.client.screen.ScreenNavigator;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -99,7 +100,7 @@ public final class CombatLabRuntime {
 		debugTelemetry.update(combatState, options.debugLoggingEnabled(), debug);
 		while (openOptions.consumeClick()) {
 			debug.info("Opening HUD editor");
-			client.gui.setScreen(new HudEditorScreen(options, hudModules, debug));
+			ScreenNavigator.open(client, new HudEditorScreen(options, hudModules, debug));
 		}
 	}
 

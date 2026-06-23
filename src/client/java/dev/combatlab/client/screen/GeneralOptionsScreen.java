@@ -86,14 +86,11 @@ public final class GeneralOptionsScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
-		OptionHelpHint.render(graphics, font, width, height);
 	}
 
 	@Override
 	public void onClose() {
-		if (minecraft != null) {
-			minecraft.gui.setScreen(parent);
-		}
+		ScreenNavigator.open(minecraft, parent);
 	}
 
 	@Override

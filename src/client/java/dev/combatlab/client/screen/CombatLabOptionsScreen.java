@@ -29,14 +29,14 @@ public final class CombatLabOptionsScreen extends Screen {
 		int top = height / 2 - 40;
 		addRenderableWidget(OptionTooltip.describe(Button.builder(
 				Component.literal("General"),
-				button -> minecraft.gui.setScreen(new GeneralOptionsScreen(this, options, debug))
+				button -> ScreenNavigator.open(minecraft, new GeneralOptionsScreen(this, options, debug))
 		).bounds(left, top, 200, 20).build(), Component.literal(
 				"Configure visual, camera, logging, and notification options."
 		)));
 
 		addRenderableWidget(OptionTooltip.describe(Button.builder(
 				Component.literal("HUD"),
-				button -> minecraft.gui.setScreen(new HudOptionsScreen(this, modules))
+				button -> ScreenNavigator.open(minecraft, new HudOptionsScreen(this, modules))
 		).bounds(left, top + 30, 200, 20).build(), Component.literal(
 				"Choose which HUD modules are visible."
 		)));
@@ -50,14 +50,11 @@ public final class CombatLabOptionsScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
-		OptionHelpHint.render(graphics, font, width, height);
 	}
 
 	@Override
 	public void onClose() {
-		if (minecraft != null) {
-			minecraft.gui.setScreen(parent);
-		}
+		ScreenNavigator.open(minecraft, parent);
 	}
 
 	@Override
