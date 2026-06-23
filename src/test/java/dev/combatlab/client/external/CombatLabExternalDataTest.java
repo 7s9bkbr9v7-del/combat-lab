@@ -90,8 +90,10 @@ class CombatLabExternalDataTest {
 		assertEquals(0.75F, snapshot.attackStrength());
 		assertTrue(snapshot.target().present());
 		assertEquals(targetId.toString(), snapshot.target().id());
+		assertTrue(snapshot.effects().isEmpty());
 		assertTrue(encoded.contains("\"schemaVersion\""));
 		assertTrue(encoded.contains("\"target\""));
+		assertTrue(encoded.contains("\"effects\""));
 	}
 
 	private HudModuleRegistry registry() {

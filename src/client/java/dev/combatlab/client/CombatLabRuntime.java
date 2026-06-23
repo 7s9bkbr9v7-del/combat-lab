@@ -21,6 +21,7 @@ import dev.combatlab.client.hud.FpsHud;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.hud.MovementStatusHud;
 import dev.combatlab.client.hud.PingHud;
+import dev.combatlab.client.hud.PotionEffectsHud;
 import dev.combatlab.client.input.CpsTracker;
 import dev.combatlab.client.model.AttackEvent;
 import dev.combatlab.client.model.AttackHistory;
@@ -99,6 +100,7 @@ public final class CombatLabRuntime {
 		hudModules.registerDescriptor(MovementStatusHud.descriptor());
 		hudModules.registerDescriptor(PingHud.descriptor());
 		hudModules.registerDescriptor(ArmorHud.descriptor());
+		hudModules.registerDescriptor(PotionEffectsHud.descriptor());
 		hudModules.freeze();
 
 		return new CombatLabRuntime(

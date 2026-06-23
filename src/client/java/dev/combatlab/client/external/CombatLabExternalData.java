@@ -5,6 +5,7 @@ import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.hud.HudModuleDescriptor;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.state.ClientGameState;
+import dev.combatlab.client.state.PlayerEffectTimer;
 import dev.combatlab.client.state.TargetState;
 
 import java.util.List;
@@ -43,7 +44,10 @@ public final class CombatLabExternalData {
 				state.input().cps(),
 				state.combat().ping(),
 				state.combat().attackStrength(),
-				target(state.combat().target())
+				target(state.combat().target()),
+				state.player().effects().active().stream()
+						.map(CombatLabExternalData::effect)
+						.toList()
 		);
 	}
 
@@ -86,6 +90,18 @@ public final class CombatLabExternalData {
 				target.id() == null ? null : target.id().toString(),
 				target.name(),
 				target.distance()
+		);
+	}
+
+	private static ExternalEffectTimer effect(PlayerEffectTimer effect) {
+		return new ExternalEffectTimer(
+				effect.id(),
+				effect.displayName(),
+				effect.amplifier(),
+				effect.durationTicks(),
+				effect.infinite(),
+				effect.ambient(),
+				effect.color()
 		);
 	}
 }

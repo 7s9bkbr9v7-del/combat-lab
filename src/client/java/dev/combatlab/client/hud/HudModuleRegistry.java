@@ -4,6 +4,7 @@ import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.feature.VanillaHudFeatureHooks;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -60,6 +61,7 @@ public final class HudModuleRegistry implements HudElement {
 				descriptor.definition().defaultX(),
 				descriptor.definition().defaultY()
 		));
+		VanillaHudFeatureHooks.updateHudModuleState(id, enabled(id));
 		if (enabled(id) || descriptor.loadWhenDisabled()) {
 			load(id);
 		}
@@ -93,6 +95,7 @@ public final class HudModuleRegistry implements HudElement {
 		}
 
 		settings.setEnabled(enabled);
+		VanillaHudFeatureHooks.updateHudModuleState(id, enabled);
 		HudModuleDescriptor descriptor = descriptorsById.get(id);
 		if (enabled) {
 			load(id);

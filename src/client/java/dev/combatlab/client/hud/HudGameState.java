@@ -4,6 +4,7 @@ import dev.combatlab.client.state.CombatSnapshot;
 import dev.combatlab.client.state.InputState;
 import dev.combatlab.client.state.MovementState;
 import dev.combatlab.client.state.PlayerArmor;
+import dev.combatlab.client.state.PlayerEffects;
 import dev.combatlab.client.state.PlayerState;
 
 public record HudGameState(
@@ -11,7 +12,8 @@ public record HudGameState(
 		int cps,
 		int ping,
 		MovementState movement,
-		PlayerArmor armor
+		PlayerArmor armor,
+		PlayerEffects effects
 ) {
 	public static HudGameState empty() {
 		return from(0, PlayerState.absent(), InputState.empty(), CombatSnapshot.empty());
@@ -23,7 +25,8 @@ public record HudGameState(
 				input.cps(),
 				combat.ping(),
 				player.movement(),
-				player.armor()
+				player.armor(),
+				player.effects()
 		);
 	}
 
@@ -33,7 +36,8 @@ public record HudGameState(
 				cps,
 				ping,
 				movement,
-				PlayerArmor.editorPreview(armor)
+				PlayerArmor.editorPreview(armor),
+				PlayerEffects.editorPreview(effects)
 		);
 	}
 }
