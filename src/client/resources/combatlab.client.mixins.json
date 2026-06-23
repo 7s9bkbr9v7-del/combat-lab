@@ -4,7 +4,9 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "CameraMixin",
+    "GameRendererMixin",
     "LightmapRenderStateExtractorMixin",
+    "MouseHandlerMixin",
     "ToastManagerMixin"
   ],
   "injectors": {

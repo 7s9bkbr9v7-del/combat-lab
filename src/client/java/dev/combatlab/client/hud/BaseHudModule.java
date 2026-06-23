@@ -114,7 +114,7 @@ public abstract class BaseHudModule implements HudModule {
 
 	@Override
 	public final void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds) {
-		renderModule(graphics, new HudRenderContext(Minecraft.getInstance(), font, bounds));
+		renderModule(graphics, new HudRenderContext(Minecraft.getInstance(), font, bounds, true));
 	}
 
 	protected final HudModuleSettings settings() {

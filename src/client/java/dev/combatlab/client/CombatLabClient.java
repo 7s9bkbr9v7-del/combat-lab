@@ -21,7 +21,19 @@ public final class CombatLabClient implements ClientModInitializer {
 				InputConstants.KEY_RSHIFT,
 				KeyMapping.Category.MISC
 		));
-		CombatLabRuntime runtime = CombatLabRuntime.create(openOptions);
+		KeyMapping zoom = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.combatlab.zoom",
+				InputConstants.Type.KEYSYM,
+				InputConstants.KEY_C,
+				KeyMapping.Category.MISC
+		));
+		KeyMapping freelook = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.combatlab.freelook",
+				InputConstants.Type.KEYSYM,
+				InputConstants.KEY_LALT,
+				KeyMapping.Category.MISC
+		));
+		CombatLabRuntime runtime = CombatLabRuntime.create(openOptions, zoom, freelook);
 
 		ClientTickEvents.END_CLIENT_TICK.register(runtime::tick);
 		ClientPreAttackCallback.EVENT.register(runtime::onPreAttack);

@@ -7,7 +7,9 @@ import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.debug.DebugTelemetry;
 import dev.combatlab.client.feature.AchievementToastController;
 import dev.combatlab.client.feature.DynamicFovController;
+import dev.combatlab.client.feature.FreelookController;
 import dev.combatlab.client.feature.FullbrightController;
+import dev.combatlab.client.feature.ZoomController;
 import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.CpsHud;
 import dev.combatlab.client.hud.FpsHud;
@@ -31,6 +33,8 @@ public final class CombatLabRuntime {
 	private final CombatLabOptions options;
 	private final DebugLogger debug;
 	private final KeyMapping openOptions;
+	private final KeyMapping zoom;
+	private final KeyMapping freelook;
 	private final CombatState combatState;
 	private final AttackHistory attackHistory;
 	private final MinecraftCombatBridge bridge;
@@ -43,6 +47,8 @@ public final class CombatLabRuntime {
 			CombatLabOptions options,
 			DebugLogger debug,
 			KeyMapping openOptions,
+			KeyMapping zoom,
+			KeyMapping freelook,
 			CombatState combatState,
 			AttackHistory attackHistory,
 			MinecraftCombatBridge bridge,
@@ -54,6 +60,8 @@ public final class CombatLabRuntime {
 		this.options = options;
 		this.debug = debug;
 		this.openOptions = openOptions;
+		this.zoom = zoom;
+		this.freelook = freelook;
 		this.combatState = combatState;
 		this.attackHistory = attackHistory;
 		this.bridge = bridge;
@@ -63,7 +71,7 @@ public final class CombatLabRuntime {
 		this.hudModules = hudModules;
 	}
 
-	public static CombatLabRuntime create(KeyMapping openOptions) {
+	public static CombatLabRuntime create(KeyMapping openOptions, KeyMapping zoom, KeyMapping freelook) {
 		CombatLabOptions options = CombatLabOptions.load();
 		FullbrightController.setEnabled(options.fullbrightEnabled());
 		AchievementToastController.setDisabled(options.achievementToastsDisabled());
@@ -84,6 +92,8 @@ public final class CombatLabRuntime {
 				options,
 				debug,
 				openOptions,
+				zoom,
+				freelook,
 				combatState,
 				new AttackHistory(64),
 				new MinecraftCombatBridge(),
@@ -96,6 +106,8 @@ public final class CombatLabRuntime {
 
 	public void tick(Minecraft client) {
 		bridge.update(client, combatState);
+		ZoomController.tick(client, zoom);
+		FreelookController.tick(client, freelook);
 		hudModules.tick();
 		debugTelemetry.update(combatState, options.debugLoggingEnabled(), debug);
 		while (openOptions.consumeClick()) {
