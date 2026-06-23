@@ -6,6 +6,10 @@ import dev.combatlab.client.bridge.MinecraftHudGameStateProvider;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.debug.DebugTelemetry;
+import dev.combatlab.client.event.AttackRecordedEvent;
+import dev.combatlab.client.event.CombatClickEvent;
+import dev.combatlab.client.event.CombatEventBus;
+import dev.combatlab.client.event.TargetChangedEvent;
 import dev.combatlab.client.feature.AchievementToastController;
 import dev.combatlab.client.feature.DynamicFovController;
 import dev.combatlab.client.feature.FreelookController;
@@ -37,11 +41,11 @@ public final class CombatLabRuntime {
 	private final KeyMapping zoom;
 	private final KeyMapping freelook;
 	private final CombatState combatState;
+	private final CombatEventBus combatEvents;
 	private final AttackHistory attackHistory;
 	private final MinecraftCombatBridge bridge;
 	private final MinecraftHudGameStateProvider hudGameStateProvider;
 	private final MinecraftAttackRecorder attackRecorder;
-	private final DebugTelemetry debugTelemetry;
 	private final CpsTracker cpsTracker;
 	private final HudModuleRegistry hudModules;
 
@@ -52,11 +56,11 @@ public final class CombatLabRuntime {
 			KeyMapping zoom,
 			KeyMapping freelook,
 			CombatState combatState,
+			CombatEventBus combatEvents,
 			AttackHistory attackHistory,
 			MinecraftCombatBridge bridge,
 			MinecraftHudGameStateProvider hudGameStateProvider,
 			MinecraftAttackRecorder attackRecorder,
-			DebugTelemetry debugTelemetry,
 			CpsTracker cpsTracker,
 			HudModuleRegistry hudModules
 	) {
@@ -66,11 +70,11 @@ public final class CombatLabRuntime {
 		this.zoom = zoom;
 		this.freelook = freelook;
 		this.combatState = combatState;
+		this.combatEvents = combatEvents;
 		this.attackHistory = attackHistory;
 		this.bridge = bridge;
 		this.hudGameStateProvider = hudGameStateProvider;
 		this.attackRecorder = attackRecorder;
-		this.debugTelemetry = debugTelemetry;
 		this.cpsTracker = cpsTracker;
 		this.hudModules = hudModules;
 	}
@@ -84,6 +88,11 @@ public final class CombatLabRuntime {
 		DebugLogger debug = new DebugLogger(options::debugLoggingEnabled);
 		CpsTracker cpsTracker = new CpsTracker();
 		CombatState combatState = new CombatState();
+		CombatEventBus combatEvents = new CombatEventBus();
+		combatEvents.subscribe(CombatClickEvent.class, event -> cpsTracker.recordClicks(event.clickCount(), event.capturedAtNanos()));
+		DebugTelemetry debugTelemetry = new DebugTelemetry();
+		combatEvents.subscribe(TargetChangedEvent.class, event -> debugTelemetry.onTargetChanged(event, options.debugLoggingEnabled(), debug));
+		combatEvents.subscribe(AttackRecordedEvent.class, event -> debugTelemetry.onAttackRecorded(event, options.debugLoggingEnabled(), debug));
 		HudModuleRegistry hudModules = new HudModuleRegistry();
 		hudModules.register(new FpsHud(options, debug));
 		hudModules.register(new CpsHud(options, debug));
@@ -99,23 +108,25 @@ public final class CombatLabRuntime {
 				zoom,
 				freelook,
 				combatState,
+				combatEvents,
 				new AttackHistory(64),
 				new MinecraftCombatBridge(),
 				new MinecraftHudGameStateProvider(),
 				new MinecraftAttackRecorder(),
-				new DebugTelemetry(),
 				cpsTracker,
 				hudModules
 		);
 	}
 
 	public void tick(Minecraft client) {
+		String previousTargetName = combatState.targetName();
+		java.util.UUID previousTargetId = combatState.targetId();
 		bridge.update(client, combatState);
 		long nowNanos = System.nanoTime();
+		publishTargetChange(previousTargetId, previousTargetName, nowNanos);
 		ZoomController.tick(client, zoom);
 		FreelookController.tick(client, freelook);
 		hudModules.tick(hudGameStateProvider.snapshot(client, combatState, cpsTracker, nowNanos));
-		debugTelemetry.update(combatState, options.debugLoggingEnabled(), debug);
 		while (openOptions.consumeClick()) {
 			debug.info("Opening HUD editor");
 			ScreenNavigator.open(client, new HudEditorScreen(options, hudModules, debug));
@@ -127,20 +138,25 @@ public final class CombatLabRuntime {
 			return false;
 		}
 
-		cpsTracker.recordClicks(clickCount, System.nanoTime());
+		long nowNanos = System.nanoTime();
+		combatEvents.publish(new CombatClickEvent(clickCount, nowNanos));
 		AttackEvent event = attackRecorder.record(client, player, combatState, attackHistory);
-		if (debug.isEnabled()) {
-			debug.info(
-					"Attack #{}: target={}, distance={}, strength={}%, ping={}ms, tick={}",
-					event.sequence(),
-					event.hasTarget() ? event.targetName() : "miss",
-					event.hasTarget() ? String.format("%.2f", event.targetDistance()) : "n/a",
-					Math.round(event.attackStrength() * 100.0F),
-					event.ping(),
-					event.gameTick()
-			);
-		}
+		combatEvents.publish(new AttackRecordedEvent(event));
 		return false;
+	}
+
+	private void publishTargetChange(java.util.UUID previousTargetId, String previousTargetName, long nowNanos) {
+		if (java.util.Objects.equals(previousTargetId, combatState.targetId())) {
+			return;
+		}
+		combatEvents.publish(new TargetChangedEvent(
+				previousTargetId,
+				previousTargetName,
+				combatState.targetId(),
+				combatState.targetName(),
+				combatState.targetDistance(),
+				nowNanos
+		));
 	}
 
 	public int hudModuleCount() {

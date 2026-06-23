@@ -1,37 +1,36 @@
 package dev.combatlab.client.debug;
 
-import dev.combatlab.client.model.CombatState;
-
-import java.util.Objects;
+import dev.combatlab.client.event.AttackRecordedEvent;
+import dev.combatlab.client.event.TargetChangedEvent;
 
 /**
  * Emits state transitions only. Rendering and tick loops deliberately stay quiet.
  */
 public final class DebugTelemetry {
-	private String previousTarget;
-	private boolean previouslyEnabled;
-
-	public void update(CombatState state, boolean enabled, DebugLogger debug) {
+	public void onTargetChanged(TargetChangedEvent event, boolean enabled, DebugLogger debug) {
 		if (!enabled) {
-			previousTarget = null;
-			previouslyEnabled = false;
 			return;
 		}
+		if (!event.hasTarget()) {
+			debug.info("Crosshair target cleared (was {})", event.previousTargetName());
+		} else {
+			debug.info("Crosshair target: {} at {} blocks", event.targetName(), String.format("%.2f", event.targetDistance()));
+		}
+	}
 
-		String target = state.targetName();
-		if (!previouslyEnabled) {
-			previousTarget = target;
-			previouslyEnabled = true;
+	public void onAttackRecorded(AttackRecordedEvent event, boolean enabled, DebugLogger debug) {
+		if (!enabled) {
 			return;
 		}
-
-		if (!Objects.equals(previousTarget, target)) {
-			if (target == null) {
-				debug.info("Crosshair target cleared (was {})", previousTarget);
-			} else {
-				debug.info("Crosshair target: {} at {} blocks", target, String.format("%.2f", state.targetDistance()));
-			}
-			previousTarget = target;
-		}
+		var attack = event.attack();
+		debug.info(
+				"Attack #{}: target={}, distance={}, strength={}%, ping={}ms, tick={}",
+				attack.sequence(),
+				attack.hasTarget() ? attack.targetName() : "miss",
+				attack.hasTarget() ? String.format("%.2f", attack.targetDistance()) : "n/a",
+				Math.round(attack.attackStrength() * 100.0F),
+				attack.ping(),
+				attack.gameTick()
+		);
 	}
 }
