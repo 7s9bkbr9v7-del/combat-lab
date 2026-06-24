@@ -18,6 +18,7 @@ import dev.combatlab.client.feature.PauseMenuFeatureHooks;
 import dev.combatlab.client.feature.ZoomController;
 import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.CpsHud;
+import dev.combatlab.client.hud.DirectionHud;
 import dev.combatlab.client.hud.FpsHud;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.hud.KeystrokesHud;
@@ -106,6 +107,7 @@ public final class CombatLabRuntime {
 		hudModules.registerDescriptor(ArmorHud.descriptor());
 		hudModules.registerDescriptor(PotionEffectsHud.descriptor());
 		hudModules.registerDescriptor(KeystrokesHud.descriptor());
+		hudModules.registerDescriptor(DirectionHud.descriptor());
 		hudModules.freeze();
 
 		instance = new CombatLabRuntime(

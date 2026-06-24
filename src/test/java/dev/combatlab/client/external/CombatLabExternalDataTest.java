@@ -211,6 +211,8 @@ class CombatLabExternalDataTest {
 				GuiGraphicsExtractor graphics,
 				Font font,
 				HudRectangle bounds,
+				int screenWidth,
+				int screenHeight,
 				ClientGameState gameState
 		) {
 		}

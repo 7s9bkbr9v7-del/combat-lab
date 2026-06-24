@@ -6,6 +6,7 @@ import dev.combatlab.client.model.CombatState;
 import dev.combatlab.client.state.ArmorSlot;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
+import dev.combatlab.client.state.DirectionState;
 import dev.combatlab.client.state.InputState;
 import dev.combatlab.client.state.MovementState;
 import dev.combatlab.client.state.PlayerArmor;
@@ -45,7 +46,14 @@ public final class MinecraftHudGameStateProvider {
 		if (player == null) {
 			return PlayerState.absent();
 		}
-		return new PlayerState(true, movement(client, player), armor(player), effects(player));
+		return new PlayerState(true, direction(player), movement(client, player), armor(player), effects(player));
+	}
+
+	private static DirectionState direction(LocalPlayer player) {
+		if (player == null) {
+			return DirectionState.absent();
+		}
+		return DirectionState.of(180.0F - player.getYRot());
 	}
 
 	private static MovementState movement(Minecraft client, LocalPlayer player) {

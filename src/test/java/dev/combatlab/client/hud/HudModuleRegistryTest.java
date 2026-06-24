@@ -179,7 +179,14 @@ class HudModuleRegistryTest {
 		}
 
 		@Override
-		public void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds, ClientGameState gameState) {
+		public void renderEditorPreview(
+				GuiGraphicsExtractor graphics,
+				Font font,
+				HudRectangle bounds,
+				int screenWidth,
+				int screenHeight,
+				ClientGameState gameState
+		) {
 		}
 
 		@Override

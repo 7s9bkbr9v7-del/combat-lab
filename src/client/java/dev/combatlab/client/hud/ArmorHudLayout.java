@@ -24,7 +24,6 @@ enum ArmorHudLayout {
 			ArmorSlot.FEET
 	));
 
-	private static final double EDGE_EPSILON = 1.0E-6;
 	private final int columns;
 	private final int rows;
 	private final List<ArmorSlot> slots;
@@ -44,15 +43,14 @@ enum ArmorHudLayout {
 			double normalizedY,
 			ArmorHudLayout floatingLayout
 	) {
-		boolean touchesHorizontalEdge = isEdge(normalizedX);
-		boolean touchesVerticalEdge = isEdge(normalizedY);
-		if (touchesHorizontalEdge && touchesVerticalEdge) {
+		HudEdgeContact edgeContact = HudEdgeContact.fromNormalizedPosition(normalizedX, normalizedY);
+		if (edgeContact.corner()) {
 			return GRID;
 		}
-		if (touchesHorizontalEdge) {
+		if (edgeContact.sideEdge()) {
 			return VERTICAL;
 		}
-		if (touchesVerticalEdge) {
+		if (edgeContact.topOrBottomEdge()) {
 			return HORIZONTAL;
 		}
 		return floatingLayout;
@@ -81,7 +79,4 @@ enum ArmorHudLayout {
 		return slots;
 	}
 
-	private static boolean isEdge(double normalizedPosition) {
-		return normalizedPosition <= EDGE_EPSILON || normalizedPosition >= 1.0 - EDGE_EPSILON;
-	}
 }

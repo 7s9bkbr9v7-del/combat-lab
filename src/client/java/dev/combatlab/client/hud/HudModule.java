@@ -41,7 +41,14 @@ public interface HudModule {
 
 	void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context);
 
-	void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds, ClientGameState gameState);
+	void renderEditorPreview(
+			GuiGraphicsExtractor graphics,
+			Font font,
+			HudRectangle bounds,
+			int screenWidth,
+			int screenHeight,
+			ClientGameState gameState
+	);
 
 	default void tick(ClientGameState gameState) {
 	}

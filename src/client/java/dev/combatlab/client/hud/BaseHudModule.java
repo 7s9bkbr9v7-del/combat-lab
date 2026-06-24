@@ -113,8 +113,22 @@ public abstract class BaseHudModule implements HudModule {
 	}
 
 	@Override
-	public final void renderEditorPreview(GuiGraphicsExtractor graphics, Font font, HudRectangle bounds, ClientGameState gameState) {
-		renderModule(graphics, new HudRenderContext(font, bounds, true, gameState.withHud(gameState.hud().forEditorPreview())));
+	public final void renderEditorPreview(
+			GuiGraphicsExtractor graphics,
+			Font font,
+			HudRectangle bounds,
+			int screenWidth,
+			int screenHeight,
+			ClientGameState gameState
+	) {
+		renderModule(graphics, new HudRenderContext(
+				font,
+				bounds,
+				screenWidth,
+				screenHeight,
+				true,
+				gameState.withHud(gameState.hud().forEditorPreview())
+		));
 	}
 
 	protected final HudModuleSettings settings() {

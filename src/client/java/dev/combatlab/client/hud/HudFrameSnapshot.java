@@ -38,7 +38,7 @@ final class HudFrameSnapshot {
 
 		private void capture(ClientGameState gameState, Font font, int screenWidth, int screenHeight) {
 			context = module.enabled()
-					? new HudRenderContext(font, module.bounds(screenWidth, screenHeight), gameState)
+					? new HudRenderContext(font, module.bounds(screenWidth, screenHeight), screenWidth, screenHeight, gameState)
 					: null;
 		}
 

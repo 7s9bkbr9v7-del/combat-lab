@@ -69,7 +69,14 @@ public final class HudEditorRenderer {
 
 		renderSnapGuide(graphics, screenWidth, screenHeight);
 		for (ModuleLayout layout : layouts) {
-			layout.module().renderEditorPreview(graphics, font, layout.bounds(), modules.gameState());
+			layout.module().renderEditorPreview(
+					graphics,
+					font,
+					layout.bounds(),
+					screenWidth,
+					screenHeight,
+					modules.gameState()
+			);
 		}
 		renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
 		renderResizeHandles(graphics, layouts);
