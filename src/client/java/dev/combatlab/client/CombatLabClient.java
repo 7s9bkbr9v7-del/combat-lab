@@ -1,9 +1,11 @@
 package dev.combatlab.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.combatlab.client.feature.VanillaHudFeatureHooks;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.minecraft.client.KeyMapping;
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ public final class CombatLabClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		VanillaHudFeatureHooks.installStatusEffectsHudSuppression();
 		KeyMapping openOptions = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.combatlab.open_options",
 				InputConstants.Type.KEYSYM,
@@ -37,6 +40,7 @@ public final class CombatLabClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(runtime::tick);
 		ClientPreAttackCallback.EVENT.register(runtime::onPreAttack);
+		ScreenEvents.AFTER_INIT.register(runtime::afterScreenInit);
 		LOGGER.info("Combat Lab initialized with {} HUD module(s)", runtime.hudModuleCount());
 	}
 }

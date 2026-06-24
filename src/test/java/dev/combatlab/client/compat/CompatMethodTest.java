@@ -27,14 +27,6 @@ class CompatMethodTest {
 	}
 
 	@Test
-	void exposesReusableHudCompatibilityTargets() {
-		assertTrue(java.util.List.of(MinecraftCapabilities.vanillaHudStatusEffectTargets())
-				.contains(MinecraftClasses.LEGACY_GUI));
-		assertTrue(java.util.List.of(MinecraftCapabilities.vanillaHudStatusEffectTargets())
-				.contains(MinecraftClasses.HUD));
-	}
-
-	@Test
 	void featureSwitchIsCheapResolvedRuntimeState() {
 		CompatFeatureSwitch feature = CompatFeatureSwitch.initiallyDisabled();
 

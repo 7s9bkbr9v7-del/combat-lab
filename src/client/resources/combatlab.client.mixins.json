@@ -7,8 +7,7 @@
     "GameRendererMixin",
     "LightmapRenderStateExtractorMixin",
     "MouseHandlerMixin",
-    "ToastManagerMixin",
-    "VanillaStatusEffectsHudMixin"
+    "ToastManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

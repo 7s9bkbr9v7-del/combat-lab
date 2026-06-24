@@ -14,6 +14,7 @@ import dev.combatlab.client.feature.AchievementToastController;
 import dev.combatlab.client.feature.DynamicFovController;
 import dev.combatlab.client.feature.FreelookController;
 import dev.combatlab.client.feature.FullbrightController;
+import dev.combatlab.client.feature.PauseMenuFeatureHooks;
 import dev.combatlab.client.feature.ZoomController;
 import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.CpsHud;
@@ -31,12 +32,14 @@ import dev.combatlab.client.screen.HudEditorScreen;
 import dev.combatlab.client.screen.ScreenNavigator;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 
 /**
  * Coordinates Combat Lab's client-side state and event handling after Fabric startup.
  */
 public final class CombatLabRuntime {
+	private static CombatLabRuntime instance;
 	private final CombatLabOptions options;
 	private final DebugLogger debug;
 	private final KeyMapping openOptions;
@@ -105,7 +108,7 @@ public final class CombatLabRuntime {
 		hudModules.registerDescriptor(KeystrokesHud.descriptor());
 		hudModules.freeze();
 
-		return new CombatLabRuntime(
+		instance = new CombatLabRuntime(
 				options,
 				debug,
 				openOptions,
@@ -120,6 +123,7 @@ public final class CombatLabRuntime {
 				cpsTracker,
 				hudModules
 		);
+		return instance;
 	}
 
 	public void tick(Minecraft client) {
@@ -132,8 +136,7 @@ public final class CombatLabRuntime {
 		FreelookController.tick(client, freelook);
 		hudModules.tick(hudGameStateProvider.snapshot(client, combatState, cpsTracker, nowNanos));
 		while (openOptions.consumeClick()) {
-			debug.info("Opening HUD editor");
-			ScreenNavigator.open(client, new HudEditorScreen(options, hudModules, debug));
+			openHudEditorInternal(client);
 		}
 	}
 
@@ -147,6 +150,10 @@ public final class CombatLabRuntime {
 		AttackEvent event = attackRecorder.record(client, player, combatState, attackHistory);
 		combatEvents.publish(new AttackRecordedEvent(event));
 		return false;
+	}
+
+	public void afterScreenInit(Minecraft client, Screen screen, int scaledWidth, int scaledHeight) {
+		PauseMenuFeatureHooks.addHudEditorButton(client, screen);
 	}
 
 	private void publishTargetChange(java.util.UUID previousTargetId, String previousTargetName, long nowNanos) {
@@ -165,5 +172,17 @@ public final class CombatLabRuntime {
 
 	public int hudModuleCount() {
 		return hudModules.descriptors().size();
+	}
+
+	public static void openHudEditor(Minecraft client) {
+		if (instance == null) {
+			return;
+		}
+		instance.openHudEditorInternal(client);
+	}
+
+	private void openHudEditorInternal(Minecraft client) {
+		debug.info("Opening HUD editor");
+		ScreenNavigator.open(client, new HudEditorScreen(options, hudModules, debug));
 	}
 }
