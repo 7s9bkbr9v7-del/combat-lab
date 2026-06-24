@@ -6,3 +6,4 @@ run/
 work/
 outputs/
 logs/
+.vscode/

@@ -103,6 +103,10 @@ public final class HudDragController {
 		return snapGuides;
 	}
 
+	public HudModule activeModule() {
+		return draggedModule;
+	}
+
 	private static int clamp(int value, int minimum, int maximum) {
 		return Math.clamp(value, minimum, maximum);
 	}

@@ -79,7 +79,7 @@ public final class HudEditorRenderer {
 					modules.gameState()
 			);
 		}
-		renderModuleHover(graphics, layouts, mouseX, mouseY);
+		renderModuleHover(graphics, layouts, attachmentRootIds, dragController.activeModule(), mouseX, mouseY);
 		renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
 		renderResizeHandles(graphics, layouts);
 		renderResizePercent(graphics, font, screenWidth, screenHeight, mouseX, mouseY);
@@ -119,16 +119,61 @@ public final class HudEditorRenderer {
 	private static void renderModuleHover(
 			GuiGraphicsExtractor graphics,
 			List<ModuleLayout> layouts,
+			Set<String> attachmentRootIds,
+			HudModule focusedModule,
 			int mouseX,
 			int mouseY
 	) {
+		if (focusedModule != null) {
+			renderFocusedModuleHover(graphics, layouts, attachmentRootIds, focusedModule);
+			return;
+		}
+
 		for (ModuleLayout layout : layouts.reversed()) {
 			HudRectangle rectangle = layout.bounds();
 			if (rectangle.contains(mouseX, mouseY)) {
-				graphics.fill(rectangle.x(), rectangle.y(), rectangle.right(), rectangle.bottom(), HOVER_FILL_COLOR);
+				String moduleId = layout.module().id().toString();
+				if (attachmentRootIds.contains(moduleId)) {
+					renderAttachmentGroupHover(graphics, layouts, moduleId);
+				} else {
+					renderHoverFill(graphics, rectangle);
+				}
 				return;
 			}
 		}
+	}
+
+	private static void renderFocusedModuleHover(
+			GuiGraphicsExtractor graphics,
+			List<ModuleLayout> layouts,
+			Set<String> attachmentRootIds,
+			HudModule focusedModule
+	) {
+		String moduleId = focusedModule.id().toString();
+		if (attachmentRootIds.contains(moduleId)) {
+			renderAttachmentGroupHover(graphics, layouts, moduleId);
+			return;
+		}
+		ModuleLayout layout = layoutById(layouts, moduleId);
+		if (layout != null) {
+			renderHoverFill(graphics, layout.bounds());
+		}
+	}
+
+	private static void renderAttachmentGroupHover(
+			GuiGraphicsExtractor graphics,
+			List<ModuleLayout> layouts,
+			String rootId
+	) {
+		for (ModuleLayout layout : layouts) {
+			if (rootId.equals(attachmentRootId(layout, layouts))) {
+				renderHoverFill(graphics, layout.bounds());
+			}
+		}
+	}
+
+	private static void renderHoverFill(GuiGraphicsExtractor graphics, HudRectangle rectangle) {
+		graphics.fill(rectangle.x(), rectangle.y(), rectangle.right(), rectangle.bottom(), HOVER_FILL_COLOR);
 	}
 
 	private static Set<String> attachmentRootIds(List<ModuleLayout> layouts) {
@@ -156,6 +201,36 @@ public final class HudEditorRenderer {
 			}
 		}
 		return false;
+	}
+
+	private static String attachmentRootId(ModuleLayout layout, List<ModuleLayout> layouts) {
+		String currentId = layout.module().id().toString();
+		for (int depth = 0; depth <= layouts.size(); depth++) {
+			String parentId = attachmentTargetId(currentId, layouts);
+			if (parentId == null) {
+				return currentId;
+			}
+			currentId = parentId;
+		}
+		return currentId;
+	}
+
+	private static String attachmentTargetId(String moduleId, List<ModuleLayout> layouts) {
+		for (ModuleLayout layout : layouts) {
+			if (moduleId.equals(layout.module().id().toString())) {
+				return layout.module().attachmentTargetId();
+			}
+		}
+		return null;
+	}
+
+	private static ModuleLayout layoutById(List<ModuleLayout> layouts, String moduleId) {
+		for (ModuleLayout layout : layouts) {
+			if (moduleId.equals(layout.module().id().toString())) {
+				return layout;
+			}
+		}
+		return null;
 	}
 
 	private void renderResizeHandles(GuiGraphicsExtractor graphics, List<ModuleLayout> layouts) {
