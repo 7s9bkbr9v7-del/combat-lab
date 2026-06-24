@@ -3,8 +3,11 @@ package dev.combatlab.client.screen;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.HudModuleRegistry;
+import dev.combatlab.client.hud.HudModule;
+import dev.combatlab.client.screen.hudeditor.HudContextMenu;
 import dev.combatlab.client.screen.hudeditor.HudDragController;
 import dev.combatlab.client.screen.hudeditor.HudEditorRenderer;
+import dev.combatlab.client.screen.hudeditor.HudEditorModuleActions;
 import dev.combatlab.client.screen.hudeditor.HudOptionsNavigation;
 import dev.combatlab.client.screen.hudeditor.HudResizeController;
 import dev.combatlab.client.screen.hudeditor.HudSelection;
@@ -17,6 +20,7 @@ import org.lwjgl.glfw.GLFW;
 public final class HudEditorScreen extends Screen {
 	private static final Component TITLE = Component.literal("Combat Lab HUD Editor");
 	private static final int SNAP_THRESHOLD = 6;
+	private static final int ADD_SNAP_THRESHOLD = 18;
 	private static final int RESIZE_HANDLE_SIZE = 3;
 	private static final long OPEN_ANIMATION_NANOS = 180_000_000L;
 
@@ -24,6 +28,8 @@ public final class HudEditorScreen extends Screen {
 	private final HudResizeController resizeController;
 	private final HudEditorRenderer renderer;
 	private final HudOptionsNavigation navigation;
+	private final HudSelection selection;
+	private final HudContextMenu contextMenu;
 	private final HudModuleRegistry modules;
 	private final long openedAtNanos;
 
@@ -31,7 +37,9 @@ public final class HudEditorScreen extends Screen {
 		super(TITLE);
 		this.modules = modules;
 		this.openedAtNanos = System.nanoTime();
-		HudSelection selection = new HudSelection(modules);
+		this.selection = new HudSelection(modules);
+		HudEditorModuleActions moduleActions = new HudEditorModuleActions(modules, selection, ADD_SNAP_THRESHOLD);
+		this.contextMenu = new HudContextMenu(modules, moduleActions);
 		this.dragController = new HudDragController(selection, SNAP_THRESHOLD);
 		this.resizeController = new HudResizeController(selection, debug, RESIZE_HANDLE_SIZE);
 		this.renderer = new HudEditorRenderer(modules, selection, dragController, resizeController, RESIZE_HANDLE_SIZE);
@@ -58,6 +66,7 @@ public final class HudEditorScreen extends Screen {
 		fadeWidgets(animationProgress);
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		renderer.renderLabels(graphics, font, title, width, hasEnabledModules, animationProgress);
+		contextMenu.render(graphics, font, mouseX, mouseY);
 	}
 
 	@Override
@@ -68,15 +77,39 @@ public final class HudEditorScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && contextMenu.open()) {
+			return contextMenu.mouseClicked(event.x(), event.y());
+		}
+
 		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
 
-		if (event.button() != 0) {
+		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+			HudModule module = selection.topModuleAt(event.x(), event.y(), width, height);
+			if (module != null) {
+				contextMenu.openModuleMenu(module, (int) event.x(), (int) event.y(), width, height);
+				return true;
+			}
+			contextMenu.openCanvasMenu((int) event.x(), (int) event.y(), width, height);
+			return true;
+		}
+
+		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			contextMenu.close();
 			return false;
 		}
+		contextMenu.close();
 		return resizeController.begin(event.x(), event.y(), width, height)
 				|| dragController.begin(event.x(), event.y(), width, height);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+		if (contextMenu.mouseScrolled(mouseX, mouseY, verticalAmount)) {
+			return true;
+		}
+		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
 	}
 
 	@Override

@@ -55,6 +55,42 @@ public final class HudSnapper {
 		);
 	}
 
+	public static HudPosition snapToEdges(
+			HudRectangle moving,
+			List<HudRectangle> others,
+			int threshold,
+			int screenWidth,
+			int screenHeight
+	) {
+		AxisSnap xSnap = AxisSnap.none(moving.x(), threshold);
+		if (screenWidth >= moving.width()) {
+			xSnap = xSnap.nearest(moving.x(), 0);
+			xSnap = xSnap.nearest(moving.x(), screenWidth - moving.width());
+		}
+		for (HudRectangle other : others) {
+			if (rangesNear(moving.y(), moving.bottom(), other.y(), other.bottom(), threshold)) {
+				xSnap = xSnap.nearest(moving.x(), xGeometry(moving, other).edgeAlignedPositions());
+			}
+		}
+
+		HudRectangle horizontal = new HudRectangle(xSnap.value(), moving.y(), moving.width(), moving.height());
+		AxisSnap ySnap = AxisSnap.none(moving.y(), threshold);
+		if (screenHeight >= moving.height()) {
+			ySnap = ySnap.nearest(moving.y(), 0);
+			ySnap = ySnap.nearest(moving.y(), screenHeight - moving.height());
+		}
+		for (HudRectangle other : others) {
+			if (rangesNear(horizontal.x(), horizontal.right(), other.x(), other.right(), threshold)) {
+				ySnap = ySnap.nearest(moving.y(), yGeometry(moving, other).edgeAlignedPositions());
+			}
+		}
+
+		return new HudPosition(
+				Math.clamp(xSnap.value(), 0, Math.max(0, screenWidth - moving.width())),
+				Math.clamp(ySnap.value(), 0, Math.max(0, screenHeight - moving.height()))
+		);
+	}
+
 	public static List<HudSnapGuide> guidesForAlignment(
 			HudRectangle original,
 			HudRectangle snapped,

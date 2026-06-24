@@ -22,6 +22,7 @@ import java.util.Set;
 public final class HudEditorRenderer {
 	private static final int OUTLINE_COLOR = 0xFF60A5FA;
 	private static final int ATTACHMENT_ANCHOR_OUTLINE_COLOR = 0xFFFBBF24;
+	private static final int HOVER_FILL_COLOR = 0x554B5563;
 	private static final int RESIZE_HANDLE_COLOR = 0xFF22C55E;
 
 	private final HudModuleRegistry modules;
@@ -78,6 +79,7 @@ public final class HudEditorRenderer {
 					modules.gameState()
 			);
 		}
+		renderModuleHover(graphics, layouts, mouseX, mouseY);
 		renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
 		renderResizeHandles(graphics, layouts);
 		renderResizePercent(graphics, font, screenWidth, screenHeight, mouseX, mouseY);
@@ -94,7 +96,7 @@ public final class HudEditorRenderer {
 	) {
 		graphics.centeredText(font, title, screenWidth / 2, 18, withAlpha(0xFFFFFFFF, animationProgress));
 		String guidance = hasEnabledModules
-				? "Drag HUD modules to reposition them; drag a corner handle to resize"
+				? "Drag HUD modules to reposition them; right-click a module for actions"
 				: "No HUD modules enabled";
 		graphics.centeredText(font, guidance, screenWidth / 2, 32, withAlpha(0xFF9CA3AF, animationProgress));
 	}
@@ -111,6 +113,21 @@ public final class HudEditorRenderer {
 					? ATTACHMENT_ANCHOR_OUTLINE_COLOR
 					: OUTLINE_COLOR;
 			drawOutline(graphics, rectangle, HudOutlineResolver.visibleSegments(rectangle, rectangles), color);
+		}
+	}
+
+	private static void renderModuleHover(
+			GuiGraphicsExtractor graphics,
+			List<ModuleLayout> layouts,
+			int mouseX,
+			int mouseY
+	) {
+		for (ModuleLayout layout : layouts.reversed()) {
+			HudRectangle rectangle = layout.bounds();
+			if (rectangle.contains(mouseX, mouseY)) {
+				graphics.fill(rectangle.x(), rectangle.y(), rectangle.right(), rectangle.bottom(), HOVER_FILL_COLOR);
+				return;
+			}
 		}
 	}
 

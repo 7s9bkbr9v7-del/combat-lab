@@ -2,7 +2,6 @@ package dev.combatlab.client.screen.hudeditor;
 
 import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudModule;
-import dev.combatlab.client.hud.HudAttachmentSide;
 import dev.combatlab.client.hud.HudPosition;
 import dev.combatlab.client.hud.HudRectangle;
 import dev.combatlab.client.hud.HudSnapGuide;
@@ -62,19 +61,27 @@ public final class HudDragController {
 		HudPosition snapped = snapResult.position();
 		int finalX = clamp(snapped.x(), 0, Math.max(0, screenWidth - size.width()));
 		int finalY = clamp(snapped.y(), 0, Math.max(0, screenHeight - size.height()));
-		draggedModule.updatePosition(
-				finalX,
-				finalY,
-				screenWidth,
-				screenHeight
-		);
 		if (snappingDisabled) {
+			draggedModule.updatePosition(
+					finalX,
+					finalY,
+					screenWidth,
+					screenHeight
+			);
 			draggedModule.clearAttachment();
 			snapGuides = List.of();
 		} else {
 			HudRectangle snappedRectangle = new HudRectangle(finalX, finalY, size.width(), size.height());
 			snapGuides = snapResult.guides();
-			updateAttachment(snappedRectangle, others);
+			HudModuleAttachment.placeAndAttach(
+					selection,
+					draggedModule,
+					snappedRectangle,
+					others,
+					snapThreshold,
+					screenWidth,
+					screenHeight
+			);
 		}
 		return true;
 	}
@@ -117,45 +124,4 @@ public final class HudDragController {
 		);
 	}
 
-	private boolean updateAttachment(
-			HudRectangle moving,
-			List<HudSelection.ModuleRectangle> others
-	) {
-		draggedModule.clearAttachment();
-		for (HudSelection.ModuleRectangle candidate : others) {
-			HudRectangle target = candidate.rectangle();
-			if (!selection.canAttach(draggedModule, candidate.module())) {
-				continue;
-			}
-			if (verticalRangesNear(moving, target)) {
-				if (moving.right() == target.x()) {
-					draggedModule.attachTo(candidate.module(), HudAttachmentSide.LEFT_OF, moving.y() - target.y());
-					return true;
-				}
-				if (moving.x() == target.right()) {
-					draggedModule.attachTo(candidate.module(), HudAttachmentSide.RIGHT_OF, moving.y() - target.y());
-					return true;
-				}
-			}
-			if (horizontalRangesNear(moving, target)) {
-				if (moving.bottom() == target.y()) {
-					draggedModule.attachTo(candidate.module(), HudAttachmentSide.ABOVE, moving.x() - target.x());
-					return true;
-				}
-				if (moving.y() == target.bottom()) {
-					draggedModule.attachTo(candidate.module(), HudAttachmentSide.BELOW, moving.x() - target.x());
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private boolean verticalRangesNear(HudRectangle first, HudRectangle second) {
-		return first.bottom() + snapThreshold >= second.y() && second.bottom() + snapThreshold >= first.y();
-	}
-
-	private boolean horizontalRangesNear(HudRectangle first, HudRectangle second) {
-		return first.right() + snapThreshold >= second.x() && second.right() + snapThreshold >= first.x();
-	}
 }
