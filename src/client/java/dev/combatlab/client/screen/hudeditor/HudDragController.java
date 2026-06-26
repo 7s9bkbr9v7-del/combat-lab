@@ -14,14 +14,20 @@ import java.util.List;
 public final class HudDragController {
 	private static final int GRID_SIZE = 4;
 	private final HudSelection selection;
+	private final HudModuleSelection moduleSelection;
 	private final int snapThreshold;
 	private HudModule draggedModule;
 	private int dragOffsetX;
 	private int dragOffsetY;
+	private int draggedStartX;
+	private int draggedStartY;
+	private boolean dragging;
+	private List<DragMember> dragMembers = List.of();
 	private List<HudSnapGuide> snapGuides = List.of();
 
-	public HudDragController(HudSelection selection, int snapThreshold) {
+	public HudDragController(HudSelection selection, HudModuleSelection moduleSelection, int snapThreshold) {
 		this.selection = selection;
+		this.moduleSelection = moduleSelection;
 		this.snapThreshold = snapThreshold;
 	}
 
@@ -34,16 +40,26 @@ public final class HudDragController {
 			adaptive.lockLayout();
 		}
 
-		draggedModule.detach(screenWidth, screenHeight);
 		HudPosition position = draggedModule.position(screenWidth, screenHeight);
+		draggedStartX = position.x();
+		draggedStartY = position.y();
 		dragOffsetX = (int) mouseX - position.x();
 		dragOffsetY = (int) mouseY - position.y();
+		dragMembers = dragMembers(screenWidth, screenHeight);
+		dragging = false;
 		return true;
 	}
 
 	public boolean drag(double mouseX, double mouseY, int screenWidth, int screenHeight, boolean snappingDisabled) {
 		if (draggedModule == null) {
 			return false;
+		}
+
+		if (!dragging) {
+			for (DragMember member : dragMembers) {
+				member.module().detach(screenWidth, screenHeight);
+			}
+			dragging = true;
 		}
 
 		HudSize size = draggedModule.size();
@@ -54,6 +70,11 @@ public final class HudDragController {
 				screenWidth,
 				screenHeight
 		);
+		if (dragMembers.size() > 1) {
+			others = others.stream()
+					.filter(candidate -> !isDragMember(candidate.module()))
+					.toList();
+		}
 		HudRectangle moving = new HudRectangle(x, y, size.width(), size.height());
 		HudSnapResult snapResult = snappingDisabled
 				? new HudSnapResult(new HudPosition(x, y), List.of())
@@ -61,6 +82,11 @@ public final class HudDragController {
 		HudPosition snapped = snapResult.position();
 		int finalX = clamp(snapped.x(), 0, Math.max(0, screenWidth - size.width()));
 		int finalY = clamp(snapped.y(), 0, Math.max(0, screenHeight - size.height()));
+		if (dragMembers.size() > 1) {
+			dragSelectedModules(finalX - draggedStartX, finalY - draggedStartY, screenWidth, screenHeight);
+			snapGuides = snappingDisabled ? List.of() : snapResult.guides();
+			return true;
+		}
 		if (snappingDisabled) {
 			draggedModule.updatePosition(
 					finalX,
@@ -94,7 +120,16 @@ public final class HudDragController {
 			adaptive.unlockLayout();
 		}
 		draggedModule.savePosition();
+		for (DragMember member : dragMembers) {
+			if (member.module() != draggedModule) {
+				member.module().savePosition();
+			}
+		}
 		draggedModule = null;
+		draggedStartX = 0;
+		draggedStartY = 0;
+		dragging = false;
+		dragMembers = List.of();
 		snapGuides = List.of();
 		return true;
 	}
@@ -109,6 +144,58 @@ public final class HudDragController {
 
 	private static int clamp(int value, int minimum, int maximum) {
 		return Math.clamp(value, minimum, maximum);
+	}
+
+	private List<DragMember> dragMembers(int screenWidth, int screenHeight) {
+		if (!moduleSelection.hasMultipleSelected() || !moduleSelection.selected(draggedModule)) {
+			return List.of(new DragMember(draggedModule, selection.rectangle(draggedModule, screenWidth, screenHeight)));
+		}
+		return moduleSelection.selectedModules(selection.modules()).stream()
+				.map(module -> new DragMember(module, selection.rectangle(module, screenWidth, screenHeight)))
+				.toList();
+	}
+
+	private boolean isDragMember(HudModule module) {
+		for (DragMember member : dragMembers) {
+			if (member.module() == module) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void dragSelectedModules(int requestedDeltaX, int requestedDeltaY, int screenWidth, int screenHeight) {
+		int deltaX = clampedGroupDeltaX(requestedDeltaX, screenWidth);
+		int deltaY = clampedGroupDeltaY(requestedDeltaY, screenHeight);
+		for (DragMember member : dragMembers) {
+			member.module().clearAttachment();
+			member.module().updatePosition(
+					member.bounds().x() + deltaX,
+					member.bounds().y() + deltaY,
+					screenWidth,
+					screenHeight
+			);
+		}
+	}
+
+	private int clampedGroupDeltaX(int requestedDeltaX, int screenWidth) {
+		int minDelta = Integer.MIN_VALUE;
+		int maxDelta = Integer.MAX_VALUE;
+		for (DragMember member : dragMembers) {
+			minDelta = Math.max(minDelta, -member.bounds().x());
+			maxDelta = Math.min(maxDelta, screenWidth - member.bounds().right());
+		}
+		return clamp(requestedDeltaX, minDelta, maxDelta);
+	}
+
+	private int clampedGroupDeltaY(int requestedDeltaY, int screenHeight) {
+		int minDelta = Integer.MIN_VALUE;
+		int maxDelta = Integer.MAX_VALUE;
+		for (DragMember member : dragMembers) {
+			minDelta = Math.max(minDelta, -member.bounds().y());
+			maxDelta = Math.min(maxDelta, screenHeight - member.bounds().bottom());
+		}
+		return clamp(requestedDeltaY, minDelta, maxDelta);
 	}
 
 	private HudSnapResult snap(
@@ -128,4 +215,6 @@ public final class HudDragController {
 		);
 	}
 
+	private record DragMember(HudModule module, HudRectangle bounds) {
+	}
 }

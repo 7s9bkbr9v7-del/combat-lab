@@ -24,6 +24,12 @@ public final class HudEditorModuleActions {
 		modules.setEnabled(module.id().toString(), false);
 	}
 
+	public void disableAll(List<HudModule> selectedModules) {
+		for (HudModule module : selectedModules) {
+			modules.setEnabled(module.id().toString(), false);
+		}
+	}
+
 	public void enableAt(String id, int requestedX, int requestedY, int screenWidth, int screenHeight) {
 		modules.setEnabled(id, true);
 		HudModule added = modules.module(id);

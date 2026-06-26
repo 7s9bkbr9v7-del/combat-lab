@@ -1,6 +1,7 @@
 package dev.combatlab.client.bridge;
 
 import dev.combatlab.client.hud.HudGameState;
+import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.input.CpsTracker;
 import dev.combatlab.client.model.CombatState;
 import dev.combatlab.client.state.ArmorSlot;
@@ -103,6 +104,7 @@ public final class MinecraftHudGameStateProvider {
 		List<PlayerEffectTimer> active = player.getActiveEffects().stream()
 				.filter(MobEffectInstance::showIcon)
 				.map(MinecraftHudGameStateProvider::effectTimer)
+				.filter(effect -> !FullbrightController.shouldHideEffectStatus(effect.id()))
 				.sorted(Comparator
 						.comparing(PlayerEffectTimer::ambient)
 						.thenComparing(PlayerEffectTimer::displayName))

@@ -27,6 +27,10 @@ public final class HudSelection {
 		return null;
 	}
 
+	public List<HudModule> modules() {
+		return modules.modules();
+	}
+
 	public ResizeSelection topResizeHandleAt(
 			double mouseX,
 			double mouseY,

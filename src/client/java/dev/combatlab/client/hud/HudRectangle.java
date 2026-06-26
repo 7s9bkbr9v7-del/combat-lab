@@ -20,4 +20,8 @@ public record HudRectangle(int x, int y, int width, int height) {
 	public boolean contains(double pointX, double pointY) {
 		return pointX >= x && pointX < right() && pointY >= y && pointY < bottom();
 	}
+
+	public boolean intersects(HudRectangle other) {
+		return right() > other.x && other.right() > x && bottom() > other.y && other.bottom() > y;
+	}
 }

@@ -23,24 +23,31 @@ public final class HudEditorRenderer {
 	private static final int OUTLINE_COLOR = 0xFF60A5FA;
 	private static final int ATTACHMENT_ANCHOR_OUTLINE_COLOR = 0xFFFBBF24;
 	private static final int HOVER_FILL_COLOR = 0x554B5563;
+	private static final int SELECTION_BOX_FILL_COLOR = 0x3360A5FA;
 	private static final int RESIZE_HANDLE_COLOR = 0xFF22C55E;
 
 	private final HudModuleRegistry modules;
 	private final HudSelection selection;
+	private final HudModuleSelection moduleSelection;
 	private final HudDragController dragController;
+	private final HudBoxSelectionController boxSelectionController;
 	private final HudResizeController resizeController;
 	private final int handleSize;
 
 	public HudEditorRenderer(
 			HudModuleRegistry modules,
 			HudSelection selection,
+			HudModuleSelection moduleSelection,
 			HudDragController dragController,
+			HudBoxSelectionController boxSelectionController,
 			HudResizeController resizeController,
 			int handleSize
 	) {
 		this.modules = modules;
 		this.selection = selection;
+		this.moduleSelection = moduleSelection;
 		this.dragController = dragController;
+		this.boxSelectionController = boxSelectionController;
 		this.resizeController = resizeController;
 		this.handleSize = handleSize;
 	}
@@ -79,9 +86,11 @@ public final class HudEditorRenderer {
 					modules.gameState()
 			);
 		}
+		renderSelectedModules(graphics, layouts);
 		renderModuleHover(graphics, layouts, attachmentRootIds, dragController.activeModule(), mouseX, mouseY);
 		renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
 		renderResizeHandles(graphics, layouts);
+		renderSelectionBox(graphics);
 		renderResizePercent(graphics, font, screenWidth, screenHeight, mouseX, mouseY);
 		return !layouts.isEmpty();
 	}
@@ -113,6 +122,14 @@ public final class HudEditorRenderer {
 					? ATTACHMENT_ANCHOR_OUTLINE_COLOR
 					: OUTLINE_COLOR;
 			drawOutline(graphics, rectangle, HudOutlineResolver.visibleSegments(rectangle, rectangles), color);
+		}
+	}
+
+	private void renderSelectedModules(GuiGraphicsExtractor graphics, List<ModuleLayout> layouts) {
+		for (ModuleLayout layout : layouts) {
+			if (moduleSelection.selected(layout.module())) {
+				renderHoverFill(graphics, layout.bounds());
+			}
 		}
 	}
 
@@ -244,6 +261,15 @@ public final class HudEditorRenderer {
 				graphics.fill(handle.x(), handle.y(), handle.right(), handle.bottom(), RESIZE_HANDLE_COLOR);
 			}
 		}
+	}
+
+	private void renderSelectionBox(GuiGraphicsExtractor graphics) {
+		if (!boxSelectionController.active()) {
+			return;
+		}
+		HudRectangle bounds = boxSelectionController.bounds();
+		graphics.fill(bounds.x(), bounds.y(), bounds.right(), bounds.bottom(), SELECTION_BOX_FILL_COLOR);
+		graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), OUTLINE_COLOR);
 	}
 
 	private void renderSnapGuide(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight) {

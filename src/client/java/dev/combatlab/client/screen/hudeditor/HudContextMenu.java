@@ -23,6 +23,7 @@ public final class HudContextMenu {
 	private final HudModuleRegistry modules;
 	private final HudEditorModuleActions moduleActions;
 	private HudModule module;
+	private List<HudModule> selectedModules = List.of();
 	private MenuType type = MenuType.CLOSED;
 	private int x;
 	private int y;
@@ -40,6 +41,7 @@ public final class HudContextMenu {
 
 	public void openModuleMenu(HudModule module, int requestedX, int requestedY, int screenWidth, int screenHeight) {
 		this.module = module;
+		this.selectedModules = List.of();
 		this.type = MenuType.MODULE;
 		this.screenWidth = screenWidth;
 		this.screenHeight = screenHeight;
@@ -51,6 +53,7 @@ public final class HudContextMenu {
 
 	public void openCanvasMenu(int requestedX, int requestedY, int screenWidth, int screenHeight) {
 		this.module = null;
+		this.selectedModules = List.of();
 		this.type = MenuType.CANVAS;
 		this.screenWidth = screenWidth;
 		this.screenHeight = screenHeight;
@@ -62,8 +65,21 @@ public final class HudContextMenu {
 		this.y = Math.clamp(requestedY, 0, Math.max(0, screenHeight - mainHeight()));
 	}
 
+	public void openSelectionMenu(List<HudModule> selectedModules, int requestedX, int requestedY, int screenWidth, int screenHeight) {
+		this.module = null;
+		this.selectedModules = List.copyOf(selectedModules);
+		this.type = MenuType.SELECTION;
+		this.screenWidth = screenWidth;
+		this.screenHeight = screenHeight;
+		this.scrollOffset = 0;
+		this.addSubmenuOpen = false;
+		this.x = Math.clamp(requestedX, 0, Math.max(0, screenWidth - MAIN_WIDTH));
+		this.y = Math.clamp(requestedY, 0, Math.max(0, screenHeight - mainHeight()));
+	}
+
 	public void close() {
 		module = null;
+		selectedModules = List.of();
 		type = MenuType.CLOSED;
 		scrollOffset = 0;
 		addSubmenuOpen = false;
@@ -80,6 +96,12 @@ public final class HudContextMenu {
 
 		if (type == MenuType.MODULE && itemIndexAt(mouseX, mouseY, x, y, MAIN_WIDTH, mainHeight()) == 0) {
 			moduleActions.disable(module);
+			close();
+			return true;
+		}
+
+		if (type == MenuType.SELECTION && itemIndexAt(mouseX, mouseY, x, y, MAIN_WIDTH, mainHeight()) == 0) {
+			moduleActions.disableAll(selectedModules);
 			close();
 			return true;
 		}
@@ -126,7 +148,7 @@ public final class HudContextMenu {
 
 		graphics.fill(x, y, x + MAIN_WIDTH, y + mainHeight(), BACKGROUND_COLOR);
 		graphics.outline(x, y, MAIN_WIDTH, mainHeight(), BORDER_COLOR);
-		if (type == MenuType.MODULE) {
+		if (type == MenuType.MODULE || type == MenuType.SELECTION) {
 			renderItem(graphics, font, "Disable", x, y, MAIN_WIDTH, itemIndexAt(mouseX, mouseY, x, y, MAIN_WIDTH, mainHeight()) == 0, TEXT_COLOR);
 			return;
 		}
@@ -236,6 +258,7 @@ public final class HudContextMenu {
 	private enum MenuType {
 		CLOSED,
 		MODULE,
+		SELECTION,
 		CANVAS
 	}
 
