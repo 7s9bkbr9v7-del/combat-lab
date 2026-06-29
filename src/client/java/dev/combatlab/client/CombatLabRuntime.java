@@ -94,10 +94,10 @@ public final class CombatLabRuntime {
 		CpsTracker cpsTracker = new CpsTracker();
 		CombatState combatState = new CombatState();
 		CombatEventBus combatEvents = new CombatEventBus();
-		combatEvents.subscribe(CombatClickEvent.class, event -> cpsTracker.recordClicks(event.clickCount(), event.capturedAtNanos()));
+		combatEvents.subscribePermanent(CombatClickEvent.class, event -> cpsTracker.recordClicks(event.clickCount(), event.capturedAtNanos()));
 		DebugTelemetry debugTelemetry = new DebugTelemetry();
-		combatEvents.subscribe(TargetChangedEvent.class, event -> debugTelemetry.onTargetChanged(event, options.debugLoggingEnabled(), debug));
-		combatEvents.subscribe(AttackRecordedEvent.class, event -> debugTelemetry.onAttackRecorded(event, options.debugLoggingEnabled(), debug));
+		combatEvents.subscribePermanent(TargetChangedEvent.class, event -> debugTelemetry.onTargetChanged(event, options.debugLoggingEnabled(), debug));
+		combatEvents.subscribePermanent(AttackRecordedEvent.class, event -> debugTelemetry.onAttackRecorded(event, options.debugLoggingEnabled(), debug));
 		HudModuleRegistry hudModules = new HudModuleRegistry(options, debug);
 		hudModules.registerDescriptor(FpsHud.descriptor());
 		hudModules.registerDescriptor(CpsHud.descriptor());
@@ -140,6 +140,7 @@ public final class CombatLabRuntime {
 		}
 	}
 
+	@SuppressWarnings("SameReturnValue")
 	public boolean onPreAttack(Minecraft client, LocalPlayer player, int clickCount) {
 		if (clickCount == 0) {
 			return false;
@@ -152,7 +153,7 @@ public final class CombatLabRuntime {
 		return false;
 	}
 
-	public void afterScreenInit(Minecraft client, Screen screen, int scaledWidth, int scaledHeight) {
+	public void afterScreenInit(Minecraft client, Screen screen, int ignoredScaledWidth, int ignoredScaledHeight) {
 		PauseMenuFeatureHooks.addHudEditorButton(client, screen, this::openHudEditorInternal);
 	}
 
