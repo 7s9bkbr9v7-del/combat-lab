@@ -1,6 +1,5 @@
 package dev.combatlab.client.feature;
 
-import dev.combatlab.client.CombatLabRuntime;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
@@ -14,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class PauseMenuFeatureHooks {
 	private static final Component HUD_EDITOR = Component.translatable("screen.combatlab.hud_editor");
@@ -26,34 +26,34 @@ public final class PauseMenuFeatureHooks {
 	private PauseMenuFeatureHooks() {
 	}
 
-	public static void addHudEditorButton(Minecraft minecraft, Screen screen) {
+	public static void addHudEditorButton(Minecraft minecraft, Screen screen, Consumer<Minecraft> openEditor) {
 		if (minecraft == null || !(screen instanceof PauseScreen) || alreadyHasHudEditorButton(screen)) {
 			return;
 		}
-		hudEditorButton(minecraft, screen).ifPresent(button -> Screens.getWidgets(screen).add(button));
+		hudEditorButton(minecraft, screen, openEditor).ifPresent(button -> Screens.getWidgets(screen).add(button));
 	}
 
-	private static Optional<Button> hudEditorButton(Minecraft minecraft, Screen screen) {
+	private static Optional<Button> hudEditorButton(Minecraft minecraft, Screen screen, Consumer<Minecraft> openEditor) {
 		if (modMenuInstalled()) {
-			Optional<Button> compactButton = compactButtonBesideModMenu(screen, minecraft);
+			Optional<Button> compactButton = compactButtonBesideModMenu(screen, minecraft, openEditor);
 			if (compactButton.isPresent()) {
 				return compactButton;
 			}
 		}
-		return fullWidthButton(screen, minecraft);
+		return fullWidthButton(screen, minecraft, openEditor);
 	}
 
-	private static Optional<Button> compactButtonBesideModMenu(Screen screen, Minecraft minecraft) {
+	private static Optional<Button> compactButtonBesideModMenu(Screen screen, Minecraft minecraft, Consumer<Minecraft> openEditor) {
 		return widgets(screen).stream()
 				.filter(PauseMenuFeatureHooks::isModsButton)
 				.max(Comparator.comparingInt(AbstractWidget::getWidth))
-				.map(modsButton -> Button.builder(HUD_EDITOR_SHORT, button -> openEditor(minecraft))
+				.map(modsButton -> Button.builder(HUD_EDITOR_SHORT, button -> openEditor.accept(minecraft))
 						.bounds(modsButton.getRight() + SPACING, modsButton.getY(), COMPACT_SIZE, COMPACT_SIZE)
 						.tooltip(Tooltip.create(HUD_EDITOR))
 						.build());
 	}
 
-	private static Optional<Button> fullWidthButton(Screen screen, Minecraft minecraft) {
+	private static Optional<Button> fullWidthButton(Screen screen, Minecraft minecraft, Consumer<Minecraft> openEditor) {
 		Optional<AbstractWidget> optionsButton = optionsButton(screen);
 		if (optionsButton.isEmpty()) {
 			return Optional.empty();
@@ -62,7 +62,7 @@ public final class PauseMenuFeatureHooks {
 		AbstractWidget anchor = optionsButton.get();
 		int insertY = anchor.getY();
 		shiftWidgetsAtOrBelow(screen, insertY, BUTTON_HEIGHT + SPACING);
-		return Optional.of(Button.builder(HUD_EDITOR, button -> openEditor(minecraft))
+		return Optional.of(Button.builder(HUD_EDITOR, button -> openEditor.accept(minecraft))
 				.bounds((screen.width - FULL_WIDTH) / 2, insertY, FULL_WIDTH, BUTTON_HEIGHT)
 				.build());
 	}
@@ -106,7 +106,4 @@ public final class PauseMenuFeatureHooks {
 		return FabricLoader.getInstance().isModLoaded("modmenu");
 	}
 
-	private static void openEditor(Minecraft minecraft) {
-		CombatLabRuntime.openHudEditor(minecraft);
-	}
 }

@@ -40,7 +40,6 @@ import net.minecraft.client.player.LocalPlayer;
  * Coordinates Combat Lab's client-side state and event handling after Fabric startup.
  */
 public final class CombatLabRuntime {
-	private static CombatLabRuntime instance;
 	private final CombatLabOptions options;
 	private final DebugLogger debug;
 	private final KeyMapping openOptions;
@@ -110,7 +109,7 @@ public final class CombatLabRuntime {
 		hudModules.registerDescriptor(DirectionHud.descriptor());
 		hudModules.freeze();
 
-		instance = new CombatLabRuntime(
+		return new CombatLabRuntime(
 				options,
 				debug,
 				openOptions,
@@ -125,7 +124,6 @@ public final class CombatLabRuntime {
 				cpsTracker,
 				hudModules
 		);
-		return instance;
 	}
 
 	public void tick(Minecraft client) {
@@ -155,7 +153,7 @@ public final class CombatLabRuntime {
 	}
 
 	public void afterScreenInit(Minecraft client, Screen screen, int scaledWidth, int scaledHeight) {
-		PauseMenuFeatureHooks.addHudEditorButton(client, screen);
+		PauseMenuFeatureHooks.addHudEditorButton(client, screen, this::openHudEditorInternal);
 	}
 
 	private void publishTargetChange(java.util.UUID previousTargetId, String previousTargetName, long nowNanos) {
@@ -174,13 +172,6 @@ public final class CombatLabRuntime {
 
 	public int hudModuleCount() {
 		return hudModules.descriptors().size();
-	}
-
-	public static void openHudEditor(Minecraft client) {
-		if (instance == null) {
-			return;
-		}
-		instance.openHudEditorInternal(client);
 	}
 
 	private void openHudEditorInternal(Minecraft client) {
