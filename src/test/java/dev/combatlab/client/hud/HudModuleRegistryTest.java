@@ -59,7 +59,7 @@ class HudModuleRegistryTest {
     CountingModule enabled = new CountingModule("enabled", true, false);
     HudFrameSnapshot snapshot = new HudFrameSnapshot(List.of(disabled, enabled));
 
-    snapshot.capture(ClientGameState.empty(), null, 320, 180);
+    snapshot.capture(ClientGameState.empty(), null, 320, 180, 1.0F);
     snapshot.render(null);
 
     assertEquals(0, disabled.boundsCount);
@@ -84,7 +84,7 @@ class HudModuleRegistryTest {
             false);
     return new HudModuleDescriptor(
         definition,
-        dependencies -> new CountingModule(path, !loadWhenDisabled, loadWhenDisabled),
+        _ -> new CountingModule(path, !loadWhenDisabled, loadWhenDisabled),
         loadWhenDisabled);
   }
 

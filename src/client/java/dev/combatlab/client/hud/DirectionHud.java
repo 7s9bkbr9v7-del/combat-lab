@@ -7,8 +7,10 @@ import dev.combatlab.client.state.DirectionState;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -23,13 +25,15 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private static final int LABEL_Y = 2;
   private static final int ACCENT_COLOR = 0xFF60A5FA;
   private static final double DEGREES_PER_PIXEL = 2.25D;
-  private static final double SPRING_STRENGTH = 0.16D;
-  private static final double FAST_TURN_EXTRA_STRENGTH = 0.10D;
-  private static final double DAMPING = 0.72D;
-  private static final double FAST_TURN_DAMPING = 0.66D;
+  private static final double SPRING_STRENGTH = 0.92D;
+  private static final double FAST_TURN_EXTRA_STRENGTH = 0.28D;
+  private static final double DAMPING = 0.44D;
+  private static final double FAST_TURN_DAMPING = 0.38D;
   private static final double FAST_TURN_THRESHOLD = 60.0D;
-  private static final double MAX_VELOCITY = 28.0D;
-  private static final double FAST_TURN_MAX_VELOCITY = 46.0D;
+  private static final double MAX_VELOCITY = 70.0D;
+  private static final double FAST_TURN_MAX_VELOCITY = 108.0D;
+  private static final double SNAP_DISPLACEMENT = 0.24D;
+  private static final double SNAP_VELOCITY = 0.32D;
   private static final DirectionHudLayout FLOATING_LAYOUT =
       new DirectionHudLayout(WIDTH, DEGREES_PER_PIXEL);
   private static final DirectionHudLayout SIDE_LAYOUT =
@@ -86,31 +90,13 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     if (!direction.present()) {
       bearingInitialized = false;
       bearingVelocity = 0.0D;
-      return;
     }
-
-    double target = direction.bearingDegrees();
-    if (!bearingInitialized) {
-      animatedBearing = target;
-      bearingVelocity = 0.0D;
-      bearingInitialized = true;
-      return;
-    }
-
-    double displacement = wrapDegrees(target - animatedBearing);
-    double fastTurn = Math.min(1.0D, Math.abs(displacement) / FAST_TURN_THRESHOLD);
-    double strength = SPRING_STRENGTH + FAST_TURN_EXTRA_STRENGTH * fastTurn;
-    double damping = DAMPING + (FAST_TURN_DAMPING - DAMPING) * fastTurn;
-    double maxVelocity = MAX_VELOCITY + (FAST_TURN_MAX_VELOCITY - MAX_VELOCITY) * fastTurn;
-    bearingVelocity =
-        clamp((bearingVelocity + displacement * strength) * damping, -maxVelocity, maxVelocity);
-    animatedBearing = normalizeDegrees(animatedBearing + bearingVelocity);
   }
 
   @Override
   protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
     DirectionState direction = context.gameState().player().direction();
-    double bearing = renderBearing(direction);
+    double bearing = renderBearing(context, direction);
 
     graphics.pose().pushMatrix();
     graphics.pose().translate(context.bounds().x(), context.bounds().y());
@@ -134,14 +120,60 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     graphics.pose().popMatrix();
   }
 
-  private double renderBearing(DirectionState direction) {
-    if (direction.present()) {
+  private double renderBearing(HudRenderContext context, DirectionState direction) {
+    Double target = targetBearing(context, direction);
+    if (target != null) {
       if (!bearingInitialized) {
-        return direction.bearingDegrees();
+        animatedBearing = target;
+        bearingVelocity = 0.0D;
+        bearingInitialized = true;
+        return target;
       }
+      animateBearing(target, context.frameDeltaTicks());
       return animatedBearing;
     }
+    bearingInitialized = false;
+    bearingVelocity = 0.0D;
     return 21.0D;
+  }
+
+  private void animateBearing(double target, float frameDeltaTicks) {
+    double displacement = wrapDegrees(target - animatedBearing);
+    if (Math.abs(displacement) <= SNAP_DISPLACEMENT && Math.abs(bearingVelocity) <= SNAP_VELOCITY) {
+      animatedBearing = target;
+      bearingVelocity = 0.0D;
+      return;
+    }
+
+    double fastTurn = Math.min(1.0D, Math.abs(displacement) / FAST_TURN_THRESHOLD);
+    double strength = SPRING_STRENGTH + FAST_TURN_EXTRA_STRENGTH * fastTurn;
+    double damping = DAMPING + (FAST_TURN_DAMPING - DAMPING) * fastTurn;
+    double maxVelocity = MAX_VELOCITY + (FAST_TURN_MAX_VELOCITY - MAX_VELOCITY) * fastTurn;
+    double frameTicks = clampFrameDelta(frameDeltaTicks);
+    bearingVelocity =
+        clamp(
+            (bearingVelocity + displacement * strength * frameTicks)
+                * Math.pow(damping, frameTicks),
+            -maxVelocity,
+            maxVelocity);
+    animatedBearing = normalizeDegrees(animatedBearing + bearingVelocity * frameTicks);
+  }
+
+  private static Double targetBearing(HudRenderContext context, DirectionState fallback) {
+    if (!context.editorPreview()) {
+      LocalPlayer player = Minecraft.getInstance().player;
+      if (player != null) {
+        return normalizeDegrees(180.0F - player.getYRot());
+      }
+    }
+    return fallback.present() ? (double) fallback.bearingDegrees() : null;
+  }
+
+  private static double clampFrameDelta(float frameDeltaTicks) {
+    if (!Float.isFinite(frameDeltaTicks) || frameDeltaTicks <= 0.0F) {
+      return 0.0D;
+    }
+    return Math.min(frameDeltaTicks, 3.0F);
   }
 
   private static int degreeY(HudRenderContext context) {
@@ -188,7 +220,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
       DirectionHudLayout layout,
       int compassY,
       double bearing) {
-    int labelY = compassY + Math.max(1, Math.min(LABEL_Y, COMPASS_HEIGHT - font.lineHeight - 1));
+    int labelY = compassY + LABEL_Y;
     List<VisibleDirectionMark> visibleMarks = new ArrayList<>(MARKS.length);
     int activeDirection = nearestCardinal(bearing);
     for (DirectionMark mark : MARKS) {
@@ -225,7 +257,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   }
 
   private static int nearestCardinal(double bearing) {
-    return (int) normalize(Math.round(bearing / 45.0D) * 45.0D);
+    return normalize(Math.round(bearing / 45.0D) * 45.0D);
   }
 
   private static double wrapDegrees(double degrees) {
@@ -244,7 +276,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   }
 
   private static double clamp(double value, double minimum, double maximum) {
-    return Math.max(minimum, Math.min(maximum, value));
+    return Math.clamp(value, minimum, maximum);
   }
 
   private record DirectionMark(String label, int degrees) {}

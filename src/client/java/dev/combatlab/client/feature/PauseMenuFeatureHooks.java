@@ -1,6 +1,5 @@
 package dev.combatlab.client.feature;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -13,13 +12,11 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 
 public final class PauseMenuFeatureHooks {
   private static final Component HUD_EDITOR = Component.translatable("screen.combatlab.hud_editor");
   private static final Component HUD_EDITOR_SHORT = Component.literal("H");
-  private static final int FULL_WIDTH = 204;
-  private static final int COMPACT_SIZE = 20;
-  private static final int BUTTON_HEIGHT = 20;
   private static final int SPACING = 4;
 
   private PauseMenuFeatureHooks() {}
@@ -37,78 +34,74 @@ public final class PauseMenuFeatureHooks {
 
   private static Optional<Button> hudEditorButton(
       Minecraft minecraft, Screen screen, Consumer<Minecraft> openEditor) {
-    if (modMenuInstalled()) {
-      Optional<Button> compactButton = compactButtonBesideModMenu(screen, minecraft, openEditor);
-      if (compactButton.isPresent()) {
-        return compactButton;
-      }
-    }
-    return fullWidthButton(screen, minecraft, openEditor);
-  }
-
-  private static Optional<Button> compactButtonBesideModMenu(
-      Screen screen, Minecraft minecraft, Consumer<Minecraft> openEditor) {
-    return widgets(screen).stream()
-        .filter(PauseMenuFeatureHooks::isModsButton)
-        .max(Comparator.comparingInt(AbstractWidget::getWidth))
+    return PauseMenuButtonPlacement.plan(screen.width, existingButtons(screen), modMenuInstalled())
         .map(
-            modsButton ->
-                Button.builder(HUD_EDITOR_SHORT, ignoredButton -> openEditor.accept(minecraft))
-                    .bounds(
-                        modsButton.getRight() + SPACING,
-                        modsButton.getY(),
-                        COMPACT_SIZE,
-                        COMPACT_SIZE)
-                    .tooltip(Tooltip.create(HUD_EDITOR))
-                    .build());
+            plan -> {
+              shiftForInsertedButton(screen, plan);
+              return buttonFromPlan(minecraft, openEditor, plan);
+            });
   }
 
-  private static Optional<Button> fullWidthButton(
-      Screen screen, Minecraft minecraft, Consumer<Minecraft> openEditor) {
-    Optional<AbstractWidget> optionsButton = optionsButton(screen);
-    if (optionsButton.isEmpty()) {
-      return Optional.empty();
+  private static Button buttonFromPlan(
+      Minecraft minecraft, Consumer<Minecraft> openEditor, PauseMenuButtonPlacement.Plan plan) {
+    if (plan.width() == 20 && plan.height() == 20) {
+      return Button.builder(HUD_EDITOR_SHORT, ignoredButton -> openEditor.accept(minecraft))
+          .bounds(plan.x(), plan.y(), plan.width(), plan.height())
+          .tooltip(Tooltip.create(HUD_EDITOR))
+          .build();
     }
-
-    AbstractWidget anchor = optionsButton.get();
-    int insertY = anchor.getY();
-    shiftWidgetsAtOrBelowInsertedButton(screen, insertY);
-    return Optional.of(
-        Button.builder(HUD_EDITOR, ignoredButton -> openEditor.accept(minecraft))
-            .bounds((screen.width - FULL_WIDTH) / 2, insertY, FULL_WIDTH, BUTTON_HEIGHT)
-            .build());
+    return Button.builder(HUD_EDITOR, ignoredButton -> openEditor.accept(minecraft))
+        .bounds(plan.x(), plan.y(), plan.width(), plan.height())
+        .build();
   }
 
-  private static Optional<AbstractWidget> optionsButton(Screen screen) {
-    return widgets(screen).stream()
-        .filter(PauseMenuFeatureHooks::isOptionsButton)
-        .min(Comparator.comparingInt(AbstractWidget::getY));
+  private static void shiftForInsertedButton(Screen screen, PauseMenuButtonPlacement.Plan plan) {
+    if (plan.width() == 20 && plan.height() == 20) {
+      return;
+    }
+    shiftWidgetsAtOrBelowInsertedButton(screen, plan.y());
   }
 
   private static void shiftWidgetsAtOrBelowInsertedButton(Screen screen, int y) {
     for (AbstractWidget widget : widgets(screen)) {
       if (widget.getY() >= y) {
-        widget.setY(widget.getY() + BUTTON_HEIGHT + SPACING);
+        widget.setY(widget.getY() + planVerticalSpace());
       }
     }
+  }
+
+  private static int planVerticalSpace() {
+    return 20 + SPACING;
   }
 
   private static boolean alreadyHasHudEditorButton(Screen screen) {
     return widgets(screen).stream()
         .anyMatch(
             widget ->
-                widget.getMessage().getString().equals(HUD_EDITOR.getString())
+                messageKey(widget)
+                        .map(PauseMenuButtonPlacement.HUD_EDITOR_KEY::equals)
+                        .orElse(false)
                     || widget.getMessage().getString().equals(HUD_EDITOR_SHORT.getString()));
   }
 
-  private static boolean isModsButton(AbstractWidget widget) {
-    String label = widget.getMessage().getString();
-    return label.equals("Mods");
+  private static List<PauseMenuButtonPlacement.ExistingButton> existingButtons(Screen screen) {
+    return widgets(screen).stream()
+        .map(
+            widget ->
+                new PauseMenuButtonPlacement.ExistingButton(
+                    widget.getX(),
+                    widget.getY(),
+                    widget.getWidth(),
+                    widget.getHeight(),
+                    messageKey(widget).orElse(null)))
+        .toList();
   }
 
-  private static boolean isOptionsButton(AbstractWidget widget) {
-    String label = widget.getMessage().getString();
-    return label.equals("Options...") || label.equals("Options");
+  private static Optional<String> messageKey(AbstractWidget widget) {
+    if (widget.getMessage().getContents() instanceof TranslatableContents contents) {
+      return Optional.of(contents.getKey());
+    }
+    return Optional.empty();
   }
 
   private static List<AbstractWidget> widgets(Screen screen) {

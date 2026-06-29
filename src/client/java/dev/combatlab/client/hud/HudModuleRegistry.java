@@ -134,20 +134,25 @@ public final class HudModuleRegistry implements HudElement {
   }
 
   @Override
+  @SuppressWarnings("NullableProblems")
   public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
     Minecraft client = Minecraft.getInstance();
     if (client.player == null || editorOpen) {
       return;
     }
 
-    frameSnapshot.capture(gameState, client.font, graphics.guiWidth(), graphics.guiHeight());
+    frameSnapshot.capture(
+        gameState,
+        client.font,
+        graphics.guiWidth(),
+        graphics.guiHeight(),
+        deltaTracker.getRealtimeDeltaTicks());
     frameSnapshot.render(graphics);
   }
 
-  private HudModule load(String id) {
-    HudModule loaded = modulesById.get(id);
-    if (loaded != null) {
-      return loaded;
+  private void load(String id) {
+    if (modulesById.containsKey(id)) {
+      return;
     }
 
     HudModuleDescriptor descriptor = descriptorsById.get(id);
@@ -161,7 +166,6 @@ public final class HudModuleRegistry implements HudElement {
       baseModule.bindModuleLookup(modulesById::get);
     }
     refreshFrameSnapshot();
-    return module;
   }
 
   private void unload(String id) {

@@ -9,6 +9,7 @@ public record HudRenderContext(
     int screenWidth,
     int screenHeight,
     boolean editorPreview,
+    float frameDeltaTicks,
     ClientGameState gameState) {
   public HudRenderContext(
       Font font,
@@ -16,7 +17,17 @@ public record HudRenderContext(
       int screenWidth,
       int screenHeight,
       ClientGameState gameState) {
-    this(font, bounds, screenWidth, screenHeight, false, gameState);
+    this(font, bounds, screenWidth, screenHeight, false, 1.0F, gameState);
+  }
+
+  public HudRenderContext(
+      Font font,
+      HudRectangle bounds,
+      int screenWidth,
+      int screenHeight,
+      float frameDeltaTicks,
+      ClientGameState gameState) {
+    this(font, bounds, screenWidth, screenHeight, false, frameDeltaTicks, gameState);
   }
 
   public HudGameState hud() {

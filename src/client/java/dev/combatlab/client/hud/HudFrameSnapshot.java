@@ -13,9 +13,14 @@ final class HudFrameSnapshot {
     this.moduleFrames = modules.stream().map(ModuleFrame::new).toList();
   }
 
-  void capture(ClientGameState gameState, Font font, int screenWidth, int screenHeight) {
+  void capture(
+      ClientGameState gameState,
+      Font font,
+      int screenWidth,
+      int screenHeight,
+      float frameDeltaTicks) {
     for (ModuleFrame moduleFrame : moduleFrames) {
-      moduleFrame.capture(gameState, font, screenWidth, screenHeight);
+      moduleFrame.capture(gameState, font, screenWidth, screenHeight, frameDeltaTicks);
     }
   }
 
@@ -33,7 +38,12 @@ final class HudFrameSnapshot {
       this.module = module;
     }
 
-    private void capture(ClientGameState gameState, Font font, int screenWidth, int screenHeight) {
+    private void capture(
+        ClientGameState gameState,
+        Font font,
+        int screenWidth,
+        int screenHeight,
+        float frameDeltaTicks) {
       context =
           module.enabled()
               ? new HudRenderContext(
@@ -41,6 +51,7 @@ final class HudFrameSnapshot {
                   module.bounds(screenWidth, screenHeight),
                   screenWidth,
                   screenHeight,
+                  frameDeltaTicks,
                   gameState)
               : null;
     }

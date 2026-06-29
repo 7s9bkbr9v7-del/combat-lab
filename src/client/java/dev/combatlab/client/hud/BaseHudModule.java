@@ -125,6 +125,7 @@ public abstract class BaseHudModule implements HudModule {
             screenWidth,
             screenHeight,
             true,
+            1.0F,
             gameState.withHud(gameState.hud().forEditorPreview())));
   }
 
