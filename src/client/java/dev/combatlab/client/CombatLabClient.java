@@ -12,35 +12,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class CombatLabClient implements ClientModInitializer {
-	public static final String MOD_ID = "combatlab";
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+  public static final String MOD_ID = "combatlab";
+  public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	@Override
-	public void onInitializeClient() {
-		VanillaHudFeatureHooks.installStatusEffectsHudSuppression();
-		KeyMapping openOptions = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-				"key.combatlab.open_options",
-				InputConstants.Type.KEYSYM,
-				InputConstants.KEY_RSHIFT,
-				KeyMapping.Category.MISC
-		));
-		KeyMapping zoom = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-				"key.combatlab.zoom",
-				InputConstants.Type.KEYSYM,
-				InputConstants.KEY_C,
-				KeyMapping.Category.MISC
-		));
-		KeyMapping freelook = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-				"key.combatlab.freelook",
-				InputConstants.Type.KEYSYM,
-				InputConstants.KEY_LALT,
-				KeyMapping.Category.MISC
-		));
-		CombatLabRuntime runtime = CombatLabRuntime.create(openOptions, zoom, freelook);
+  @Override
+  public void onInitializeClient() {
+    VanillaHudFeatureHooks.installStatusEffectsHudSuppression();
+    KeyMapping openOptions =
+        KeyMappingHelper.registerKeyMapping(
+            new KeyMapping(
+                "key.combatlab.open_options",
+                InputConstants.Type.KEYSYM,
+                InputConstants.KEY_RSHIFT,
+                KeyMapping.Category.MISC));
+    KeyMapping zoom =
+        KeyMappingHelper.registerKeyMapping(
+            new KeyMapping(
+                "key.combatlab.zoom",
+                InputConstants.Type.KEYSYM,
+                InputConstants.KEY_C,
+                KeyMapping.Category.MISC));
+    KeyMapping freelook =
+        KeyMappingHelper.registerKeyMapping(
+            new KeyMapping(
+                "key.combatlab.freelook",
+                InputConstants.Type.KEYSYM,
+                InputConstants.KEY_LALT,
+                KeyMapping.Category.MISC));
+    CombatLabRuntime runtime = CombatLabRuntime.create(openOptions, zoom, freelook);
 
-		ClientTickEvents.END_CLIENT_TICK.register(runtime::tick);
-		ClientPreAttackCallback.EVENT.register(runtime::onPreAttack);
-		ScreenEvents.AFTER_INIT.register(runtime::afterScreenInit);
-		LOGGER.info("Combat Lab initialized with {} HUD module(s)", runtime.hudModuleCount());
-	}
+    ClientTickEvents.END_CLIENT_TICK.register(runtime::tick);
+    ClientPreAttackCallback.EVENT.register(runtime::onPreAttack);
+    ScreenEvents.AFTER_INIT.register(runtime::afterScreenInit);
+    LOGGER.info("Combat Lab initialized with {} HUD module(s)", runtime.hudModuleCount());
+  }
 }

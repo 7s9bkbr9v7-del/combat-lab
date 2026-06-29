@@ -8,43 +8,38 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class MovementStatusHud extends TextHudModule {
-	private static final HudModuleDefinition DEFINITION = new HudModuleDefinition(
-			Identifier.fromNamespaceAndPath("combatlab", "movement_status"),
-			Component.literal("Movement status HUD"),
-			1.0,
-			0.14,
-			true
-	);
+  private static final HudModuleDefinition DEFINITION =
+      new HudModuleDefinition(
+          Identifier.fromNamespaceAndPath("combatlab", "movement_status"),
+          Component.literal("Movement status HUD"),
+          1.0,
+          0.14,
+          true);
 
-	public static HudModuleDescriptor descriptor() {
-		return new HudModuleDescriptor(DEFINITION, dependencies -> new MovementStatusHud(dependencies.options(), dependencies.debug()));
-	}
+  public static HudModuleDescriptor descriptor() {
+    return new HudModuleDescriptor(
+        DEFINITION,
+        dependencies -> new MovementStatusHud(dependencies.options(), dependencies.debug()));
+  }
 
-	private boolean active;
+  private boolean active;
 
-	public MovementStatusHud(CombatLabOptions options, DebugLogger debug) {
-		super(
-				DEFINITION,
-				"Movement status",
-				options,
-				debug
-		);
-	}
+  public MovementStatusHud(CombatLabOptions options, DebugLogger debug) {
+    super(DEFINITION, "Movement status", options, debug);
+  }
 
-	@Override
-	public void tick(ClientGameState gameState) {
-		MovementState movement = gameState.player().movement();
-		String status = MovementStatusText.resolve(
-				movement.crouching(),
-				movement.sprinting(),
-				movement.sprintToggled()
-		);
-		active = !status.isEmpty();
-		setText(active ? status : "Movement status");
-	}
+  @Override
+  public void tick(ClientGameState gameState) {
+    MovementState movement = gameState.player().movement();
+    String status =
+        MovementStatusText.resolve(
+            movement.crouching(), movement.sprinting(), movement.sprintToggled());
+    active = !status.isEmpty();
+    setText(active ? status : "Movement status");
+  }
 
-	@Override
-	protected boolean shouldRenderInGame(HudRenderContext context) {
-		return active;
-	}
+  @Override
+  protected boolean shouldRenderInGame(HudRenderContext context) {
+    return active;
+  }
 }

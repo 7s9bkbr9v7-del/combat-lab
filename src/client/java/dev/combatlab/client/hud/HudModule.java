@@ -1,63 +1,61 @@
 package dev.combatlab.client.hud;
 
+import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import dev.combatlab.client.state.ClientGameState;
 
 /**
- * A self-contained HUD module that can be registered, configured, and moved
- * without teaching the editor about its concrete type.
+ * A self-contained HUD module that can be registered, configured, and moved without teaching the
+ * editor about its concrete type.
  */
 public interface HudModule {
-	Identifier id();
+  Identifier id();
 
-	Component displayName();
+  Component displayName();
 
-	boolean enabled();
+  boolean enabled();
 
-	void setEnabled(boolean enabled);
+  void setEnabled(boolean enabled);
 
-	HudPosition position(int screenWidth, int screenHeight);
+  HudPosition position(int screenWidth, int screenHeight);
 
-	HudSize size();
+  HudSize size();
 
-	HudRectangle bounds(int screenWidth, int screenHeight);
+  HudRectangle bounds(int screenWidth, int screenHeight);
 
-	HudOrientation orientation(int screenWidth, int screenHeight);
+  HudOrientation orientation(int screenWidth, int screenHeight);
 
-	void updatePosition(int x, int y, int screenWidth, int screenHeight);
+  void updatePosition(int x, int y, int screenWidth, int screenHeight);
 
-	void savePosition();
+  void savePosition();
 
-	String attachmentTargetId();
+  String attachmentTargetId();
 
-	void attachTo(HudModule target, HudAttachmentSide side, int offset);
+  void attachTo(HudModule target, HudAttachmentSide side, int offset);
 
-	void clearAttachment();
+  void clearAttachment();
 
-	void detach(int screenWidth, int screenHeight);
+  void detach(int screenWidth, int screenHeight);
 
-	void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context);
+  void renderInGame(GuiGraphicsExtractor graphics, HudRenderContext context);
 
-	void renderEditorPreview(
-			GuiGraphicsExtractor graphics,
-			Font font,
-			HudRectangle bounds,
-			int screenWidth,
-			int screenHeight,
-			ClientGameState gameState
-	);
+  void renderEditorPreview(
+      GuiGraphicsExtractor graphics,
+      Font font,
+      HudRectangle bounds,
+      int screenWidth,
+      int screenHeight,
+      ClientGameState gameState);
 
-	default void tick(ClientGameState gameState) {
-	}
+  default void tick(ClientGameState gameState) {}
 
-	default boolean ticksWhenDisabled() {
-		return false;
-	}
+  default boolean ticksWhenDisabled() {
+    return false;
+  }
 
-	default boolean contains(double mouseX, double mouseY, int screenWidth, int screenHeight) {
-		return bounds(screenWidth, screenHeight).contains(mouseX, mouseY);
-	}
+  default boolean contains(double mouseX, double mouseY, int screenWidth, int screenHeight) {
+    return bounds(screenWidth, screenHeight).contains(mouseX, mouseY);
+  }
 }

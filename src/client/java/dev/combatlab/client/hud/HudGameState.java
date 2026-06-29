@@ -8,36 +8,24 @@ import dev.combatlab.client.state.PlayerEffects;
 import dev.combatlab.client.state.PlayerState;
 
 public record HudGameState(
-		int fps,
-		int cps,
-		int ping,
-		MovementState movement,
-		PlayerArmor armor,
-		PlayerEffects effects
-) {
-	public static HudGameState empty() {
-		return from(0, PlayerState.absent(), InputState.empty(), CombatSnapshot.empty());
-	}
+    int fps, int cps, int ping, MovementState movement, PlayerArmor armor, PlayerEffects effects) {
+  public static HudGameState empty() {
+    return from(0, PlayerState.absent(), InputState.empty(), CombatSnapshot.empty());
+  }
 
-	public static HudGameState from(int fps, PlayerState player, InputState input, CombatSnapshot combat) {
-		return new HudGameState(
-				fps,
-				input.cps(),
-				combat.ping(),
-				player.movement(),
-				player.armor(),
-				player.effects()
-		);
-	}
+  public static HudGameState from(
+      int fps, PlayerState player, InputState input, CombatSnapshot combat) {
+    return new HudGameState(
+        fps, input.cps(), combat.ping(), player.movement(), player.armor(), player.effects());
+  }
 
-	public HudGameState forEditorPreview() {
-		return new HudGameState(
-				fps,
-				cps,
-				ping,
-				movement,
-				PlayerArmor.editorPreview(armor),
-				PlayerEffects.editorPreview(effects)
-		);
-	}
+  public HudGameState forEditorPreview() {
+    return new HudGameState(
+        fps,
+        cps,
+        ping,
+        movement,
+        PlayerArmor.editorPreview(armor),
+        PlayerEffects.editorPreview(effects));
+  }
 }

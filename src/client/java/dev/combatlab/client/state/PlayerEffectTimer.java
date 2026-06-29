@@ -1,21 +1,19 @@
 package dev.combatlab.client.state;
 
+import java.util.Objects;
 import net.minecraft.resources.Identifier;
 
-import java.util.Objects;
-
 public record PlayerEffectTimer(
-		String id,
-		String displayName,
-		int amplifier,
-		int durationTicks,
-		boolean infinite,
-		boolean ambient,
-		int color,
-		Identifier iconTexture
-) {
-	public PlayerEffectTimer {
-		Objects.requireNonNull(id, "id");
-		Objects.requireNonNull(displayName, "displayName");
-	}
+    String id,
+    String displayName,
+    int amplifier,
+    int durationTicks,
+    boolean infinite,
+    boolean ambient,
+    int color,
+    Identifier iconTexture) {
+  public PlayerEffectTimer {
+    Objects.requireNonNull(id, "id");
+    Objects.requireNonNull(displayName, "displayName");
+  }
 }

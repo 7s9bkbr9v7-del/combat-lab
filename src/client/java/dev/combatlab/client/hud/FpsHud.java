@@ -7,29 +7,25 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class FpsHud extends TextHudModule {
-	private static final HudModuleDefinition DEFINITION = new HudModuleDefinition(
-			Identifier.fromNamespaceAndPath("combatlab", "fps"),
-			Component.literal("FPS HUD"),
-			1.0,
-			0.02,
-			true
-	);
+  private static final HudModuleDefinition DEFINITION =
+      new HudModuleDefinition(
+          Identifier.fromNamespaceAndPath("combatlab", "fps"),
+          Component.literal("FPS HUD"),
+          1.0,
+          0.02,
+          true);
 
-	public static HudModuleDescriptor descriptor() {
-		return new HudModuleDescriptor(DEFINITION, dependencies -> new FpsHud(dependencies.options(), dependencies.debug()));
-	}
+  public static HudModuleDescriptor descriptor() {
+    return new HudModuleDescriptor(
+        DEFINITION, dependencies -> new FpsHud(dependencies.options(), dependencies.debug()));
+  }
 
-	public FpsHud(CombatLabOptions options, DebugLogger debug) {
-		super(
-				DEFINITION,
-				"-- FPS",
-				options,
-				debug
-		);
-	}
+  public FpsHud(CombatLabOptions options, DebugLogger debug) {
+    super(DEFINITION, "-- FPS", options, debug);
+  }
 
-	@Override
-	public void tick(ClientGameState gameState) {
-		setText(gameState.hud().fps() + " FPS");
-	}
+  @Override
+  public void tick(ClientGameState gameState) {
+    setText(gameState.hud().fps() + " FPS");
+  }
 }

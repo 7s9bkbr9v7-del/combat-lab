@@ -9,56 +9,65 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public final class CombatLabOptionsScreen extends Screen {
-	private static final Component TITLE = Component.literal("Combat Lab Options");
-	private final Screen parent;
-	private final CombatLabOptions options;
-	private final HudModuleRegistry modules;
-	private final DebugLogger debug;
+  private static final Component TITLE = Component.literal("Combat Lab Options");
+  private final Screen parent;
+  private final CombatLabOptions options;
+  private final HudModuleRegistry modules;
+  private final DebugLogger debug;
 
-	public CombatLabOptionsScreen(Screen parent, CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
-		super(TITLE);
-		this.parent = parent;
-		this.options = options;
-		this.modules = modules;
-		this.debug = debug;
-	}
+  public CombatLabOptionsScreen(
+      Screen parent, CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
+    super(TITLE);
+    this.parent = parent;
+    this.options = options;
+    this.modules = modules;
+    this.debug = debug;
+  }
 
-	@Override
-	protected void init() {
-		int left = width / 2 - 100;
-		int top = height / 2 - 40;
-		addRenderableWidget(OptionTooltip.describe(Button.builder(
-				Component.literal("General"),
-				button -> ScreenNavigator.open(minecraft, new GeneralOptionsScreen(this, options, debug))
-		).bounds(left, top, 200, 20).build(), Component.literal(
-				"Configure visual, camera, logging, and notification options."
-		)));
+  @Override
+  protected void init() {
+    int left = width / 2 - 100;
+    int top = height / 2 - 40;
+    addRenderableWidget(
+        OptionTooltip.describe(
+            Button.builder(
+                    Component.literal("General"),
+                    button ->
+                        ScreenNavigator.open(
+                            minecraft, new GeneralOptionsScreen(this, options, debug)))
+                .bounds(left, top, 200, 20)
+                .build(),
+            Component.literal("Configure visual, camera, logging, and notification options.")));
 
-		addRenderableWidget(OptionTooltip.describe(Button.builder(
-				Component.literal("HUD"),
-				button -> ScreenNavigator.open(minecraft, new HudOptionsScreen(this, modules))
-		).bounds(left, top + 30, 200, 20).build(), Component.literal(
-				"Choose which HUD modules are visible."
-		)));
+    addRenderableWidget(
+        OptionTooltip.describe(
+            Button.builder(
+                    Component.literal("HUD"),
+                    button -> ScreenNavigator.open(minecraft, new HudOptionsScreen(this, modules)))
+                .bounds(left, top + 30, 200, 20)
+                .build(),
+            Component.literal("Choose which HUD modules are visible.")));
 
-		addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
-				.bounds(left, top + 75, 200, 20)
-				.build());
-	}
+    addRenderableWidget(
+        Button.builder(Component.literal("Done"), button -> onClose())
+            .bounds(left, top + 75, 200, 20)
+            .build());
+  }
 
-	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-		graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
-	}
+  @Override
+  public void extractRenderState(
+      GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+    super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+    graphics.centeredText(font, title, width / 2, 30, 0xFFFFFFFF);
+  }
 
-	@Override
-	public void onClose() {
-		ScreenNavigator.open(minecraft, parent);
-	}
+  @Override
+  public void onClose() {
+    ScreenNavigator.open(minecraft, parent);
+  }
 
-	@Override
-	public boolean isPauseScreen() {
-		return false;
-	}
+  @Override
+  public boolean isPauseScreen() {
+    return false;
+  }
 }

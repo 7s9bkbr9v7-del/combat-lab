@@ -7,24 +7,25 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class PingHud extends TextHudModule {
-	private static final HudModuleDefinition DEFINITION = new HudModuleDefinition(
-			Identifier.fromNamespaceAndPath("combatlab", "ping"),
-			Component.literal("Ping HUD"),
-			1.0,
-			0.20,
-			true
-	);
+  private static final HudModuleDefinition DEFINITION =
+      new HudModuleDefinition(
+          Identifier.fromNamespaceAndPath("combatlab", "ping"),
+          Component.literal("Ping HUD"),
+          1.0,
+          0.20,
+          true);
 
-	public static HudModuleDescriptor descriptor() {
-		return new HudModuleDescriptor(DEFINITION, dependencies -> new PingHud(dependencies.options(), dependencies.debug()));
-	}
+  public static HudModuleDescriptor descriptor() {
+    return new HudModuleDescriptor(
+        DEFINITION, dependencies -> new PingHud(dependencies.options(), dependencies.debug()));
+  }
 
-	public PingHud(CombatLabOptions options, DebugLogger debug) {
-		super(DEFINITION, "-- ms", options, debug);
-	}
+  public PingHud(CombatLabOptions options, DebugLogger debug) {
+    super(DEFINITION, "-- ms", options, debug);
+  }
 
-	@Override
-	public void tick(ClientGameState gameState) {
-		setText(PingText.resolve(gameState.combat().ping()));
-	}
+  @Override
+  public void tick(ClientGameState gameState) {
+    setText(PingText.resolve(gameState.combat().ping()));
+  }
 }

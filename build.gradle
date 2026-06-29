@@ -1,5 +1,6 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'com.diffplug.spotless' version '8.7.0'
 }
 
 version = project.mod_version
@@ -50,6 +51,21 @@ tasks.withType(Test).configureEach {
 	systemProperty 'combatlab.clientClasses', sourceSets.client.output.classesDirs.asPath
 }
 
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		googleJavaFormat()
+		removeUnusedImports()
+		formatAnnotations()
+	}
+
+	format 'misc', {
+		target '*.gradle', '*.md', '.gitignore'
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_25
@@ -63,5 +79,6 @@ tasks.register('verifyRendererCompatibility') {
 }
 
 tasks.named('check') {
+	dependsOn tasks.named('spotlessCheck')
 	dependsOn tasks.named('verifyRendererCompatibility')
 }

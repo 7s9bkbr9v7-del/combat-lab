@@ -4,248 +4,264 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.DirectionState;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
 public final class DirectionHud extends ResizableBaseHudModule implements AdaptiveLayoutHudModule {
-	private static final int WIDTH = 112;
-	private static final int SIDE_WIDTH = 58;
-	private static final int COMPASS_HEIGHT = 12;
-	private static final int HEIGHT = 22;
-	private static final int CONTENT_LEFT = 3;
-	private static final int CONTENT_PADDING = 3;
-	private static final int DEGREE_GAP = 1;
-	private static final int LABEL_Y = 2;
-	private static final int ACCENT_COLOR = 0xFF60A5FA;
-	private static final double DEGREES_PER_PIXEL = 2.25D;
-	private static final double SPRING_STRENGTH = 0.16D;
-	private static final double FAST_TURN_EXTRA_STRENGTH = 0.10D;
-	private static final double DAMPING = 0.72D;
-	private static final double FAST_TURN_DAMPING = 0.66D;
-	private static final double FAST_TURN_THRESHOLD = 60.0D;
-	private static final double MAX_VELOCITY = 28.0D;
-	private static final double FAST_TURN_MAX_VELOCITY = 46.0D;
-	private static final DirectionHudLayout FLOATING_LAYOUT = new DirectionHudLayout(WIDTH, DEGREES_PER_PIXEL);
-	private static final DirectionHudLayout SIDE_LAYOUT = new DirectionHudLayout(SIDE_WIDTH, DEGREES_PER_PIXEL);
-	private static final DirectionMark[] MARKS = {
-			new DirectionMark("N", 0),
-			new DirectionMark("NE", 45),
-			new DirectionMark("E", 90),
-			new DirectionMark("SE", 135),
-			new DirectionMark("S", 180),
-			new DirectionMark("SW", 225),
-			new DirectionMark("W", 270),
-			new DirectionMark("NW", 315)
-	};
-	private static final HudModuleDefinition DEFINITION = new HudModuleDefinition(
-			Identifier.fromNamespaceAndPath("combatlab", "direction"),
-			Component.literal("Direction"),
-			0.5,
-			0.08,
-			true
-	);
-	private boolean bearingInitialized;
-	private double animatedBearing;
-	private double bearingVelocity;
-	private DirectionHudLayout lockedLayout;
+  private static final int WIDTH = 112;
+  private static final int SIDE_WIDTH = 58;
+  private static final int COMPASS_HEIGHT = 12;
+  private static final int HEIGHT = 22;
+  private static final int CONTENT_LEFT = 3;
+  private static final int CONTENT_PADDING = 3;
+  private static final int DEGREE_GAP = 1;
+  private static final int LABEL_Y = 2;
+  private static final int ACCENT_COLOR = 0xFF60A5FA;
+  private static final double DEGREES_PER_PIXEL = 2.25D;
+  private static final double SPRING_STRENGTH = 0.16D;
+  private static final double FAST_TURN_EXTRA_STRENGTH = 0.10D;
+  private static final double DAMPING = 0.72D;
+  private static final double FAST_TURN_DAMPING = 0.66D;
+  private static final double FAST_TURN_THRESHOLD = 60.0D;
+  private static final double MAX_VELOCITY = 28.0D;
+  private static final double FAST_TURN_MAX_VELOCITY = 46.0D;
+  private static final DirectionHudLayout FLOATING_LAYOUT =
+      new DirectionHudLayout(WIDTH, DEGREES_PER_PIXEL);
+  private static final DirectionHudLayout SIDE_LAYOUT =
+      new DirectionHudLayout(SIDE_WIDTH, DEGREES_PER_PIXEL);
+  private static final DirectionMark[] MARKS = {
+    new DirectionMark("N", 0),
+    new DirectionMark("NE", 45),
+    new DirectionMark("E", 90),
+    new DirectionMark("SE", 135),
+    new DirectionMark("S", 180),
+    new DirectionMark("SW", 225),
+    new DirectionMark("W", 270),
+    new DirectionMark("NW", 315)
+  };
+  private static final HudModuleDefinition DEFINITION =
+      new HudModuleDefinition(
+          Identifier.fromNamespaceAndPath("combatlab", "direction"),
+          Component.literal("Direction"),
+          0.5,
+          0.08,
+          true);
+  private boolean bearingInitialized;
+  private double animatedBearing;
+  private double bearingVelocity;
+  private DirectionHudLayout lockedLayout;
 
-	public static HudModuleDescriptor descriptor() {
-		return new HudModuleDescriptor(DEFINITION, dependencies -> new DirectionHud(dependencies.options(), dependencies.debug()));
-	}
+  public static HudModuleDescriptor descriptor() {
+    return new HudModuleDescriptor(
+        DEFINITION, dependencies -> new DirectionHud(dependencies.options(), dependencies.debug()));
+  }
 
-	public DirectionHud(CombatLabOptions options, DebugLogger debug) {
-		super(DEFINITION, options, debug);
-	}
+  public DirectionHud(CombatLabOptions options, DebugLogger debug) {
+    super(DEFINITION, options, debug);
+  }
 
-	@Override
-	public HudSize unscaledSize() {
-		return layout().size();
-	}
+  @Override
+  public HudSize unscaledSize() {
+    return layout().size();
+  }
 
-	@Override
-	public void lockLayout() {
-		lockedLayout = resolvedLayout();
-	}
+  @Override
+  public void lockLayout() {
+    lockedLayout = resolvedLayout();
+  }
 
-	@Override
-	public void unlockLayout() {
-		lockedLayout = null;
-	}
+  @Override
+  public void unlockLayout() {
+    lockedLayout = null;
+  }
 
-	@Override
-	public void tick(ClientGameState gameState) {
-		DirectionState direction = gameState.player().direction();
-		if (!direction.present()) {
-			bearingInitialized = false;
-			bearingVelocity = 0.0D;
-			return;
-		}
+  @Override
+  public void tick(ClientGameState gameState) {
+    DirectionState direction = gameState.player().direction();
+    if (!direction.present()) {
+      bearingInitialized = false;
+      bearingVelocity = 0.0D;
+      return;
+    }
 
-		double target = direction.bearingDegrees();
-		if (!bearingInitialized) {
-			animatedBearing = target;
-			bearingVelocity = 0.0D;
-			bearingInitialized = true;
-			return;
-		}
+    double target = direction.bearingDegrees();
+    if (!bearingInitialized) {
+      animatedBearing = target;
+      bearingVelocity = 0.0D;
+      bearingInitialized = true;
+      return;
+    }
 
-		double displacement = wrapDegrees(target - animatedBearing);
-		double fastTurn = Math.min(1.0D, Math.abs(displacement) / FAST_TURN_THRESHOLD);
-		double strength = SPRING_STRENGTH + FAST_TURN_EXTRA_STRENGTH * fastTurn;
-		double damping = DAMPING + (FAST_TURN_DAMPING - DAMPING) * fastTurn;
-		double maxVelocity = MAX_VELOCITY + (FAST_TURN_MAX_VELOCITY - MAX_VELOCITY) * fastTurn;
-		bearingVelocity = clamp((bearingVelocity + displacement * strength) * damping, -maxVelocity, maxVelocity);
-		animatedBearing = normalizeDegrees(animatedBearing + bearingVelocity);
-	}
+    double displacement = wrapDegrees(target - animatedBearing);
+    double fastTurn = Math.min(1.0D, Math.abs(displacement) / FAST_TURN_THRESHOLD);
+    double strength = SPRING_STRENGTH + FAST_TURN_EXTRA_STRENGTH * fastTurn;
+    double damping = DAMPING + (FAST_TURN_DAMPING - DAMPING) * fastTurn;
+    double maxVelocity = MAX_VELOCITY + (FAST_TURN_MAX_VELOCITY - MAX_VELOCITY) * fastTurn;
+    bearingVelocity =
+        clamp((bearingVelocity + displacement * strength) * damping, -maxVelocity, maxVelocity);
+    animatedBearing = normalizeDegrees(animatedBearing + bearingVelocity);
+  }
 
-	@Override
-	protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
-		DirectionState direction = context.gameState().player().direction();
-		double bearing = renderBearing(direction);
+  @Override
+  protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
+    DirectionState direction = context.gameState().player().direction();
+    double bearing = renderBearing(direction);
 
-		graphics.pose().pushMatrix();
-		graphics.pose().translate(context.bounds().x(), context.bounds().y());
-		graphics.pose().scale((float) scale(), (float) scale());
+    graphics.pose().pushMatrix();
+    graphics.pose().translate(context.bounds().x(), context.bounds().y());
+    graphics.pose().scale((float) scale(), (float) scale());
 
-		DirectionHudLayout layout = layout();
-		int degreeY = degreeY(context);
-		int compassY = compassY(context, context.font());
-		graphics.fill(0, compassY, layout.width(), compassY + COMPASS_HEIGHT, 0x77000000);
-		graphics.outline(0, compassY, layout.width(), COMPASS_HEIGHT, 0x44FFFFFF);
-		graphics.fill(layout.centerX(), compassY + 1, layout.centerX() + 1, compassY + COMPASS_HEIGHT - 1, 0x99D1D5DB);
-		renderTicks(graphics, layout, compassY, bearing);
-		renderMarks(graphics, context.font(), layout, compassY, bearing);
-		renderDegree(graphics, context.font(), layout, degreeY, bearing);
+    DirectionHudLayout layout = layout();
+    int degreeY = degreeY(context);
+    int compassY = compassY(context, context.font());
+    graphics.fill(0, compassY, layout.width(), compassY + COMPASS_HEIGHT, 0x77000000);
+    graphics.outline(0, compassY, layout.width(), COMPASS_HEIGHT, 0x44FFFFFF);
+    graphics.fill(
+        layout.centerX(),
+        compassY + 1,
+        layout.centerX() + 1,
+        compassY + COMPASS_HEIGHT - 1,
+        0x99D1D5DB);
+    renderTicks(graphics, layout, compassY, bearing);
+    renderMarks(graphics, context.font(), layout, compassY, bearing);
+    renderDegree(graphics, context.font(), layout, degreeY, bearing);
 
-		graphics.pose().popMatrix();
-	}
+    graphics.pose().popMatrix();
+  }
 
-	private double renderBearing(DirectionState direction) {
-		if (direction.present()) {
-			if (!bearingInitialized) {
-				return direction.bearingDegrees();
-			}
-			return animatedBearing;
-		}
-		return 21.0D;
-	}
+  private double renderBearing(DirectionState direction) {
+    if (direction.present()) {
+      if (!bearingInitialized) {
+        return direction.bearingDegrees();
+      }
+      return animatedBearing;
+    }
+    return 21.0D;
+  }
 
-	private static int degreeY(HudRenderContext context) {
-		return context.orientation().verticalSideFacingCenter() == HudVerticalSide.TOP
-				? 0
-				: COMPASS_HEIGHT + DEGREE_GAP;
-	}
+  private static int degreeY(HudRenderContext context) {
+    return context.orientation().verticalSideFacingCenter() == HudVerticalSide.TOP
+        ? 0
+        : COMPASS_HEIGHT + DEGREE_GAP;
+  }
 
-	private static int compassY(HudRenderContext context, Font font) {
-		return context.orientation().verticalSideFacingCenter() == HudVerticalSide.TOP
-				? font.lineHeight + DEGREE_GAP
-				: 0;
-	}
+  private static int compassY(HudRenderContext context, Font font) {
+    return context.orientation().verticalSideFacingCenter() == HudVerticalSide.TOP
+        ? font.lineHeight + DEGREE_GAP
+        : 0;
+  }
 
-	private DirectionHudLayout layout() {
-		return lockedLayout != null ? lockedLayout : resolvedLayout();
-	}
+  private DirectionHudLayout layout() {
+    return lockedLayout != null ? lockedLayout : resolvedLayout();
+  }
 
-	private DirectionHudLayout resolvedLayout() {
-		return HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY()).sideEdge()
-				? SIDE_LAYOUT
-				: FLOATING_LAYOUT;
-	}
+  private DirectionHudLayout resolvedLayout() {
+    return HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY())
+            .sideEdge()
+        ? SIDE_LAYOUT
+        : FLOATING_LAYOUT;
+  }
 
-	private static void renderTicks(GuiGraphicsExtractor graphics, DirectionHudLayout layout, int compassY, double bearing) {
-		for (int degrees = 0; degrees < 360; degrees += 15) {
-			int x = xFor(layout, degrees, bearing);
-			if (x < CONTENT_LEFT || x >= layout.contentRight()) {
-				continue;
-			}
-			boolean cardinal = degrees % 45 == 0;
-			int height = cardinal ? 3 : 2;
-			int color = cardinal ? 0x77FFFFFF : 0x44FFFFFF;
-			graphics.fill(x, compassY + COMPASS_HEIGHT - height - 1, x + 1, compassY + COMPASS_HEIGHT - 1, color);
-		}
-	}
+  private static void renderTicks(
+      GuiGraphicsExtractor graphics, DirectionHudLayout layout, int compassY, double bearing) {
+    for (int degrees = 0; degrees < 360; degrees += 15) {
+      int x = xFor(layout, degrees, bearing);
+      if (x < CONTENT_LEFT || x >= layout.contentRight()) {
+        continue;
+      }
+      boolean cardinal = degrees % 45 == 0;
+      int height = cardinal ? 3 : 2;
+      int color = cardinal ? 0x77FFFFFF : 0x44FFFFFF;
+      graphics.fill(
+          x, compassY + COMPASS_HEIGHT - height - 1, x + 1, compassY + COMPASS_HEIGHT - 1, color);
+    }
+  }
 
-	private static void renderMarks(GuiGraphicsExtractor graphics, Font font, DirectionHudLayout layout, int compassY, double bearing) {
-		int labelY = compassY + Math.max(1, Math.min(LABEL_Y, COMPASS_HEIGHT - font.lineHeight - 1));
-		List<VisibleDirectionMark> visibleMarks = new ArrayList<>(MARKS.length);
-		int activeDirection = nearestCardinal(bearing);
-		for (DirectionMark mark : MARKS) {
-			int x = xFor(layout, mark.degrees(), bearing);
-			int textWidth = font.width(mark.label());
-			int textX = x - textWidth / 2;
-			if (textX < CONTENT_LEFT || textX + textWidth > layout.contentRight()) {
-				continue;
-			}
-			int color = mark.degrees() == activeDirection ? ACCENT_COLOR : 0xFFE5E7EB;
-			visibleMarks.add(new VisibleDirectionMark(mark.label(), textX, textWidth, color));
-		}
+  private static void renderMarks(
+      GuiGraphicsExtractor graphics,
+      Font font,
+      DirectionHudLayout layout,
+      int compassY,
+      double bearing) {
+    int labelY = compassY + Math.max(1, Math.min(LABEL_Y, COMPASS_HEIGHT - font.lineHeight - 1));
+    List<VisibleDirectionMark> visibleMarks = new ArrayList<>(MARKS.length);
+    int activeDirection = nearestCardinal(bearing);
+    for (DirectionMark mark : MARKS) {
+      int x = xFor(layout, mark.degrees(), bearing);
+      int textWidth = font.width(mark.label());
+      int textX = x - textWidth / 2;
+      if (textX < CONTENT_LEFT || textX + textWidth > layout.contentRight()) {
+        continue;
+      }
+      int color = mark.degrees() == activeDirection ? ACCENT_COLOR : 0xFFE5E7EB;
+      visibleMarks.add(new VisibleDirectionMark(mark.label(), textX, textWidth, color));
+    }
 
-		visibleMarks.sort(Comparator.comparingInt(VisibleDirectionMark::textX));
-		int lastTextRight = Integer.MIN_VALUE;
-		for (VisibleDirectionMark mark : visibleMarks) {
-			if (mark.textX() <= lastTextRight + 2) {
-				continue;
-			}
-			graphics.text(font, mark.label(), mark.textX(), labelY, mark.color(), true);
-			lastTextRight = mark.textX() + mark.textWidth();
-		}
-	}
+    visibleMarks.sort(Comparator.comparingInt(VisibleDirectionMark::textX));
+    int lastTextRight = Integer.MIN_VALUE;
+    for (VisibleDirectionMark mark : visibleMarks) {
+      if (mark.textX() <= lastTextRight + 2) {
+        continue;
+      }
+      graphics.text(font, mark.label(), mark.textX(), labelY, mark.color(), true);
+      lastTextRight = mark.textX() + mark.textWidth();
+    }
+  }
 
-	private static void renderDegree(GuiGraphicsExtractor graphics, Font font, DirectionHudLayout layout, int y, double bearing) {
-		String text = Integer.toString(normalize(bearing));
-		graphics.text(font, text, layout.centerX() - font.width(text) / 2, y, 0xFFE5E7EB, true);
-	}
+  private static void renderDegree(
+      GuiGraphicsExtractor graphics, Font font, DirectionHudLayout layout, int y, double bearing) {
+    String text = Integer.toString(normalize(bearing));
+    graphics.text(font, text, layout.centerX() - font.width(text) / 2, y, 0xFFE5E7EB, true);
+  }
 
-	private static int xFor(DirectionHudLayout layout, int degrees, double bearing) {
-		return layout.centerX() + (int) Math.round(wrapDegrees(degrees - bearing) / layout.degreesPerPixel());
-	}
+  private static int xFor(DirectionHudLayout layout, int degrees, double bearing) {
+    return layout.centerX()
+        + (int) Math.round(wrapDegrees(degrees - bearing) / layout.degreesPerPixel());
+  }
 
-	private static int nearestCardinal(double bearing) {
-		return (int) normalize(Math.round(bearing / 45.0D) * 45.0D);
-	}
+  private static int nearestCardinal(double bearing) {
+    return (int) normalize(Math.round(bearing / 45.0D) * 45.0D);
+  }
 
-	private static double wrapDegrees(double degrees) {
-		double wrapped = normalizeDegrees(degrees);
-		return wrapped > 180 ? wrapped - 360 : wrapped;
-	}
+  private static double wrapDegrees(double degrees) {
+    double wrapped = normalizeDegrees(degrees);
+    return wrapped > 180 ? wrapped - 360 : wrapped;
+  }
 
-	private static int normalize(double degrees) {
-		int normalized = (int) Math.round(degrees) % 360;
-		return normalized < 0 ? normalized + 360 : normalized;
-	}
+  private static int normalize(double degrees) {
+    int normalized = (int) Math.round(degrees) % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  }
 
-	private static double normalizeDegrees(double degrees) {
-		double normalized = degrees % 360.0D;
-		return normalized < 0.0D ? normalized + 360.0D : normalized;
-	}
+  private static double normalizeDegrees(double degrees) {
+    double normalized = degrees % 360.0D;
+    return normalized < 0.0D ? normalized + 360.0D : normalized;
+  }
 
-	private static double clamp(double value, double minimum, double maximum) {
-		return Math.max(minimum, Math.min(maximum, value));
-	}
+  private static double clamp(double value, double minimum, double maximum) {
+    return Math.max(minimum, Math.min(maximum, value));
+  }
 
-	private record DirectionMark(String label, int degrees) {
-	}
+  private record DirectionMark(String label, int degrees) {}
 
-	private record VisibleDirectionMark(String label, int textX, int textWidth, int color) {
-	}
+  private record VisibleDirectionMark(String label, int textX, int textWidth, int color) {}
 
-	private record DirectionHudLayout(int width, double degreesPerPixel) {
-		HudSize size() {
-			return new HudSize(width, HEIGHT);
-		}
+  private record DirectionHudLayout(int width, double degreesPerPixel) {
+    HudSize size() {
+      return new HudSize(width, HEIGHT);
+    }
 
-		int centerX() {
-			return width / 2;
-		}
+    int centerX() {
+      return width / 2;
+    }
 
-		int contentRight() {
-			return width - CONTENT_PADDING;
-		}
-	}
+    int contentRight() {
+      return width - CONTENT_PADDING;
+    }
+  }
 }

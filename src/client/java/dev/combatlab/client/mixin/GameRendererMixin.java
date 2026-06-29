@@ -10,11 +10,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(GameRenderer.class)
 abstract class GameRendererMixin {
-	@Redirect(
-			method = "extractOptions",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Options;getCameraType()Lnet/minecraft/client/CameraType;")
-	)
-	private CameraType combatlab$freelookRenderCameraType(Options options) {
-		return CameraFeatureHooks.cameraType(options);
-	}
+  @Redirect(
+      method = "extractOptions",
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/Options;getCameraType()Lnet/minecraft/client/CameraType;"))
+  private CameraType combatlab$freelookRenderCameraType(Options options) {
+    return CameraFeatureHooks.cameraType(options);
+  }
 }

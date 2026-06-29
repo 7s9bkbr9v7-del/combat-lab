@@ -1,4 +1,3 @@
 package dev.combatlab.client.hud;
 
-public record HudSize(int width, int height) {
-}
+public record HudSize(int width, int height) {}

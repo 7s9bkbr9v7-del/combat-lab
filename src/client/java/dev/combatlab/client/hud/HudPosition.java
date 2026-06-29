@@ -1,4 +1,3 @@
 package dev.combatlab.client.hud;
 
-public record HudPosition(int x, int y) {
-}
+public record HudPosition(int x, int y) {}

@@ -1,13 +1,13 @@
 package dev.combatlab.client.hud;
 
 public interface ResizableHudModule extends HudModule {
-	double scale();
+  double scale();
 
-	void updateScale(double scale);
+  void updateScale(double scale);
 
-	HudSize unscaledSize();
+  HudSize unscaledSize();
 
-	double minScale();
+  double minScale();
 
-	double maxScale();
+  double maxScale();
 }

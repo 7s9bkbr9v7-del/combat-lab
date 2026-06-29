@@ -9,11 +9,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(MouseHandler.class)
 abstract class MouseHandlerMixin {
-	@Redirect(
-			method = "turnPlayer",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;turn(DD)V")
-	)
-	private void combatlab$turnPlayerOrFreelook(LocalPlayer player, double deltaX, double deltaY) {
-		MouseFeatureHooks.turnPlayerOrFreelook(player, deltaX, deltaY);
-	}
+  @Redirect(
+      method = "turnPlayer",
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;turn(DD)V"))
+  private void combatlab$turnPlayerOrFreelook(LocalPlayer player, double deltaX, double deltaY) {
+    MouseFeatureHooks.turnPlayerOrFreelook(player, deltaX, deltaY);
+  }
 }
