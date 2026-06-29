@@ -47,7 +47,7 @@ public final class PauseMenuFeatureHooks {
 		return widgets(screen).stream()
 				.filter(PauseMenuFeatureHooks::isModsButton)
 				.max(Comparator.comparingInt(AbstractWidget::getWidth))
-				.map(modsButton -> Button.builder(HUD_EDITOR_SHORT, button -> openEditor.accept(minecraft))
+				.map(modsButton -> Button.builder(HUD_EDITOR_SHORT, ignoredButton -> openEditor.accept(minecraft))
 						.bounds(modsButton.getRight() + SPACING, modsButton.getY(), COMPACT_SIZE, COMPACT_SIZE)
 						.tooltip(Tooltip.create(HUD_EDITOR))
 						.build());
@@ -61,8 +61,8 @@ public final class PauseMenuFeatureHooks {
 
 		AbstractWidget anchor = optionsButton.get();
 		int insertY = anchor.getY();
-		shiftWidgetsAtOrBelow(screen, insertY, BUTTON_HEIGHT + SPACING);
-		return Optional.of(Button.builder(HUD_EDITOR, button -> openEditor.accept(minecraft))
+		shiftWidgetsAtOrBelowInsertedButton(screen, insertY);
+		return Optional.of(Button.builder(HUD_EDITOR, ignoredButton -> openEditor.accept(minecraft))
 				.bounds((screen.width - FULL_WIDTH) / 2, insertY, FULL_WIDTH, BUTTON_HEIGHT)
 				.build());
 	}
@@ -73,10 +73,10 @@ public final class PauseMenuFeatureHooks {
 				.min(Comparator.comparingInt(AbstractWidget::getY));
 	}
 
-	private static void shiftWidgetsAtOrBelow(Screen screen, int y, int amount) {
+	private static void shiftWidgetsAtOrBelowInsertedButton(Screen screen, int y) {
 		for (AbstractWidget widget : widgets(screen)) {
 			if (widget.getY() >= y) {
-				widget.setY(widget.getY() + amount);
+				widget.setY(widget.getY() + BUTTON_HEIGHT + SPACING);
 			}
 		}
 	}
