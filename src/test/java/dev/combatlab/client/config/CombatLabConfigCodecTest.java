@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -89,6 +90,68 @@ class CombatLabConfigCodecTest {
 
 		assertEquals(CombatLabConfig.CURRENT_SCHEMA_VERSION, decoded.schemaVersion);
 		assertTrue(decoded.dynamicFovEnabled);
+	}
+
+	@Test
+	void rejectsInvalidRootJsonWithClearErrors() {
+		IllegalArgumentException malformed = assertThrows(IllegalArgumentException.class, () -> codec.decode("{"));
+		assertEquals("Config must be valid JSON", malformed.getMessage());
+
+		IllegalArgumentException wrongRoot = assertThrows(IllegalArgumentException.class, () -> codec.decode("[]"));
+		assertEquals("Config root must be a JSON object", wrongRoot.getMessage());
+	}
+
+	@Test
+	void rejectsWrongFieldTypesWithClearErrors() {
+		IllegalArgumentException rootField = assertThrows(
+				IllegalArgumentException.class,
+				() -> codec.decode("{\"schemaVersion\":3,\"debugLoggingEnabled\":\"yes\"}")
+		);
+		assertEquals("Config field 'debugLoggingEnabled' must be a boolean", rootField.getMessage());
+
+		IllegalArgumentException moduleField = assertThrows(
+				IllegalArgumentException.class,
+				() -> codec.decode("""
+						{
+						  "schemaVersion": 3,
+						  "hudModules": {
+						    "combatlab:fps": {
+						      "normalizedX": "left"
+						    }
+						  }
+						}
+						""")
+		);
+		assertEquals("HUD module 'combatlab:fps' field 'normalizedX' must be a finite number", moduleField.getMessage());
+	}
+
+	@Test
+	void normalizesRecoverableModuleValues() {
+		CombatLabConfig decoded = codec.decode("""
+				{
+				  "schemaVersion": 3,
+				  "hudModules": {
+				    "combatlab:fps": {
+				      "normalizedX": -0.5,
+				      "normalizedY": 1.5,
+				      "scale": 99.0,
+				      "layout": "SIDEWAYS",
+				      "attachedTo": "combatlab:cps",
+				      "attachmentSide": "NEAR",
+				      "attachmentOffset": 12
+				    }
+				  }
+				}
+				""");
+
+		HudModuleConfig module = decoded.hudModules.get("combatlab:fps");
+		assertEquals(0.0, module.normalizedX, 0.0001);
+		assertEquals(1.0, module.normalizedY, 0.0001);
+		assertEquals(HudModuleSettings.MAX_SCALE, module.scale, 0.0001);
+		assertNull(module.layout);
+		assertNull(module.attachedTo);
+		assertNull(module.attachmentSide);
+		assertEquals(0, module.attachmentOffset);
 	}
 
 	@Test
