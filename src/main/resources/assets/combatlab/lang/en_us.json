@@ -12,6 +12,6 @@
   "options.combatlab.dynamic_fov.tooltip": "Shows vanilla movement-based FOV changes, including sprinting and speed effects. Turn this off to disable them.",
   "options.combatlab.debug_logging": "Debug logging",
   "options.combatlab.achievement_notification": "Achievement notifications",
-  "options.combatlab.achievement_notification.tooltip": "Shows vanilla on-screen achievement notifications. Turn this off to hide them.",
+  "options.combatlab.achievement_notification.tooltip": "Shows vanilla on-screen achievement notifications and tutorial prompts. Turn this off to hide them.",
   "options.combatlab.hud_module.tooltip": "Show or hide this module in game and in the HUD editor."
 }

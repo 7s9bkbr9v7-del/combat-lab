@@ -9,9 +9,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ToastManager.class)
+@SuppressWarnings("unused")
 abstract class ToastManagerMixin {
   @Inject(method = "addToast", at = @At("HEAD"), cancellable = true)
-  private void combatlab$suppressAdvancementToasts(Toast toast, CallbackInfo callbackInfo) {
+  private void combatlab$suppressVanillaProgressToasts(Toast toast, CallbackInfo callbackInfo) {
     if (ToastFeatureHooks.shouldSuppress(toast)) {
       callbackInfo.cancel();
     }
