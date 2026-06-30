@@ -8,6 +8,7 @@ import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.screen.hudeditor.HudBoxSelectionController;
 import dev.combatlab.client.screen.hudeditor.HudContextMenu;
 import dev.combatlab.client.screen.hudeditor.HudDragController;
+import dev.combatlab.client.screen.hudeditor.HudEditorHistory;
 import dev.combatlab.client.screen.hudeditor.HudEditorModuleActions;
 import dev.combatlab.client.screen.hudeditor.HudEditorRenderer;
 import dev.combatlab.client.screen.hudeditor.HudModuleSelection;
@@ -38,6 +39,7 @@ public final class HudEditorScreen extends Screen {
   private final HudModuleSelection moduleSelection = new HudModuleSelection();
   private final HudContextMenu contextMenu;
   private final HudEditorModuleActions moduleActions;
+  private final HudEditorHistory history;
   private final HudModuleRegistry modules;
   private final long openedAtNanos;
 
@@ -46,7 +48,9 @@ public final class HudEditorScreen extends Screen {
     this.modules = modules;
     this.openedAtNanos = System.nanoTime();
     this.selection = new HudSelection(modules);
-    this.moduleActions = new HudEditorModuleActions(modules, selection, ADD_SNAP_THRESHOLD);
+    this.history = new HudEditorHistory(modules);
+    this.moduleActions =
+        new HudEditorModuleActions(modules, selection, history, ADD_SNAP_THRESHOLD);
     this.contextMenu = new HudContextMenu(modules, moduleActions);
     this.dragController = new HudDragController(selection, moduleSelection, SNAP_THRESHOLD);
     this.boxSelectionController = new HudBoxSelectionController(selection, moduleSelection);
@@ -129,22 +133,26 @@ public final class HudEditorScreen extends Screen {
     HudModule layoutButtonModule =
         selection.topLayoutButtonAt(event.x(), event.y(), width, height, LAYOUT_BUTTON_SIZE);
     if (layoutButtonModule instanceof AdaptiveLayoutHudModule adaptive) {
-      adaptive.cycleLayout();
+      history.recordChange(adaptive::cycleLayout);
       moduleSelection.select(layoutButtonModule, false, false, modules.modules());
       return true;
     }
     HudModule clickedModule = selection.topModuleAt(event.x(), event.y(), width, height);
+    history.beginChange();
     boolean resizeStarted = resizeController.begin(event.x(), event.y(), width, height);
     if (resizeStarted) {
       selectModuleForMouseDown(resizeController.activeModule());
       return true;
     }
+    history.cancelChange();
     if (clickedModule != null) {
       selectModuleForMouseDown(clickedModule);
     }
+    history.beginChange();
     if (dragController.begin(event.x(), event.y(), width, height)) {
       return true;
     }
+    history.cancelChange();
     if (clickedModule == null) {
       boxSelectionController.begin(event.x(), event.y(), leftControlDown());
       return true;
@@ -164,6 +172,22 @@ public final class HudEditorScreen extends Screen {
   @Override
   @SuppressWarnings("NullableProblems")
   public boolean keyPressed(KeyEvent event) {
+    if (controlDown(event)
+        && (event.key() == GLFW.GLFW_KEY_Y
+            || (event.key() == GLFW.GLFW_KEY_Z && shiftDown(event)))) {
+      if (history.redo()) {
+        moduleSelection.clear();
+        contextMenu.close();
+      }
+      return true;
+    }
+    if (controlDown(event) && event.key() == GLFW.GLFW_KEY_Z) {
+      if (history.undo()) {
+        moduleSelection.clear();
+        contextMenu.close();
+      }
+      return true;
+    }
     if (controlDown(event) && event.key() == GLFW.GLFW_KEY_A) {
       moduleSelection.selectAll(modules.modules());
       contextMenu.close();
@@ -200,9 +224,7 @@ public final class HudEditorScreen extends Screen {
   @Override
   public boolean mouseReleased(MouseButtonEvent event) {
     if (event.button() == 0
-        && (resizeController.release()
-            || dragController.release()
-            || boxSelectionController.release())) {
+        && (releaseResize() || releaseDrag() || boxSelectionController.release())) {
       return true;
     }
     if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT && boxSelectionController.active()) {
@@ -254,6 +276,10 @@ public final class HudEditorScreen extends Screen {
     return (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0;
   }
 
+  private static boolean shiftDown(KeyEvent event) {
+    return (event.modifiers() & GLFW.GLFW_MOD_SHIFT) != 0;
+  }
+
   private void selectModuleForMouseDown(HudModule module) {
     if (module != null) {
       if (!leftControlDown()
@@ -264,5 +290,21 @@ public final class HudEditorScreen extends Screen {
       }
       moduleSelection.select(module, leftControlDown(), leftShiftDown(), modules.modules());
     }
+  }
+
+  private boolean releaseResize() {
+    if (!resizeController.release()) {
+      return false;
+    }
+    history.commitChange();
+    return true;
+  }
+
+  private boolean releaseDrag() {
+    if (!dragController.release()) {
+      return false;
+    }
+    history.commitChange();
+    return true;
   }
 }

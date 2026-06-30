@@ -11,30 +11,40 @@ import java.util.List;
 public final class HudEditorModuleActions {
   private final HudModuleRegistry modules;
   private final HudSelection selection;
+  private final HudEditorHistory history;
   private final int addSnapThreshold;
 
   public HudEditorModuleActions(
-      HudModuleRegistry modules, HudSelection selection, int addSnapThreshold) {
+      HudModuleRegistry modules,
+      HudSelection selection,
+      HudEditorHistory history,
+      int addSnapThreshold) {
     this.modules = modules;
     this.selection = selection;
+    this.history = history;
     this.addSnapThreshold = addSnapThreshold;
   }
 
   public void disable(HudModule module) {
-    modules.setEnabled(module.id().toString(), false);
+    history.recordChange(() -> modules.setEnabled(module.id().toString(), false));
   }
 
   public void disableAll(List<HudModule> selectedModules) {
-    for (HudModule module : selectedModules) {
-      modules.setEnabled(module.id().toString(), false);
-    }
+    history.recordChange(
+        () -> {
+          for (HudModule module : selectedModules) {
+            modules.setEnabled(module.id().toString(), false);
+          }
+        });
   }
 
   public void enableAt(
       String id, int requestedX, int requestedY, int screenWidth, int screenHeight) {
+    history.beginChange();
     modules.setEnabled(id, true);
     HudModule added = modules.module(id);
     if (added == null) {
+      history.commitChange();
       return;
     }
 
@@ -55,5 +65,6 @@ public final class HudEditorModuleActions {
     HudModuleAttachment.placeAndAttach(
         selection, added, snappedRectangle, others, addSnapThreshold, screenWidth, screenHeight);
     added.savePosition();
+    history.commitChange();
   }
 }

@@ -47,10 +47,6 @@ public final class HudModuleSettings {
     return config.layout;
   }
 
-  public void updateLayout(String layout) {
-    config.layout = layout;
-  }
-
   public String attachedTo() {
     return config.attachedTo;
   }
@@ -61,6 +57,27 @@ public final class HudModuleSettings {
 
   public int attachmentOffset() {
     return config.attachmentOffset;
+  }
+
+  public State state() {
+    return new State(
+        config.normalizedX,
+        config.normalizedY,
+        config.scale,
+        config.layout,
+        config.attachedTo,
+        config.attachmentSide,
+        config.attachmentOffset);
+  }
+
+  public void restore(State state) {
+    config.normalizedX = clampPosition(state.normalizedX());
+    config.normalizedY = clampPosition(state.normalizedY());
+    config.scale = clampScale(state.scale());
+    config.layout = state.layout();
+    config.attachedTo = state.attachedTo();
+    config.attachmentSide = state.attachmentSide();
+    config.attachmentOffset = state.attachmentOffset();
   }
 
   public void updateAttachment(String targetId, String side, int offset) {
@@ -78,6 +95,15 @@ public final class HudModuleSettings {
   public void save() {
     saveAction.run();
   }
+
+  public record State(
+      double normalizedX,
+      double normalizedY,
+      double scale,
+      String layout,
+      String attachedTo,
+      String attachmentSide,
+      int attachmentOffset) {}
 
   private static double clampPosition(double value) {
     return Math.clamp(value, 0.0, 1.0);
