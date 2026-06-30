@@ -11,7 +11,7 @@ final class HudAdaptiveLayoutAnimation<T> {
       int screenWidth,
       int screenHeight) {
     HudRectangle bounds = new HudRectangle(0, 0, 0, 0);
-    module.resolveBoundsInto(
+    module.resolveEditorBoundsInto(
         bounds,
         scaled(previewSize(target, targetSize, locked), module.scale()),
         screenWidth,

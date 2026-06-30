@@ -25,4 +25,22 @@ class HudAttachmentSideTest {
 
     assertEquals(new HudPosition(45, 48), below);
   }
+
+  @Test
+  void clampsOffsetsSoAttachedModulesStayTouchingTarget() {
+    HudRectangle target = new HudRectangle(40, 30, 80, 18);
+
+    assertEquals(
+        new HudPosition(120, 48),
+        HudAttachmentSide.RIGHT_OF.resolve(target, new HudSize(50, 12), 66));
+    assertEquals(
+        new HudPosition(120, 18),
+        HudAttachmentSide.RIGHT_OF.resolve(target, new HudSize(50, 12), -30));
+    assertEquals(
+        new HudPosition(120, 48),
+        HudAttachmentSide.BELOW.resolve(target, new HudSize(50, 12), 200));
+    assertEquals(
+        new HudPosition(-10, 48),
+        HudAttachmentSide.BELOW.resolve(target, new HudSize(50, 12), -90));
+  }
 }

@@ -154,6 +154,30 @@ class ArmorHudLayoutTest {
     assertEquals(verticalBounds.height(), animatedBounds.height());
   }
 
+  @Test
+  void attachedEditorBoundsFollowAnimatedTargetBounds() {
+    ConfigStore store =
+        new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());
+    CombatLabOptions options = CombatLabOptions.load(store);
+    DebugLogger debug = new DebugLogger(() -> false);
+    ArmorHud armor = new ArmorHud(options, debug);
+    DirectionHud direction = new DirectionHud(options, debug);
+    armor.bindModuleLookup(id -> direction.id().toString().equals(id) ? direction : null);
+    direction.bindModuleLookup(id -> armor.id().toString().equals(id) ? armor : null);
+    armor.updatePosition(120, 80, 320, 180);
+    armor.editorBounds(320, 180);
+    direction.attachTo(armor, HudAttachmentSide.RIGHT_OF, 0);
+
+    armor.updatePosition(0, 80, 320, 180);
+
+    HudRectangle attachedEditorBounds = direction.editorBounds(320, 180);
+    HudRectangle animatedArmorBounds = armor.editorBounds(320, 180);
+
+    assertEquals(18, armor.bounds(320, 180).width());
+    assertEquals(animatedArmorBounds.right(), attachedEditorBounds.x());
+    assertEquals(animatedArmorBounds.y(), attachedEditorBounds.y());
+  }
+
   private ArmorHud armorHud() {
     return armorHud(temporaryDirectory.resolve("combatlab.json"));
   }

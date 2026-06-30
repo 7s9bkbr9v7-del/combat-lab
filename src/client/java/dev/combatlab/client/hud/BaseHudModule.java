@@ -145,13 +145,34 @@ public abstract class BaseHudModule implements HudModule {
     return bounds;
   }
 
+  @Override
+  public HudRectangle editorBounds(int screenWidth, int screenHeight) {
+    HudRectangle bounds = new HudRectangle(0, 0, 0, 0);
+    resolveEditorBoundsInto(bounds, screenWidth, screenHeight);
+    return bounds;
+  }
+
   final void resolveBoundsInto(HudRectangle bounds, int screenWidth, int screenHeight) {
     resolveBoundsInto(bounds, size(), screenWidth, screenHeight);
   }
 
   final void resolveBoundsInto(
       HudRectangle bounds, HudSize size, int screenWidth, int screenHeight) {
-    if (resolveAttachedBoundsInto(bounds, size, screenWidth, screenHeight)) {
+    resolveBoundsInto(bounds, size, screenWidth, screenHeight, false);
+  }
+
+  final void resolveEditorBoundsInto(HudRectangle bounds, int screenWidth, int screenHeight) {
+    resolveEditorBoundsInto(bounds, size(), screenWidth, screenHeight);
+  }
+
+  final void resolveEditorBoundsInto(
+      HudRectangle bounds, HudSize size, int screenWidth, int screenHeight) {
+    resolveBoundsInto(bounds, size, screenWidth, screenHeight, true);
+  }
+
+  private void resolveBoundsInto(
+      HudRectangle bounds, HudSize size, int screenWidth, int screenHeight, boolean editorBounds) {
+    if (resolveAttachedBoundsInto(bounds, size, screenWidth, screenHeight, editorBounds)) {
       return;
     }
 
@@ -167,7 +188,7 @@ public abstract class BaseHudModule implements HudModule {
   }
 
   private boolean resolveAttachedBoundsInto(
-      HudRectangle bounds, HudSize size, int screenWidth, int screenHeight) {
+      HudRectangle bounds, HudSize size, int screenWidth, int screenHeight, boolean editorBounds) {
     if (resolvingBounds) {
       return false;
     }
@@ -181,7 +202,9 @@ public abstract class BaseHudModule implements HudModule {
 
     resolvingBounds = true;
     try {
-      if (target instanceof BaseHudModule baseTarget) {
+      if (editorBounds) {
+        attachedTargetBounds.set(target.editorBounds(screenWidth, screenHeight));
+      } else if (target instanceof BaseHudModule baseTarget) {
         baseTarget.resolveBoundsInto(attachedTargetBounds, screenWidth, screenHeight);
       } else {
         attachedTargetBounds.set(target.bounds(screenWidth, screenHeight));
