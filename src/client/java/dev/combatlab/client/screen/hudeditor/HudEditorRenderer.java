@@ -84,8 +84,7 @@ public final class HudEditorRenderer {
               graphics, font, layout.bounds(), screenWidth, screenHeight, modules.gameState());
     }
     renderSelectedModules(graphics, layouts);
-    renderModuleHover(
-        graphics, layouts, attachmentRootIds, dragController.activeModule(), mouseX, mouseY);
+    renderModuleHover(graphics, layouts, attachmentRootIds, focusedModule(), mouseX, mouseY);
     renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
     renderResizeHandles(graphics, layouts);
     renderLayoutButtons(graphics, layouts, mouseX, mouseY);
@@ -159,6 +158,11 @@ public final class HudEditorRenderer {
         return;
       }
     }
+  }
+
+  private HudModule focusedModule() {
+    HudModule resizedModule = resizeController.activeModule();
+    return resizedModule != null ? resizedModule : dragController.activeModule();
   }
 
   private static void renderFocusedModuleHover(
