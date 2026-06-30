@@ -27,6 +27,12 @@ public final class HudEditorRenderer {
   private static final int RESIZE_HANDLE_COLOR = 0xFF22C55E;
   private static final int LAYOUT_BUTTON_ICON_COLOR = 0xFFC7CCD4;
   private static final int LAYOUT_BUTTON_ICON_HOVER_COLOR = 0xFFFFFFFF;
+  private static final int LABEL_BACKGROUND_COLOR = 0x99000000;
+  private static final int LABEL_BACKGROUND_PADDING = 3;
+  private static final int TITLE_Y = 18;
+  private static final int GUIDANCE_Y = 32;
+  private static final String ENABLED_MODULE_GUIDANCE = "Drag to move. Right-click for actions.";
+  private static final String EMPTY_MODULE_GUIDANCE = "No HUD modules enabled";
 
   private final HudModuleRegistry modules;
   private final HudSelection selection;
@@ -36,6 +42,7 @@ public final class HudEditorRenderer {
   private final HudResizeController resizeController;
   private final int handleSize;
   private final int layoutButtonSize;
+  private List<HudRectangle> visibleModuleBounds = List.of();
 
   public HudEditorRenderer(
       HudModuleRegistry modules,
@@ -74,6 +81,7 @@ public final class HudEditorRenderer {
         rectangles.add(bounds);
       }
     }
+    visibleModuleBounds = List.copyOf(rectangles);
     Set<String> attachmentRootIds = attachmentRootIds(layouts);
 
     renderSnapGuide(graphics, screenWidth, screenHeight);
@@ -99,15 +107,62 @@ public final class HudEditorRenderer {
       Component title,
       int screenWidth,
       boolean hasEnabledModules,
-      float animationProgress) {
+      float titleProgress,
+      float guidanceProgress) {
+    HudRectangle titleBounds =
+        centeredTextBounds(font.width(title), screenWidth / 2, TITLE_Y, font.lineHeight);
+    if (overlapsVisibleModule(titleBounds) && titleProgress > 0.0F) {
+      renderLabelBackground(graphics, titleBounds, titleProgress);
+    }
     graphics.centeredText(
-        font, title, screenWidth / 2, 18, withAlpha(0xFFFFFFFF, animationProgress));
-    String guidance =
-        hasEnabledModules
-            ? "Drag HUD modules to reposition them; right-click a module for actions"
-            : "No HUD modules enabled";
+        font, title, screenWidth / 2, TITLE_Y, withAlpha(0xFFFFFFFF, titleProgress));
+    String guidance = guidanceText(hasEnabledModules);
+    HudRectangle guidanceBounds =
+        centeredTextBounds(font.width(guidance), screenWidth / 2, GUIDANCE_Y, font.lineHeight);
+    if (overlapsVisibleModule(guidanceBounds) && guidanceProgress > 0.0F) {
+      renderLabelBackground(graphics, guidanceBounds, guidanceProgress);
+    }
     graphics.centeredText(
-        font, guidance, screenWidth / 2, 32, withAlpha(0xFF9CA3AF, animationProgress));
+        font, guidance, screenWidth / 2, GUIDANCE_Y, withAlpha(0xFF9CA3AF, guidanceProgress));
+  }
+
+  public boolean titleOverlapsModule(Font font, Component title, int screenWidth) {
+    return overlapsVisibleModule(
+        centeredTextBounds(font.width(title), screenWidth / 2, TITLE_Y, font.lineHeight));
+  }
+
+  public boolean guidanceOverlapsModule(Font font, int screenWidth) {
+    String guidance = guidanceText(true);
+    return overlapsVisibleModule(
+        centeredTextBounds(font.width(guidance), screenWidth / 2, GUIDANCE_Y, font.lineHeight));
+  }
+
+  private boolean overlapsVisibleModule(HudRectangle bounds) {
+    for (HudRectangle moduleBounds : visibleModuleBounds) {
+      if (moduleBounds.intersects(bounds)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static String guidanceText(boolean hasEnabledModules) {
+    return hasEnabledModules ? ENABLED_MODULE_GUIDANCE : EMPTY_MODULE_GUIDANCE;
+  }
+
+  private static HudRectangle centeredTextBounds(
+      int textWidth, int centerX, int topY, int textHeight) {
+    return new HudRectangle(centerX - textWidth / 2, topY, textWidth, textHeight);
+  }
+
+  private static void renderLabelBackground(
+      GuiGraphicsExtractor graphics, HudRectangle bounds, float alpha) {
+    graphics.fill(
+        bounds.x() - LABEL_BACKGROUND_PADDING,
+        bounds.y() - LABEL_BACKGROUND_PADDING,
+        bounds.right() + LABEL_BACKGROUND_PADDING,
+        bounds.bottom() + LABEL_BACKGROUND_PADDING,
+        withAlpha(LABEL_BACKGROUND_COLOR, alpha));
   }
 
   private void renderModuleOutlines(

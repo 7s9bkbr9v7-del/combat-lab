@@ -29,6 +29,7 @@ public final class HudEditorScreen extends Screen {
   private static final int RESIZE_HANDLE_SIZE = 3;
   private static final int LAYOUT_BUTTON_SIZE = 11;
   private static final long OPEN_ANIMATION_NANOS = 180_000_000L;
+  private static final long LABEL_FADE_NANOS = 700_000_000L;
 
   private final HudDragController dragController;
   private final HudBoxSelectionController boxSelectionController;
@@ -42,6 +43,9 @@ public final class HudEditorScreen extends Screen {
   private final HudEditorHistory history;
   private final HudModuleRegistry modules;
   private final long openedAtNanos;
+  private long lastLabelFadeNanos = -1L;
+  private float titleVisibilityProgress = 1.0F;
+  private float guidanceVisibilityProgress = 1.0F;
 
   public HudEditorScreen(CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
     super(TITLE);
@@ -80,12 +84,19 @@ public final class HudEditorScreen extends Screen {
   @SuppressWarnings("NullableProblems")
   public void extractRenderState(
       GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-    float animationProgress = openingAnimationProgress(System.nanoTime());
+    long nowNanos = System.nanoTime();
+    float animationProgress = openingAnimationProgress(nowNanos);
     boolean hasEnabledModules =
         renderer.renderEditorLayer(graphics, font, width, height, mouseX, mouseY);
+    boolean titleOverlapped = hasEnabledModules && renderer.titleOverlapsModule(font, title, width);
+    boolean guidanceOverlapped = hasEnabledModules && renderer.guidanceOverlapsModule(font, width);
+    updateLabelVisibility(nowNanos, titleOverlapped, guidanceOverlapped);
+    float titleProgress = animationProgress * titleVisibilityProgress;
+    float guidanceProgress = animationProgress * guidanceVisibilityProgress;
     fadeWidgets(animationProgress);
     super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-    renderer.renderLabels(graphics, font, title, width, hasEnabledModules, animationProgress);
+    renderer.renderLabels(
+        graphics, font, title, width, hasEnabledModules, titleProgress, guidanceProgress);
     contextMenu.render(graphics, font, mouseX, mouseY);
   }
 
@@ -260,6 +271,31 @@ public final class HudEditorScreen extends Screen {
         Math.clamp((float) (nowNanos - openedAtNanos) / OPEN_ANIMATION_NANOS, 0.0F, 1.0F);
     float remaining = 1.0F - elapsed;
     return 1.0F - remaining * remaining * remaining;
+  }
+
+  private void updateLabelVisibility(
+      long nowNanos, boolean titleOverlapped, boolean guidanceOverlapped) {
+    if (lastLabelFadeNanos < 0L) {
+      lastLabelFadeNanos = nowNanos;
+      return;
+    }
+    float fadeStep =
+        Math.clamp((float) (nowNanos - lastLabelFadeNanos) / LABEL_FADE_NANOS, 0.0F, 1.0F);
+    lastLabelFadeNanos = nowNanos;
+    titleVisibilityProgress =
+        approach(titleVisibilityProgress, titleOverlapped ? 0.0F : 1.0F, fadeStep);
+    guidanceVisibilityProgress =
+        approach(guidanceVisibilityProgress, guidanceOverlapped ? 0.0F : 1.0F, fadeStep);
+  }
+
+  private static float approach(float value, float target, float step) {
+    if (value < target) {
+      return Math.min(value + step, target);
+    }
+    if (value > target) {
+      return Math.max(value - step, target);
+    }
+    return value;
   }
 
   private boolean leftShiftDown() {
