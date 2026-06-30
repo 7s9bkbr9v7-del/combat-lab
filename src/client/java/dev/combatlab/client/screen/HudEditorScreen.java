@@ -29,7 +29,9 @@ public final class HudEditorScreen extends Screen {
   private static final int RESIZE_HANDLE_SIZE = 3;
   private static final int LAYOUT_BUTTON_SIZE = 11;
   private static final long OPEN_ANIMATION_NANOS = 180_000_000L;
+  private static final long LABEL_FADE_HOLD_NANOS = 3_000_000_000L;
   private static final long LABEL_FADE_NANOS = 700_000_000L;
+  private static final long LABEL_SHADOW_FADE_NANOS = 350_000_000L;
 
   private final HudDragController dragController;
   private final HudBoxSelectionController boxSelectionController;
@@ -44,8 +46,12 @@ public final class HudEditorScreen extends Screen {
   private final HudModuleRegistry modules;
   private final long openedAtNanos;
   private long lastLabelFadeNanos = -1L;
+  private long titleOverlapStartedAtNanos = -1L;
+  private long guidanceOverlapStartedAtNanos = -1L;
   private float titleVisibilityProgress = 1.0F;
   private float guidanceVisibilityProgress = 1.0F;
+  private float titleShadowProgress;
+  private float guidanceShadowProgress;
 
   public HudEditorScreen(CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
     super(TITLE);
@@ -93,10 +99,20 @@ public final class HudEditorScreen extends Screen {
     updateLabelVisibility(nowNanos, titleOverlapped, guidanceOverlapped);
     float titleProgress = animationProgress * titleVisibilityProgress;
     float guidanceProgress = animationProgress * guidanceVisibilityProgress;
+    float titleShadowProgress = titleProgress * this.titleShadowProgress;
+    float guidanceShadowProgress = guidanceProgress * this.guidanceShadowProgress;
     fadeWidgets(animationProgress);
     super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     renderer.renderLabels(
-        graphics, font, title, width, hasEnabledModules, titleProgress, guidanceProgress);
+        graphics,
+        font,
+        title,
+        width,
+        hasEnabledModules,
+        titleProgress,
+        guidanceProgress,
+        titleShadowProgress,
+        guidanceShadowProgress);
     contextMenu.render(graphics, font, mouseX, mouseY);
   }
 
@@ -279,13 +295,44 @@ public final class HudEditorScreen extends Screen {
       lastLabelFadeNanos = nowNanos;
       return;
     }
-    float fadeStep =
+    float labelFadeStep =
         Math.clamp((float) (nowNanos - lastLabelFadeNanos) / LABEL_FADE_NANOS, 0.0F, 1.0F);
+    float shadowFadeStep =
+        Math.clamp((float) (nowNanos - lastLabelFadeNanos) / LABEL_SHADOW_FADE_NANOS, 0.0F, 1.0F);
     lastLabelFadeNanos = nowNanos;
+    titleShadowProgress =
+        approach(titleShadowProgress, titleOverlapped ? 1.0F : 0.0F, shadowFadeStep);
+    guidanceShadowProgress =
+        approach(guidanceShadowProgress, guidanceOverlapped ? 1.0F : 0.0F, shadowFadeStep);
+    titleOverlapStartedAtNanos =
+        overlapStartNanos(titleOverlapStartedAtNanos, nowNanos, titleOverlapped);
+    guidanceOverlapStartedAtNanos =
+        overlapStartNanos(guidanceOverlapStartedAtNanos, nowNanos, guidanceOverlapped);
     titleVisibilityProgress =
-        approach(titleVisibilityProgress, titleOverlapped ? 0.0F : 1.0F, fadeStep);
+        approach(
+            titleVisibilityProgress,
+            labelVisibilityTarget(titleOverlapStartedAtNanos, nowNanos),
+            labelFadeStep);
     guidanceVisibilityProgress =
-        approach(guidanceVisibilityProgress, guidanceOverlapped ? 0.0F : 1.0F, fadeStep);
+        approach(
+            guidanceVisibilityProgress,
+            labelVisibilityTarget(guidanceOverlapStartedAtNanos, nowNanos),
+            labelFadeStep);
+  }
+
+  private static long overlapStartNanos(
+      long previousOverlapStartedAtNanos, long nowNanos, boolean overlapped) {
+    if (!overlapped) {
+      return -1L;
+    }
+    return previousOverlapStartedAtNanos < 0L ? nowNanos : previousOverlapStartedAtNanos;
+  }
+
+  private static float labelVisibilityTarget(long overlapStartedAtNanos, long nowNanos) {
+    if (overlapStartedAtNanos < 0L || nowNanos - overlapStartedAtNanos < LABEL_FADE_HOLD_NANOS) {
+      return 1.0F;
+    }
+    return 0.0F;
   }
 
   private static float approach(float value, float target, float step) {

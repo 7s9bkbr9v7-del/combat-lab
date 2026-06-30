@@ -27,8 +27,12 @@ public final class HudEditorRenderer {
   private static final int RESIZE_HANDLE_COLOR = 0xFF22C55E;
   private static final int LAYOUT_BUTTON_ICON_COLOR = 0xFFC7CCD4;
   private static final int LAYOUT_BUTTON_ICON_HOVER_COLOR = 0xFFFFFFFF;
-  private static final int LABEL_BACKGROUND_COLOR = 0x99000000;
-  private static final int LABEL_BACKGROUND_PADDING = 3;
+  private static final int LABEL_SHADOW_CORE_COLOR = 0x3A000000;
+  private static final int LABEL_SHADOW_OUTER_COLOR = 0x12000000;
+  private static final int LABEL_SHADOW_CORE_PADDING = 2;
+  private static final int LABEL_SHADOW_OUTER_SPREAD = 1;
+  private static final int LABEL_SHADOW_CORE_RADIUS = 3;
+  private static final int LABEL_SHADOW_OUTER_RADIUS = 4;
   private static final int TITLE_Y = 18;
   private static final int GUIDANCE_Y = 32;
   private static final String ENABLED_MODULE_GUIDANCE = "Drag to move. Right-click for actions.";
@@ -108,19 +112,21 @@ public final class HudEditorRenderer {
       int screenWidth,
       boolean hasEnabledModules,
       float titleProgress,
-      float guidanceProgress) {
+      float guidanceProgress,
+      float titleShadowProgress,
+      float guidanceShadowProgress) {
     HudRectangle titleBounds =
         centeredTextBounds(font.width(title), screenWidth / 2, TITLE_Y, font.lineHeight);
-    if (overlapsVisibleModule(titleBounds) && titleProgress > 0.0F) {
-      renderLabelBackground(graphics, titleBounds, titleProgress);
+    if (overlapsVisibleModule(titleBounds) && titleShadowProgress > 0.0F) {
+      renderLabelBackground(graphics, titleBounds, titleShadowProgress);
     }
     graphics.centeredText(
         font, title, screenWidth / 2, TITLE_Y, withAlpha(0xFFFFFFFF, titleProgress));
     String guidance = guidanceText(hasEnabledModules);
     HudRectangle guidanceBounds =
         centeredTextBounds(font.width(guidance), screenWidth / 2, GUIDANCE_Y, font.lineHeight);
-    if (overlapsVisibleModule(guidanceBounds) && guidanceProgress > 0.0F) {
-      renderLabelBackground(graphics, guidanceBounds, guidanceProgress);
+    if (overlapsVisibleModule(guidanceBounds) && guidanceShadowProgress > 0.0F) {
+      renderLabelBackground(graphics, guidanceBounds, guidanceShadowProgress);
     }
     graphics.centeredText(
         font, guidance, screenWidth / 2, GUIDANCE_Y, withAlpha(0xFF9CA3AF, guidanceProgress));
@@ -157,12 +163,41 @@ public final class HudEditorRenderer {
 
   private static void renderLabelBackground(
       GuiGraphicsExtractor graphics, HudRectangle bounds, float alpha) {
-    graphics.fill(
-        bounds.x() - LABEL_BACKGROUND_PADDING,
-        bounds.y() - LABEL_BACKGROUND_PADDING,
-        bounds.right() + LABEL_BACKGROUND_PADDING,
-        bounds.bottom() + LABEL_BACKGROUND_PADDING,
-        withAlpha(LABEL_BACKGROUND_COLOR, alpha));
+    int coreLeft = bounds.x() - LABEL_SHADOW_CORE_PADDING;
+    int coreTop = bounds.y() - LABEL_SHADOW_CORE_PADDING;
+    int coreRight = bounds.right() + LABEL_SHADOW_CORE_PADDING;
+    int coreBottom = bounds.bottom() + LABEL_SHADOW_CORE_PADDING;
+    drawRoundedFill(
+        graphics,
+        coreLeft - LABEL_SHADOW_OUTER_SPREAD,
+        coreTop - LABEL_SHADOW_OUTER_SPREAD,
+        coreRight + LABEL_SHADOW_OUTER_SPREAD,
+        coreBottom + LABEL_SHADOW_OUTER_SPREAD,
+        LABEL_SHADOW_OUTER_RADIUS,
+        withAlpha(LABEL_SHADOW_OUTER_COLOR, alpha));
+    drawRoundedFill(
+        graphics,
+        coreLeft,
+        coreTop,
+        coreRight,
+        coreBottom,
+        LABEL_SHADOW_CORE_RADIUS,
+        withAlpha(LABEL_SHADOW_CORE_COLOR, alpha));
+  }
+
+  private static void drawRoundedFill(
+      GuiGraphicsExtractor graphics,
+      int left,
+      int top,
+      int right,
+      int bottom,
+      int radius,
+      int color) {
+    for (int y = top; y < bottom; y++) {
+      int edgeDistance = Math.min(y - top, bottom - y - 1);
+      int inset = Math.max(0, radius - edgeDistance - 1);
+      graphics.fill(left + inset, y, right - inset, y + 1, color);
+    }
   }
 
   private void renderModuleOutlines(
