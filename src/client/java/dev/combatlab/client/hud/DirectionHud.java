@@ -7,10 +7,8 @@ import dev.combatlab.client.state.DirectionState;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -56,6 +54,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
           0.08,
           true);
   private boolean bearingInitialized;
+  private double previousAnimatedBearing;
   private double animatedBearing;
   private double bearingVelocity;
   private DirectionHudLayout lockedLayout;
@@ -90,13 +89,27 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     if (!direction.present()) {
       bearingInitialized = false;
       bearingVelocity = 0.0D;
+      previousAnimatedBearing = 21.0D;
+      animatedBearing = 21.0D;
+      return;
     }
+
+    double target = direction.bearingDegrees();
+    if (!bearingInitialized) {
+      previousAnimatedBearing = target;
+      animatedBearing = target;
+      bearingVelocity = 0.0D;
+      bearingInitialized = true;
+      return;
+    }
+
+    previousAnimatedBearing = animatedBearing;
+    animateBearing(target);
   }
 
   @Override
   protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
-    DirectionState direction = context.gameState().player().direction();
-    double bearing = renderBearing(context, direction);
+    double bearing = renderBearing(context);
 
     graphics.pose().pushMatrix();
     graphics.pose().translate(context.bounds().x(), context.bounds().y());
@@ -120,24 +133,18 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     graphics.pose().popMatrix();
   }
 
-  private double renderBearing(HudRenderContext context, DirectionState direction) {
-    Double target = targetBearing(context, direction);
-    if (target != null) {
-      if (!bearingInitialized) {
-        animatedBearing = target;
-        bearingVelocity = 0.0D;
-        bearingInitialized = true;
-        return target;
-      }
-      animateBearing(target, context.frameDeltaTicks());
-      return animatedBearing;
+  private double renderBearing(HudRenderContext context) {
+    if (context.editorPreview()) {
+      DirectionState direction = context.gameState().player().direction();
+      return direction.present() ? direction.bearingDegrees() : 21.0D;
     }
-    bearingInitialized = false;
-    bearingVelocity = 0.0D;
-    return 21.0D;
+    if (!bearingInitialized) {
+      return 21.0D;
+    }
+    return interpolatedBearing(context.frameDeltaTicks());
   }
 
-  private void animateBearing(double target, float frameDeltaTicks) {
+  private void animateBearing(double target) {
     double displacement = wrapDegrees(target - animatedBearing);
     if (Math.abs(displacement) <= SNAP_DISPLACEMENT && Math.abs(bearingVelocity) <= SNAP_VELOCITY) {
       animatedBearing = target;
@@ -149,31 +156,23 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     double strength = SPRING_STRENGTH + FAST_TURN_EXTRA_STRENGTH * fastTurn;
     double damping = DAMPING + (FAST_TURN_DAMPING - DAMPING) * fastTurn;
     double maxVelocity = MAX_VELOCITY + (FAST_TURN_MAX_VELOCITY - MAX_VELOCITY) * fastTurn;
-    double frameTicks = clampFrameDelta(frameDeltaTicks);
     bearingVelocity =
-        clamp(
-            (bearingVelocity + displacement * strength * frameTicks)
-                * Math.pow(damping, frameTicks),
-            -maxVelocity,
-            maxVelocity);
-    animatedBearing = normalizeDegrees(animatedBearing + bearingVelocity * frameTicks);
+        clamp((bearingVelocity + displacement * strength) * damping, -maxVelocity, maxVelocity);
+    animatedBearing = normalizeDegrees(animatedBearing + bearingVelocity);
   }
 
-  private static Double targetBearing(HudRenderContext context, DirectionState fallback) {
-    if (!context.editorPreview()) {
-      LocalPlayer player = Minecraft.getInstance().player;
-      if (player != null) {
-        return normalizeDegrees(180.0F - player.getYRot());
-      }
-    }
-    return fallback.present() ? (double) fallback.bearingDegrees() : null;
+  private double interpolatedBearing(float frameDeltaTicks) {
+    double frameTicks = clampFrameProgress(frameDeltaTicks);
+    return normalizeDegrees(
+        previousAnimatedBearing
+            + wrapDegrees(animatedBearing - previousAnimatedBearing) * frameTicks);
   }
 
-  private static double clampFrameDelta(float frameDeltaTicks) {
+  private static double clampFrameProgress(float frameDeltaTicks) {
     if (!Float.isFinite(frameDeltaTicks) || frameDeltaTicks <= 0.0F) {
       return 0.0D;
     }
-    return Math.min(frameDeltaTicks, 3.0F);
+    return Math.min(frameDeltaTicks, 1.0F);
   }
 
   private static int degreeY(HudRenderContext context) {
