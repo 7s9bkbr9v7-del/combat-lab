@@ -25,7 +25,9 @@ public interface HudModule {
 
   HudRectangle bounds(int screenWidth, int screenHeight);
 
-  HudOrientation orientation(int screenWidth, int screenHeight);
+  default HudRectangle editorBounds(int screenWidth, int screenHeight) {
+    return bounds(screenWidth, screenHeight);
+  }
 
   void updatePosition(int x, int y, int screenWidth, int screenHeight);
 

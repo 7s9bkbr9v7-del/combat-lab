@@ -20,7 +20,8 @@ public final class HudSelection {
 
   public HudModule topModuleAt(double mouseX, double mouseY, int screenWidth, int screenHeight) {
     for (HudModule module : modules.modules().reversed()) {
-      if (module.enabled() && module.contains(mouseX, mouseY, screenWidth, screenHeight)) {
+      if (module.enabled()
+          && rectangle(module, screenWidth, screenHeight).contains(mouseX, mouseY)) {
         return module;
       }
     }
@@ -74,7 +75,7 @@ public final class HudSelection {
   }
 
   public HudRectangle rectangle(HudModule module, int screenWidth, int screenHeight) {
-    return module.bounds(screenWidth, screenHeight);
+    return module.editorBounds(screenWidth, screenHeight);
   }
 
   public HudRectangle resizeHandle(HudRectangle rectangle, HudCorner corner, int handleSize) {

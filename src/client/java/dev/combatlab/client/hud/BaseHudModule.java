@@ -59,12 +59,6 @@ public abstract class BaseHudModule implements HudModule {
   }
 
   @Override
-  public final HudOrientation orientation(int screenWidth, int screenHeight) {
-    return HudOrientationResolver.resolve(
-        bounds(screenWidth, screenHeight), screenWidth, screenHeight);
-  }
-
-  @Override
   public final void updatePosition(int x, int y, int screenWidth, int screenHeight) {
     HudSize size = size();
     settings.updatePosition(
@@ -152,7 +146,11 @@ public abstract class BaseHudModule implements HudModule {
   }
 
   final void resolveBoundsInto(HudRectangle bounds, int screenWidth, int screenHeight) {
-    HudSize size = size();
+    resolveBoundsInto(bounds, size(), screenWidth, screenHeight);
+  }
+
+  final void resolveBoundsInto(
+      HudRectangle bounds, HudSize size, int screenWidth, int screenHeight) {
     if (resolveAttachedBoundsInto(bounds, size, screenWidth, screenHeight)) {
       return;
     }

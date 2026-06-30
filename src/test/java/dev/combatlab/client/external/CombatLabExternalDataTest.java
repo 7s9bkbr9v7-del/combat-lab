@@ -1,6 +1,7 @@
 package dev.combatlab.client.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.combatlab.client.config.CombatLabConfigCodec;
@@ -8,19 +9,15 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.HudAttachmentSide;
-import dev.combatlab.client.hud.HudCorner;
 import dev.combatlab.client.hud.HudGameState;
-import dev.combatlab.client.hud.HudHorizontalSide;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleDefinition;
 import dev.combatlab.client.hud.HudModuleDescriptor;
 import dev.combatlab.client.hud.HudModuleRegistry;
-import dev.combatlab.client.hud.HudOrientation;
 import dev.combatlab.client.hud.HudPosition;
 import dev.combatlab.client.hud.HudRectangle;
 import dev.combatlab.client.hud.HudRenderContext;
 import dev.combatlab.client.hud.HudSize;
-import dev.combatlab.client.hud.HudVerticalSide;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
 import dev.combatlab.client.state.InputState;
@@ -87,17 +84,13 @@ class CombatLabExternalDataTest {
     assertEquals(12, snapshot.cps());
     assertEquals(42, snapshot.ping());
     assertEquals(0.75F, snapshot.attackStrength());
-    assertEquals(false, snapshot.input().forward());
+    assertFalse(snapshot.input().forward());
     assertTrue(snapshot.target().present());
     assertEquals(targetId.toString(), snapshot.target().id());
     assertTrue(snapshot.effects().isEmpty());
     assertTrue(encoded.contains("\"schemaVersion\""));
     assertTrue(encoded.contains("\"target\""));
     assertTrue(encoded.contains("\"effects\""));
-  }
-
-  private HudModuleRegistry registry() {
-    return registry(options());
   }
 
   private HudModuleRegistry registry(CombatLabOptions options) {
@@ -124,8 +117,7 @@ class CombatLabExternalDataTest {
             defaultX,
             defaultY,
             resizable);
-    return new HudModuleDescriptor(
-        definition, dependencies -> new NoopModule(definition), loadWhenDisabled);
+    return new HudModuleDescriptor(definition, _ -> new NoopModule(definition), loadWhenDisabled);
   }
 
   private static final class NoopModule implements HudModule {
@@ -166,12 +158,6 @@ class CombatLabExternalDataTest {
     @Override
     public HudRectangle bounds(int screenWidth, int screenHeight) {
       return new HudRectangle(0, 0, 1, 1);
-    }
-
-    @Override
-    public HudOrientation orientation(int screenWidth, int screenHeight) {
-      return new HudOrientation(
-          HudHorizontalSide.RIGHT, HudVerticalSide.BOTTOM, HudCorner.BOTTOM_RIGHT);
     }
 
     @Override

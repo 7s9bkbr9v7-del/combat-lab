@@ -47,6 +47,10 @@ public final class HudModuleSettings {
     return config.layout;
   }
 
+  public void updateLayout(String layout) {
+    config.layout = layout;
+  }
+
   public String attachedTo() {
     return config.attachedTo;
   }

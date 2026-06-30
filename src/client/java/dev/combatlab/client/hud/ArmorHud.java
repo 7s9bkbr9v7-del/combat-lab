@@ -27,13 +27,14 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   }
 
   private ArmorHudLayout lockedLayout;
-  private ArmorHudLayout overrideLayout;
   private ArmorHudLayout floatingLayout = ArmorHudLayout.GRID;
   private final double[] animationStartX = new double[ARMOR_SLOT_COUNT];
   private final double[] animationStartY = new double[ARMOR_SLOT_COUNT];
   private final double[] previewX = new double[ARMOR_SLOT_COUNT];
   private final double[] previewY = new double[ARMOR_SLOT_COUNT];
   private final HudLayoutTransition<ArmorHudLayout> layoutTransition = new HudLayoutTransition<>();
+  private final HudAdaptiveLayoutAnimation<ArmorHudLayout> layoutAnimation =
+      new HudAdaptiveLayoutAnimation<>();
 
   public ArmorHud(CombatLabOptions options, DebugLogger debug) {
     super(DEFINITION, options, debug);
@@ -42,9 +43,14 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 
   @Override
   public HudSize unscaledSize() {
+    return unscaledSize(layout());
+  }
+
+  @Override
+  public HudRectangle editorBounds(int screenWidth, int screenHeight) {
     ArmorHudLayout layout = layout();
-    return new HudSize(
-        PADDING * 2 + ITEM_SIZE * layout.columns(), PADDING * 2 + ITEM_SIZE * layout.rows());
+    return layoutAnimation.editorBounds(
+        this, layout, unscaledSize(layout), lockedLayout != null, screenWidth, screenHeight);
   }
 
   @Override
@@ -58,15 +64,17 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 
   @Override
   public String currentLayout() {
-    return overrideLayout == null ? ADAPTIVE_LAYOUT : overrideLayout.name();
+    ArmorHudLayout manualLayout = manualLayout();
+    return manualLayout == null ? ADAPTIVE_LAYOUT : manualLayout.name();
   }
 
   @Override
   public void cycleLayout() {
+    ArmorHudLayout manualLayout = manualLayout();
     ArmorHudLayout adaptiveLayout = resolvedLayout();
-    ArmorHudLayout nextLayout =
-        overrideLayout == null ? adaptiveLayout.next() : overrideLayout.next();
-    overrideLayout = nextLayout == adaptiveLayout ? null : nextLayout;
+    ArmorHudLayout nextLayout = manualLayout == null ? adaptiveLayout.next() : manualLayout.next();
+    settings().updateLayout(nextLayout == adaptiveLayout ? null : nextLayout.name());
+    settings().save();
   }
 
   @Override
@@ -77,7 +85,7 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   @Override
   public void unlockLayout() {
     if (snappedToAdaptiveEdge()) {
-      overrideLayout = null;
+      settings().updateLayout(null);
     }
     floatingLayout =
         ArmorHudLayout.resolve(
@@ -112,6 +120,7 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   private void updatePreviewPositions(HudRenderContext context, ArmorHudLayout layout) {
     if (!context.editorPreview()) {
       layoutTransition.reset();
+      layoutAnimation.reset();
       setPreviewPositionsTo(layout);
       return;
     }
@@ -173,7 +182,13 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
     if (lockedLayout != null) {
       return lockedLayout;
     }
-    return overrideLayout != null ? overrideLayout : resolvedLayout();
+    ArmorHudLayout manualLayout = manualLayout();
+    return manualLayout != null ? manualLayout : resolvedLayout();
+  }
+
+  private static HudSize unscaledSize(ArmorHudLayout layout) {
+    return new HudSize(
+        PADDING * 2 + ITEM_SIZE * layout.columns(), PADDING * 2 + ITEM_SIZE * layout.rows());
   }
 
   private ArmorHudLayout resolvedLayout() {
@@ -183,6 +198,14 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 
   private ArmorHudLayout storedLayout() {
     return ArmorHudLayout.fromStored(settings().layout());
+  }
+
+  private ArmorHudLayout manualLayout() {
+    String layout = settings().layout();
+    if (layout == null || ADAPTIVE_LAYOUT.equals(layout)) {
+      return null;
+    }
+    return ArmorHudLayout.fromStored(layout);
   }
 
   private boolean snappedToAdaptiveEdge() {

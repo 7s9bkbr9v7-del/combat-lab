@@ -13,7 +13,8 @@ import java.util.Set;
 
 public final class CombatLabConfigCodec {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-  private static final Set<String> VALID_LAYOUTS = Set.of("VERTICAL", "HORIZONTAL", "GRID");
+  private static final Set<String> VALID_LAYOUTS =
+      Set.of("VERTICAL", "HORIZONTAL", "GRID", "FLOATING", "SIDE");
   private static final Set<String> VALID_ATTACHMENT_SIDES =
       Set.of("LEFT_OF", "RIGHT_OF", "ABOVE", "BELOW");
 

@@ -59,12 +59,9 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private double animatedBearing;
   private double bearingVelocity;
   private DirectionHudLayout lockedLayout;
-  private DirectionHudLayout overrideLayout;
   private DirectionHudLayout floatingLayout = FLOATING_LAYOUT;
-  private final HudLayoutTransition<DirectionHudLayout> layoutTransition =
-      new HudLayoutTransition<>();
-  private double previewWidth;
-  private double layoutAnimationStartWidth;
+  private final HudAdaptiveLayoutAnimation<DirectionHudLayout> layoutAnimation =
+      new HudAdaptiveLayoutAnimation<>();
 
   public static HudModuleDescriptor descriptor() {
     return new HudModuleDescriptor(
@@ -81,21 +78,31 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   }
 
   @Override
+  public HudRectangle editorBounds(int screenWidth, int screenHeight) {
+    DirectionHudLayout layout = layout();
+    return layoutAnimation.editorBounds(
+        this, layout, layout.size(), lockedLayout != null, screenWidth, screenHeight);
+  }
+
+  @Override
   public List<String> availableLayouts() {
     return List.of(ADAPTIVE_LAYOUT, "FLOATING", "SIDE");
   }
 
   @Override
   public String currentLayout() {
-    return overrideLayout == null ? ADAPTIVE_LAYOUT : layoutName(overrideLayout);
+    DirectionHudLayout manualLayout = manualLayout();
+    return manualLayout == null ? ADAPTIVE_LAYOUT : layoutName(manualLayout);
   }
 
   @Override
   public void cycleLayout() {
+    DirectionHudLayout manualLayout = manualLayout();
     DirectionHudLayout adaptiveLayout = resolvedLayout();
     DirectionHudLayout nextLayout =
-        overrideLayout == null ? nextLayout(adaptiveLayout) : nextLayout(overrideLayout);
-    overrideLayout = nextLayout == adaptiveLayout ? null : nextLayout;
+        manualLayout == null ? nextLayout(adaptiveLayout) : nextLayout(manualLayout);
+    settings().updateLayout(nextLayout == adaptiveLayout ? null : layoutName(nextLayout));
+    settings().save();
   }
 
   @Override
@@ -108,7 +115,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     HudEdgeContact edgeContact =
         HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY());
     if (snappedToAdaptiveEdge()) {
-      overrideLayout = null;
+      settings().updateLayout(null);
     }
     if (edgeContact.sideEdge()) {
       floatingLayout = SIDE_LAYOUT;
@@ -148,61 +155,52 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
     double bearing = renderBearing(context);
 
+    DirectionHudLayout layout = layout();
+    CompassRenderFrame renderFrame = renderFrame(context, layout);
+
     graphics.pose().pushMatrix();
-    graphics.pose().translate(context.bounds().x(), context.bounds().y());
+    graphics.pose().translate((float) renderFrame.x(), (float) renderFrame.y());
     graphics.pose().scale((float) scale(), (float) scale());
 
-    DirectionHudLayout layout = layout();
-    int compassWidth = animatedCompassWidth(context, layout);
-    int compassX = (layout.width() - compassWidth) / 2;
+    DirectionHudLayout renderLayout =
+        new DirectionHudLayout(renderFrame.width(), layout.degreesPerPixel());
     int degreeY = degreeY(context);
     int compassY = compassY(context, context.font());
+    graphics.fill(0, compassY, renderLayout.width(), compassY + COMPASS_HEIGHT, 0x77000000);
+    graphics.outline(0, compassY, renderLayout.width(), COMPASS_HEIGHT, 0x44FFFFFF);
     graphics.fill(
-        compassX, compassY, compassX + compassWidth, compassY + COMPASS_HEIGHT, 0x77000000);
-    graphics.outline(compassX, compassY, compassWidth, COMPASS_HEIGHT, 0x44FFFFFF);
-    graphics.fill(
-        layout.centerX(),
+        renderLayout.centerX(),
         compassY + 1,
-        layout.centerX() + 1,
+        renderLayout.centerX() + 1,
         compassY + COMPASS_HEIGHT - 1,
         0x99D1D5DB);
-    renderTicks(graphics, layout, compassY, bearing);
-    renderMarks(graphics, context.font(), layout, compassY, bearing);
-    renderDegree(graphics, context.font(), layout, degreeY, bearing);
+    renderTicks(graphics, renderLayout, compassY, bearing);
+    renderMarks(graphics, context.font(), renderLayout, compassY, bearing);
+    renderDegree(graphics, context.font(), renderLayout, degreeY, bearing);
 
     graphics.pose().popMatrix();
   }
 
-  private int animatedCompassWidth(HudRenderContext context, DirectionHudLayout layout) {
+  private CompassRenderFrame renderFrame(HudRenderContext context, DirectionHudLayout layout) {
     if (!context.editorPreview()) {
-      layoutTransition.reset();
-      return layout.width();
+      layoutAnimation.reset();
+      return new CompassRenderFrame(context.bounds().x(), context.bounds().y(), layout.width());
     }
 
-    if (lockedLayout != null) {
-      layoutTransition.snapTo(layout);
-      previewWidth = layout.width();
-      layoutAnimationStartWidth = previewWidth;
-      return layout.width();
-    }
+    HudAnimatedSize animatedSize = layoutAnimation.currentContextSize(context, scale());
+    int renderWidth = Math.max(1, (int) Math.round(animatedSize.width()));
+    return new CompassRenderFrame(
+        renderX(context, animatedSize.width(), renderWidth / 2), context.bounds().y(), renderWidth);
+  }
 
-    HudLayoutTransition.Update transition = layoutTransition.update(layout);
-    if (transition.firstUpdate()) {
-      previewWidth = layout.width();
-      layoutAnimationStartWidth = previewWidth;
-      return layout.width();
-    }
-
-    if (transition.targetChanged()) {
-      layoutAnimationStartWidth = previewWidth;
-    }
-
-    previewWidth =
-        HudLayoutTransition.lerp(layoutAnimationStartWidth, layout.width(), transition.progress());
-    if (transition.complete()) {
-      previewWidth = layout.width();
-    }
-    return Math.max(SIDE_WIDTH, (int) Math.round(previewWidth));
+  private double renderX(HudRenderContext context, double animatedWidth, int renderCenterX) {
+    return layoutAnimation.centeredRenderX(
+        context,
+        scale(),
+        settings().normalizedX(),
+        attachmentTargetId() != null,
+        animatedWidth,
+        renderCenterX);
   }
 
   private double renderBearing(HudRenderContext context) {
@@ -268,7 +266,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     if (lockedLayout != null) {
       return lockedLayout;
     }
-    return overrideLayout != null ? overrideLayout : resolvedLayout();
+    DirectionHudLayout manualLayout = manualLayout();
+    return manualLayout != null ? manualLayout : resolvedLayout();
   }
 
   private DirectionHudLayout resolvedLayout() {
@@ -290,6 +289,20 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
 
   private static String layoutName(DirectionHudLayout layout) {
     return layout == SIDE_LAYOUT ? "SIDE" : "FLOATING";
+  }
+
+  private DirectionHudLayout manualLayout() {
+    String layout = settings().layout();
+    if (layout == null || ADAPTIVE_LAYOUT.equals(layout)) {
+      return null;
+    }
+    if ("SIDE".equals(layout)) {
+      return SIDE_LAYOUT;
+    }
+    if ("FLOATING".equals(layout)) {
+      return FLOATING_LAYOUT;
+    }
+    return null;
   }
 
   private static void renderTicks(
@@ -375,6 +388,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private record DirectionMark(String label, int degrees) {}
 
   private record VisibleDirectionMark(String label, int textX, int textWidth, int color) {}
+
+  private record CompassRenderFrame(double x, int y, int width) {}
 
   private record DirectionHudLayout(int width, double degreesPerPixel) {
     HudSize size() {

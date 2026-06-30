@@ -96,6 +96,20 @@ class DirectionHudTest {
   }
 
   @Test
+  void manualCycleLayoutPersistsAcrossReload() {
+    Path configPath = temporaryDirectory.resolve("combatlab.json");
+    DirectionHud hud = hud(configPath);
+    hud.updatePosition(0, 30, 320, 180);
+
+    hud.cycleLayout();
+
+    DirectionHud reloaded = hud(configPath);
+
+    assertEquals("FLOATING", reloaded.currentLayout());
+    assertEquals(new HudSize(112, 22), reloaded.size());
+  }
+
+  @Test
   void clearsManualLayoutWhenReleasedOnEdge() {
     DirectionHud hud = hud();
     hud.updatePosition(120, 30, 320, 180);
@@ -124,9 +138,25 @@ class DirectionHudTest {
     assertEquals(new HudSize(58, 22), hud.size());
   }
 
+  @Test
+  void shrinkingPreviewCompassWidthKeepsEditorBoundsUntilSettled() {
+    DirectionHud hud = hud();
+    hud.updatePosition(120, 30, 320, 180);
+
+    assertEquals(112, hud.editorBounds(320, 180).width());
+
+    hud.updatePosition(0, 30, 320, 180);
+
+    assertEquals(58, hud.size().width());
+    assertTrue(hud.editorBounds(320, 180).width() > hud.size().width());
+  }
+
   private DirectionHud hud() {
-    ConfigStore store =
-        new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());
+    return hud(temporaryDirectory.resolve("combatlab.json"));
+  }
+
+  private DirectionHud hud(Path configPath) {
+    ConfigStore store = new ConfigStore(configPath, new CombatLabConfigCodec());
     return new DirectionHud(CombatLabOptions.load(store), new DebugLogger(() -> false));
   }
 

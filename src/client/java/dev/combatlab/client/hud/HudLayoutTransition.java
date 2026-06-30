@@ -15,6 +15,9 @@ final class HudLayoutTransition<T> {
   }
 
   HudLayoutTransition(long durationNanos) {
+    if (durationNanos <= 0L) {
+      throw new IllegalArgumentException("HUD layout transition duration must be positive");
+    }
     this.durationNanos = durationNanos;
   }
 

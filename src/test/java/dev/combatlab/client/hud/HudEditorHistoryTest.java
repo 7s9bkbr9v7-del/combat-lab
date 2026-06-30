@@ -162,12 +162,6 @@ class HudEditorHistoryTest {
     }
 
     @Override
-    public HudOrientation orientation(int screenWidth, int screenHeight) {
-      return HudOrientationResolver.resolve(
-          bounds(screenWidth, screenHeight), screenWidth, screenHeight);
-    }
-
-    @Override
     public void updatePosition(int x, int y, int screenWidth, int screenHeight) {}
 
     @Override

@@ -6,6 +6,7 @@ import dev.combatlab.client.config.CombatLabConfigCodec;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.screen.hudeditor.HudEditorHistory;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -72,6 +73,42 @@ class ArmorHudLayoutTest {
   }
 
   @Test
+  void manualCycleLayoutPersistsAcrossReload() {
+    Path configPath = temporaryDirectory.resolve("combatlab.json");
+    ArmorHud hud = armorHud(configPath);
+    hud.updatePosition(0, 80, 320, 180);
+
+    hud.cycleLayout();
+
+    ArmorHud reloaded = armorHud(configPath);
+
+    assertEquals("HORIZONTAL", reloaded.currentLayout());
+    assertEquals(new HudSize(66, 18), reloaded.size());
+  }
+
+  @Test
+  void manualCycleLayoutCanBeUndoneByEditorHistory() {
+    ConfigStore store =
+        new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());
+    HudModuleRegistry registry =
+        new HudModuleRegistry(CombatLabOptions.load(store), new DebugLogger(() -> false));
+    registry.registerDescriptor(ArmorHud.descriptor());
+    registry.setEnabled("combatlab:armor", true);
+    ArmorHud hud = (ArmorHud) registry.module("combatlab:armor");
+    hud.updatePosition(0, 80, 320, 180);
+    HudEditorHistory history = new HudEditorHistory(registry);
+
+    history.recordChange(hud::cycleLayout);
+
+    assertEquals("HORIZONTAL", hud.currentLayout());
+
+    history.undo();
+
+    assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
+    assertEquals(new HudSize(18, 66), hud.size());
+  }
+
+  @Test
   void clearsManualLayoutWhenReleasedOnEdge() {
     ArmorHud hud = armorHud();
     hud.updatePosition(120, 80, 320, 180);
@@ -100,9 +137,29 @@ class ArmorHudLayoutTest {
     assertEquals(new HudSize(18, 66), hud.size());
   }
 
+  @Test
+  void shrinkingPreviewBoundsStayAnimatedUntilSettled() {
+    ArmorHud hud = armorHud();
+    hud.updatePosition(0, 80, 320, 180);
+    HudRectangle verticalBounds = hud.editorBounds(320, 180);
+
+    assertEquals(18, verticalBounds.width());
+    assertEquals(66, verticalBounds.height());
+
+    hud.updatePosition(160, 0, 320, 180);
+    HudRectangle animatedBounds = hud.editorBounds(320, 180);
+
+    assertEquals(new HudSize(66, 18), hud.size());
+    assertEquals(verticalBounds.width(), animatedBounds.width());
+    assertEquals(verticalBounds.height(), animatedBounds.height());
+  }
+
   private ArmorHud armorHud() {
-    ConfigStore store =
-        new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());
+    return armorHud(temporaryDirectory.resolve("combatlab.json"));
+  }
+
+  private ArmorHud armorHud(Path configPath) {
+    ConfigStore store = new ConfigStore(configPath, new CombatLabConfigCodec());
     return new ArmorHud(CombatLabOptions.load(store), new DebugLogger(() -> false));
   }
 }
