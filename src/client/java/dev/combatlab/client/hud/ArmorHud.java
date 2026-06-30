@@ -10,7 +10,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLayoutHudModule {
-  private static final long LAYOUT_ANIMATION_NANOS = 220_000_000L;
   private static final int PADDING = 1;
   private static final int ITEM_SIZE = 16;
   private static final int ARMOR_SLOT_COUNT = ArmorSlot.values().length;
@@ -34,9 +33,7 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   private final double[] animationStartY = new double[ARMOR_SLOT_COUNT];
   private final double[] previewX = new double[ARMOR_SLOT_COUNT];
   private final double[] previewY = new double[ARMOR_SLOT_COUNT];
-  private ArmorHudLayout previewLayout;
-  private long layoutAnimationStartNanos;
-  private boolean previewPositionsInitialized;
+  private final HudLayoutTransition<ArmorHudLayout> layoutTransition = new HudLayoutTransition<>();
 
   public ArmorHud(CombatLabOptions options, DebugLogger debug) {
     super(DEFINITION, options, debug);
@@ -114,44 +111,38 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
 
   private void updatePreviewPositions(HudRenderContext context, ArmorHudLayout layout) {
     if (!context.editorPreview()) {
-      previewPositionsInitialized = false;
+      layoutTransition.reset();
       setPreviewPositionsTo(layout);
       return;
     }
 
     if (lockedLayout != null) {
-      previewLayout = layout;
-      previewPositionsInitialized = true;
+      layoutTransition.snapTo(layout);
       setPreviewPositionsTo(layout);
       return;
     }
 
-    long nowNanos = System.nanoTime();
-    if (!previewPositionsInitialized) {
-      previewLayout = layout;
-      layoutAnimationStartNanos = nowNanos - LAYOUT_ANIMATION_NANOS;
-      previewPositionsInitialized = true;
+    HudLayoutTransition.Update transition = layoutTransition.update(layout);
+    if (transition.firstUpdate()) {
       setPreviewPositionsTo(layout);
       return;
     }
 
-    if (previewLayout != layout) {
+    if (transition.targetChanged()) {
       System.arraycopy(previewX, 0, animationStartX, 0, previewX.length);
       System.arraycopy(previewY, 0, animationStartY, 0, previewY.length);
-      previewLayout = layout;
-      layoutAnimationStartNanos = nowNanos;
     }
 
-    double progress =
-        Math.clamp(
-            (double) (nowNanos - layoutAnimationStartNanos) / LAYOUT_ANIMATION_NANOS, 0.0D, 1.0D);
-    double easedProgress = settleProgress(progress);
     for (ArmorSlot slot : ArmorSlot.values()) {
       int slotIndex = slot.ordinal();
-      previewX[slotIndex] = lerp(animationStartX[slotIndex], slotX(layout, slot), easedProgress);
-      previewY[slotIndex] = lerp(animationStartY[slotIndex], slotY(layout, slot), easedProgress);
+      previewX[slotIndex] =
+          HudLayoutTransition.lerp(
+              animationStartX[slotIndex], slotX(layout, slot), transition.progress());
+      previewY[slotIndex] =
+          HudLayoutTransition.lerp(
+              animationStartY[slotIndex], slotY(layout, slot), transition.progress());
     }
-    if (progress >= 1.0D) {
+    if (transition.complete()) {
       setPreviewPositionsTo(layout);
     }
   }
@@ -176,14 +167,6 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   private static int slotY(ArmorHudLayout layout, ArmorSlot slot) {
     int index = layout.slots().indexOf(slot);
     return PADDING + index / layout.columns() * ITEM_SIZE;
-  }
-
-  private static double settleProgress(double progress) {
-    return progress * progress * progress * (progress * (progress * 6.0D - 15.0D) + 10.0D);
-  }
-
-  private static double lerp(double start, double end, double progress) {
-    return start + (end - start) * progress;
   }
 
   private ArmorHudLayout layout() {
