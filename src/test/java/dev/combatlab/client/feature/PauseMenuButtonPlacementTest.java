@@ -51,6 +51,41 @@ class PauseMenuButtonPlacementTest {
   }
 
   @Test
+  void fullWidthButtonUsesStructuralFallbackForNonTranslatableRows() {
+    PauseMenuButtonPlacement.Plan plan =
+        PauseMenuButtonPlacement.plan(
+                400,
+                List.of(
+                    button(98, 72, 204, null),
+                    button(98, 96, 98, "custom.advancements"),
+                    button(200, 96, 98, null),
+                    button(98, 120, 98, null),
+                    button(200, 120, 98, "custom.feedback"),
+                    button(98, 144, 204, null)),
+                false)
+            .orElseThrow();
+
+    assertEquals(new PauseMenuButtonPlacement.Plan(98, 120, 204, 20), plan);
+  }
+
+  @Test
+  void compactButtonUsesStructuralFallbackForIconOnlyCustomRow() {
+    PauseMenuButtonPlacement.Plan plan =
+        PauseMenuButtonPlacement.plan(
+                400,
+                List.of(
+                    button(98, 72, 204, null),
+                    button(98, 120, 98, null),
+                    button(200, 120, 98, null),
+                    button(302, 120, 20, null),
+                    button(98, 144, 204, null)),
+                true)
+            .orElseThrow();
+
+    assertEquals(new PauseMenuButtonPlacement.Plan(326, 120, 20, 20), plan);
+  }
+
+  @Test
   void compactButtonFallsBackToLeftSideWhenRowRightSideDoesNotFit() {
     PauseMenuButtonPlacement.Plan plan =
         PauseMenuButtonPlacement.plan(

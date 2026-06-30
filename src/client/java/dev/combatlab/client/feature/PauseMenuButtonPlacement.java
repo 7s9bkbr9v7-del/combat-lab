@@ -26,12 +26,13 @@ final class PauseMenuButtonPlacement {
   }
 
   static Optional<Plan> compactPlan(int screenWidth, List<ExistingButton> buttons) {
-    return compactAnchor(buttons)
+    return compactAnchor(screenWidth, buttons)
         .flatMap(anchor -> compactPlanForRow(screenWidth, buttons, anchor.y()));
   }
 
   static Optional<Plan> fullWidthPlan(int screenWidth, List<ExistingButton> buttons) {
     return optionsButton(buttons)
+        .or(() -> structuralMenuRowAnchor(screenWidth, buttons))
         .map(
             anchor ->
                 new Plan((screenWidth - FULL_WIDTH) / 2, anchor.y(), FULL_WIDTH, BUTTON_HEIGHT));
@@ -46,6 +47,11 @@ final class PauseMenuButtonPlacement {
       return modMenuButton;
     }
     return optionsButton(buttons);
+  }
+
+  private static Optional<ExistingButton> compactAnchor(
+      int screenWidth, List<ExistingButton> buttons) {
+    return compactAnchor(buttons).or(() -> structuralMenuRowAnchor(screenWidth, buttons));
   }
 
   private static Optional<ExistingButton> optionsButton(List<ExistingButton> buttons) {
@@ -83,6 +89,42 @@ final class PauseMenuButtonPlacement {
     return key != null && (key.equals("modmenu.title") || key.startsWith("modmenu."));
   }
 
+  private static Optional<ExistingButton> structuralMenuRowAnchor(
+      int screenWidth, List<ExistingButton> buttons) {
+    return buttons.stream()
+        .map(button -> structuralRow(screenWidth, buttons, button.y()))
+        .filter(Optional::isPresent)
+        .map(Optional::orElseThrow)
+        .distinct()
+        .max(Comparator.comparingInt(StructuralRow::top))
+        .map(StructuralRow::anchor);
+  }
+
+  private static Optional<StructuralRow> structuralRow(
+      int screenWidth, List<ExistingButton> buttons, int rowY) {
+    List<ExistingButton> rowButtons =
+        buttons.stream().filter(button -> button.overlapsCompactY(rowY)).toList();
+    if (rowButtons.size() < 2) {
+      return Optional.empty();
+    }
+
+    int top = rowButtons.stream().mapToInt(ExistingButton::y).min().orElse(rowY);
+    int left = rowButtons.stream().mapToInt(ExistingButton::x).min().orElse(0);
+    int right = rowButtons.stream().mapToInt(ExistingButton::right).max().orElse(0);
+    int rowWidth = right - left;
+    int center = left + rowWidth / 2;
+    boolean centered = Math.abs(center - screenWidth / 2) <= COMPACT_SIZE;
+    boolean menuWidth = rowWidth >= FULL_WIDTH - SPACING && rowWidth <= FULL_WIDTH + COMPACT_SIZE;
+    boolean hasWideButton = rowButtons.stream().anyMatch(button -> button.width() > COMPACT_SIZE);
+    if (!centered || !menuWidth || !hasWideButton) {
+      return Optional.empty();
+    }
+
+    ExistingButton anchor =
+        rowButtons.stream().max(Comparator.comparingInt(ExistingButton::width)).orElseThrow();
+    return Optional.of(new StructuralRow(top, anchor));
+  }
+
   private static boolean doesNotIntersectAny(Plan plan, List<ExistingButton> buttons) {
     return buttons.stream().noneMatch(button -> button.intersects(plan));
   }
@@ -114,4 +156,6 @@ final class PauseMenuButtonPlacement {
       return y + height;
     }
   }
+
+  private record StructuralRow(int top, ExistingButton anchor) {}
 }
