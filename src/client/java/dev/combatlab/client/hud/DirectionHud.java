@@ -166,6 +166,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         new DirectionHudLayout(renderFrame.width(), layout.degreesPerPixel());
     int degreeY = degreeY(context);
     int compassY = compassY(context, context.font());
+    double moduleScale = scale();
+    double textScale = HudTextScale.nearest(moduleScale);
     graphics.fill(0, compassY, renderLayout.width(), compassY + COMPASS_HEIGHT, 0x77000000);
     graphics.outline(0, compassY, renderLayout.width(), COMPASS_HEIGHT, 0x44FFFFFF);
     graphics.fill(
@@ -175,10 +177,27 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         compassY + COMPASS_HEIGHT - 1,
         0x99D1D5DB);
     renderTicks(graphics, renderLayout, compassY, bearing);
-    renderMarks(graphics, context.font(), renderLayout, compassY, bearing);
-    renderDegree(graphics, context.font(), renderLayout, degreeY, bearing);
 
     graphics.pose().popMatrix();
+
+    renderMarks(
+        graphics,
+        context.font(),
+        renderFrame,
+        renderLayout,
+        moduleScale,
+        textScale,
+        compassY,
+        bearing);
+    renderDegree(
+        graphics,
+        context.font(),
+        renderFrame,
+        renderLayout,
+        moduleScale,
+        textScale,
+        degreeY,
+        bearing);
   }
 
   private CompassRenderFrame renderFrame(HudRenderContext context, DirectionHudLayout layout) {
@@ -323,38 +342,61 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private static void renderMarks(
       GuiGraphicsExtractor graphics,
       Font font,
+      CompassRenderFrame frame,
       DirectionHudLayout layout,
+      double moduleScale,
+      double textScale,
       int compassY,
       double bearing) {
-    int labelY = compassY + LABEL_Y;
+    double labelY = frame.y() + (compassY + LABEL_Y) * moduleScale;
+    double contentLeft = frame.x() + CONTENT_LEFT * moduleScale;
+    double contentRight = frame.x() + layout.contentRight() * moduleScale;
     List<VisibleDirectionMark> visibleMarks = new ArrayList<>(MARKS.length);
     int activeDirection = nearestCardinal(bearing);
     for (DirectionMark mark : MARKS) {
       int x = xFor(layout, mark.degrees(), bearing);
-      int textWidth = font.width(mark.label());
-      int textX = x - textWidth / 2;
-      if (textX < CONTENT_LEFT || textX + textWidth > layout.contentRight()) {
+      double centerX = frame.x() + x * moduleScale;
+      double textWidth = font.width(mark.label()) * textScale;
+      double textX = centerX - textWidth / 2.0D;
+      if (textX < contentLeft || textX + textWidth > contentRight) {
         continue;
       }
       int color = mark.degrees() == activeDirection ? ACCENT_COLOR : 0xFFE5E7EB;
       visibleMarks.add(new VisibleDirectionMark(mark.label(), textX, textWidth, color));
     }
 
-    visibleMarks.sort(Comparator.comparingInt(VisibleDirectionMark::textX));
-    int lastTextRight = Integer.MIN_VALUE;
+    visibleMarks.sort(Comparator.comparingDouble(VisibleDirectionMark::textX));
+    double lastTextRight = Double.NEGATIVE_INFINITY;
     for (VisibleDirectionMark mark : visibleMarks) {
       if (mark.textX() <= lastTextRight + 2) {
         continue;
       }
-      graphics.text(font, mark.label(), mark.textX(), labelY, mark.color(), true);
+      HudTextScale.draw(
+          graphics, font, mark.label(), mark.textX(), labelY, textScale, mark.color(), true);
       lastTextRight = mark.textX() + mark.textWidth();
     }
   }
 
   private static void renderDegree(
-      GuiGraphicsExtractor graphics, Font font, DirectionHudLayout layout, int y, double bearing) {
+      GuiGraphicsExtractor graphics,
+      Font font,
+      CompassRenderFrame frame,
+      DirectionHudLayout layout,
+      double moduleScale,
+      double textScale,
+      int y,
+      double bearing) {
     String text = Integer.toString(normalize(bearing));
-    graphics.text(font, text, layout.centerX() - font.width(text) / 2, y, 0xFFE5E7EB, true);
+    double centerX = frame.x() + layout.centerX() * moduleScale;
+    HudTextScale.draw(
+        graphics,
+        font,
+        text,
+        HudTextScale.centeredX(font, text, centerX, textScale),
+        frame.y() + y * moduleScale,
+        textScale,
+        0xFFE5E7EB,
+        true);
   }
 
   private static int xFor(DirectionHudLayout layout, int degrees, double bearing) {
@@ -387,7 +429,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
 
   private record DirectionMark(String label, int degrees) {}
 
-  private record VisibleDirectionMark(String label, int textX, int textWidth, int color) {}
+  private record VisibleDirectionMark(String label, double textX, double textWidth, int color) {}
 
   private record CompassRenderFrame(double x, int y, int width) {}
 

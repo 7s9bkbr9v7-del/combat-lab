@@ -48,49 +48,145 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
           new InputState(input.cps(), true, true, false, false, true, false, false, true, false);
     }
 
-    graphics.pose().pushMatrix();
-    graphics.pose().translate(context.bounds().x(), context.bounds().y());
-    graphics.pose().scale((float) scale(), (float) scale());
+    HudRectangle bounds = context.bounds();
+    double moduleScale = scale();
+    double textScale = HudTextScale.nearest(moduleScale);
 
-    renderKey(graphics, context.font(), "W", KEY + GAP, 0, KEY, KEY, input.forward());
-    renderKey(graphics, context.font(), "A", 0, KEY + GAP, KEY, KEY, input.left());
-    renderKey(graphics, context.font(), "S", KEY + GAP, KEY + GAP, KEY, KEY, input.back());
-    renderKey(graphics, context.font(), "D", (KEY + GAP) * 2, KEY + GAP, KEY, KEY, input.right());
-    renderKey(graphics, context.font(), "SPACE", 0, SPACE_Y, WIDTH, SPACE_HEIGHT, input.jump());
+    graphics.pose().pushMatrix();
+    graphics.pose().translate(bounds.x(), bounds.y());
+    graphics.pose().scale((float) moduleScale, (float) moduleScale);
+
+    renderKeyBackground(graphics, 0, KEY + GAP, KEY, KEY, input.left());
+    renderKeyBackground(graphics, KEY + GAP, 0, KEY, KEY, input.forward());
+    renderKeyBackground(graphics, KEY + GAP, KEY + GAP, KEY, KEY, input.back());
+    renderKeyBackground(graphics, (KEY + GAP) * 2, KEY + GAP, KEY, KEY, input.right());
+    renderKeyBackground(graphics, 0, SPACE_Y, WIDTH, SPACE_HEIGHT, input.jump());
 
     int mouseWidth = (WIDTH - GAP) / 2;
-    renderKey(
-        graphics, context.font(), "LMB", 0, MOUSE_Y, mouseWidth, MOUSE_HEIGHT, input.attack());
-    renderKey(
+    renderKeyBackground(graphics, 0, MOUSE_Y, mouseWidth, MOUSE_HEIGHT, input.attack());
+    renderKeyBackground(graphics, mouseWidth + GAP, MOUSE_Y, mouseWidth, MOUSE_HEIGHT, input.use());
+
+    graphics.pose().popMatrix();
+
+    renderKeyLabel(
         graphics,
         context.font(),
+        bounds,
+        moduleScale,
+        textScale,
+        "W",
+        KEY + GAP,
+        0,
+        KEY,
+        KEY,
+        input.forward());
+    renderKeyLabel(
+        graphics,
+        context.font(),
+        bounds,
+        moduleScale,
+        textScale,
+        "A",
+        0,
+        KEY + GAP,
+        KEY,
+        KEY,
+        input.left());
+    renderKeyLabel(
+        graphics,
+        context.font(),
+        bounds,
+        moduleScale,
+        textScale,
+        "S",
+        KEY + GAP,
+        KEY + GAP,
+        KEY,
+        KEY,
+        input.back());
+    renderKeyLabel(
+        graphics,
+        context.font(),
+        bounds,
+        moduleScale,
+        textScale,
+        "D",
+        (KEY + GAP) * 2,
+        KEY + GAP,
+        KEY,
+        KEY,
+        input.right());
+    renderKeyLabel(
+        graphics,
+        context.font(),
+        bounds,
+        moduleScale,
+        textScale,
+        "SPACE",
+        0,
+        SPACE_Y,
+        WIDTH,
+        SPACE_HEIGHT,
+        input.jump());
+    renderKeyLabel(
+        graphics,
+        context.font(),
+        bounds,
+        moduleScale,
+        textScale,
+        "LMB",
+        0,
+        MOUSE_Y,
+        mouseWidth,
+        MOUSE_HEIGHT,
+        input.attack());
+    renderKeyLabel(
+        graphics,
+        context.font(),
+        bounds,
+        moduleScale,
+        textScale,
         "RMB",
         mouseWidth + GAP,
         MOUSE_Y,
         mouseWidth,
         MOUSE_HEIGHT,
         input.use());
-
-    graphics.pose().popMatrix();
   }
 
-  private static void renderKey(
+  private static void renderKeyBackground(
+      GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean pressed) {
+    int fill = pressed ? 0xCCF3F4F6 : 0x99000000;
+    int outline = pressed ? 0xFFE5E7EB : 0x55FFFFFF;
+    graphics.fill(x, y, x + width, y + height, fill);
+    graphics.outline(x, y, width, height, outline);
+  }
+
+  private static void renderKeyLabel(
       GuiGraphicsExtractor graphics,
       Font font,
+      HudRectangle bounds,
+      double moduleScale,
+      double textScale,
       String label,
       int x,
       int y,
       int width,
       int height,
       boolean pressed) {
-    int fill = pressed ? 0xCCF3F4F6 : 0x99000000;
-    int outline = pressed ? 0xFFE5E7EB : 0x55FFFFFF;
-    int text = pressed ? 0xFF111827 : 0xFFF3F4F6;
-    graphics.fill(x, y, x + width, y + height, fill);
-    graphics.outline(x, y, width, height, outline);
-    int textY = y + (height - font.lineHeight) / 2 + 1;
-    int textX = x + (width - font.width(label)) / 2 + horizontalTextOffset(label);
-    graphics.text(font, label, textX, textY, text, !pressed);
+    int color = pressed ? 0xFF111827 : 0xFFF3F4F6;
+    double centerX = bounds.x() + (x + width / 2.0D) * moduleScale;
+    double centerY = bounds.y() + (y + height / 2.0D) * moduleScale;
+    HudTextScale.draw(
+        graphics,
+        font,
+        label,
+        HudTextScale.centeredX(font, label, centerX, textScale)
+            + horizontalTextOffset(label) * moduleScale,
+        HudTextScale.centeredY(font, centerY, textScale) + moduleScale,
+        textScale,
+        color,
+        !pressed);
   }
 
   private static int horizontalTextOffset(String label) {

@@ -34,26 +34,22 @@ abstract class TextHudModule extends ResizableBaseHudModule {
     }
     this.text = text;
     Font font = Minecraft.getInstance().font;
-    if (font != null) {
-      this.unscaledSize =
-          new HudSize(font.width(text) + PADDING * 2, font.lineHeight + PADDING * 2);
-    }
+    this.unscaledSize = new HudSize(font.width(text) + PADDING * 2, font.lineHeight + PADDING * 2);
   }
 
   @Override
   protected final void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
     HudRectangle bounds = context.bounds();
-    double scale = scale();
-    if (scale == 1.0) {
-      graphics.text(
-          context.font(), text, bounds.x() + PADDING, bounds.y() + PADDING, 0xFFF3F4F6, true);
-      return;
-    }
-
-    graphics.pose().pushMatrix();
-    graphics.pose().translate(bounds.x(), bounds.y());
-    graphics.pose().scale((float) scale, (float) scale);
-    graphics.text(context.font(), text, PADDING, PADDING, 0xFFF3F4F6, true);
-    graphics.pose().popMatrix();
+    double moduleScale = scale();
+    double textScale = HudTextScale.nearest(moduleScale);
+    HudTextScale.draw(
+        graphics,
+        context.font(),
+        text,
+        bounds.x() + PADDING * moduleScale,
+        bounds.y() + PADDING * moduleScale,
+        textScale,
+        0xFFF3F4F6,
+        true);
   }
 }

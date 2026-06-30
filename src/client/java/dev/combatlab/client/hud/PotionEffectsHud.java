@@ -65,17 +65,31 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
       updateSize(effects);
     }
 
+    HudRectangle bounds = context.bounds();
+    double moduleScale = scale();
+    double textScale = HudTextScale.nearest(moduleScale);
     graphics.pose().pushMatrix();
-    graphics.pose().translate(context.bounds().x(), context.bounds().y());
-    graphics.pose().scale((float) scale(), (float) scale());
+    graphics.pose().translate(bounds.x(), bounds.y());
+    graphics.pose().scale((float) moduleScale, (float) moduleScale);
     for (int index = 0; index < effects.size(); index++) {
-      renderEffect(graphics, context.font(), effects.get(index), index * ROW_HEIGHT);
+      renderEffectBackground(graphics, effects.get(index), index * ROW_HEIGHT);
     }
     graphics.pose().popMatrix();
+
+    for (int index = 0; index < effects.size(); index++) {
+      renderEffectText(
+          graphics,
+          context.font(),
+          bounds,
+          moduleScale,
+          textScale,
+          effects.get(index),
+          index * ROW_HEIGHT);
+    }
   }
 
-  private void renderEffect(
-      GuiGraphicsExtractor graphics, Font font, PlayerEffectTimer effect, int y) {
+  private void renderEffectBackground(
+      GuiGraphicsExtractor graphics, PlayerEffectTimer effect, int y) {
     int width = unscaledSize.width();
     int accent = 0xFF000000 | effect.color();
     graphics.fill(0, y, width, y + ROW_HEIGHT - 1, 0x99000000);
@@ -92,12 +106,37 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
         ICON_SIZE,
         ICON_SIZE,
         ICON_SIZE);
+  }
 
+  private void renderEffectText(
+      GuiGraphicsExtractor graphics,
+      Font font,
+      HudRectangle bounds,
+      double moduleScale,
+      double textScale,
+      PlayerEffectTimer effect,
+      int y) {
     String name = effect.displayName() + amplifierSuffix(effect.amplifier());
     String timer = durationText(effect);
     int textX = PADDING + ICON_SIZE + 4;
-    graphics.text(font, name, textX, y + 3, 0xFFF3F4F6, true);
-    graphics.text(font, timer, textX, y + 13, durationColor(effect), true);
+    HudTextScale.draw(
+        graphics,
+        font,
+        name,
+        bounds.x() + textX * moduleScale,
+        bounds.y() + (y + 3) * moduleScale,
+        textScale,
+        0xFFF3F4F6,
+        true);
+    HudTextScale.draw(
+        graphics,
+        font,
+        timer,
+        bounds.x() + textX * moduleScale,
+        bounds.y() + (y + 13) * moduleScale,
+        textScale,
+        durationColor(effect),
+        true);
   }
 
   private void updateSize(List<PlayerEffectTimer> activeEffects) {
@@ -109,14 +148,12 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
 
     Font font = Minecraft.getInstance().font;
     int width = MIN_WIDTH;
-    if (font != null) {
-      for (PlayerEffectTimer effect : effects) {
-        int textWidth =
-            Math.max(
-                font.width(effect.displayName() + amplifierSuffix(effect.amplifier())),
-                font.width(durationText(effect)));
-        width = Math.max(width, PADDING * 2 + ICON_SIZE + 4 + textWidth);
-      }
+    for (PlayerEffectTimer effect : effects) {
+      int textWidth =
+          Math.max(
+              font.width(effect.displayName() + amplifierSuffix(effect.amplifier())),
+              font.width(durationText(effect)));
+      width = Math.max(width, PADDING * 2 + ICON_SIZE + 4 + textWidth);
     }
     unscaledSize = new HudSize(width, ROW_HEIGHT * effects.size());
   }
