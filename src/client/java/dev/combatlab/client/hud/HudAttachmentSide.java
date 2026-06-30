@@ -15,6 +15,30 @@ public enum HudAttachmentSide {
     };
   }
 
+  void resolveInto(
+      HudRectangle target, HudSize attachedSize, int offset, HudRectangle attachedBounds) {
+    switch (this) {
+      case LEFT_OF ->
+          attachedBounds.set(
+              target.x() - attachedSize.width(),
+              target.y() + offset,
+              attachedSize.width(),
+              attachedSize.height());
+      case RIGHT_OF ->
+          attachedBounds.set(
+              target.right(), target.y() + offset, attachedSize.width(), attachedSize.height());
+      case ABOVE ->
+          attachedBounds.set(
+              target.x() + offset,
+              target.y() - attachedSize.height(),
+              attachedSize.width(),
+              attachedSize.height());
+      case BELOW ->
+          attachedBounds.set(
+              target.x() + offset, target.bottom(), attachedSize.width(), attachedSize.height());
+    }
+  }
+
   public static HudAttachmentSide fromStored(String stored) {
     if (stored == null) {
       return null;

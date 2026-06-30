@@ -14,6 +14,7 @@ public abstract class BaseHudModule implements HudModule {
   private final HudModuleDefinition definition;
   private final HudModuleSettings settings;
   private final DebugLogger debug;
+  private final HudRectangle attachedTargetBounds = new HudRectangle(0, 0, 0, 0);
   private Function<String, HudModule> moduleLookup = ignored -> null;
   private boolean resolvingBounds;
 
@@ -145,35 +146,50 @@ public abstract class BaseHudModule implements HudModule {
 
   @Override
   public final HudRectangle bounds(int screenWidth, int screenHeight) {
+    HudRectangle bounds = new HudRectangle(0, 0, 0, 0);
+    resolveBoundsInto(bounds, screenWidth, screenHeight);
+    return bounds;
+  }
+
+  final void resolveBoundsInto(HudRectangle bounds, int screenWidth, int screenHeight) {
     HudSize size = size();
-    HudPosition fallback =
-        HudLayout.resolve(
-            settings.normalizedX(), settings.normalizedY(), screenWidth, screenHeight, size);
-    HudPosition attached = attachedPosition(size, screenWidth, screenHeight);
-    HudPosition position = attached != null ? attached : fallback;
-    return new HudRectangle(position.x(), position.y(), size.width(), size.height());
+    if (resolveAttachedBoundsInto(bounds, size, screenWidth, screenHeight)) {
+      return;
+    }
+
+    bounds.set(
+        HudLayout.resolveX(settings.normalizedX(), screenWidth, size),
+        HudLayout.resolveY(settings.normalizedY(), screenHeight, size),
+        size.width(),
+        size.height());
   }
 
   void bindModuleLookup(Function<String, HudModule> moduleLookup) {
     this.moduleLookup = moduleLookup;
   }
 
-  private HudPosition attachedPosition(HudSize size, int screenWidth, int screenHeight) {
+  private boolean resolveAttachedBoundsInto(
+      HudRectangle bounds, HudSize size, int screenWidth, int screenHeight) {
     if (resolvingBounds) {
-      return null;
+      return false;
     }
 
     String targetId = settings.attachedTo();
     HudAttachmentSide side = HudAttachmentSide.fromStored(settings.attachmentSide());
     HudModule target = targetId == null ? null : moduleLookup.apply(targetId);
     if (target == null || target == this || side == null) {
-      return null;
+      return false;
     }
 
     resolvingBounds = true;
     try {
-      return side.resolve(
-          target.bounds(screenWidth, screenHeight), size, settings.attachmentOffset());
+      if (target instanceof BaseHudModule baseTarget) {
+        baseTarget.resolveBoundsInto(attachedTargetBounds, screenWidth, screenHeight);
+      } else {
+        attachedTargetBounds.set(target.bounds(screenWidth, screenHeight));
+      }
+      side.resolveInto(attachedTargetBounds, size, settings.attachmentOffset(), bounds);
+      return true;
     } finally {
       resolvingBounds = false;
     }

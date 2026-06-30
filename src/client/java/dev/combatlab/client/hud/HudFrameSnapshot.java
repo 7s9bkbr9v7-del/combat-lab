@@ -32,7 +32,10 @@ final class HudFrameSnapshot {
 
   private static final class ModuleFrame {
     private final HudModule module;
-    private HudRenderContext context;
+    private final HudRectangle bounds = new HudRectangle(0, 0, 0, 0);
+    private final HudRenderContext context =
+        new HudRenderContext(null, bounds, 0, 0, 1.0F, null);
+    private boolean active;
 
     private ModuleFrame(HudModule module) {
       this.module = module;
@@ -44,22 +47,26 @@ final class HudFrameSnapshot {
         int screenWidth,
         int screenHeight,
         float frameDeltaTicks) {
-      context =
-          module.enabled()
-              ? new HudRenderContext(
-                  font,
-                  module.bounds(screenWidth, screenHeight),
-                  screenWidth,
-                  screenHeight,
-                  frameDeltaTicks,
-                  gameState)
-              : null;
+      active = module.enabled();
+      if (!active) {
+        return;
+      }
+      captureBounds(screenWidth, screenHeight);
+      context.update(font, bounds, screenWidth, screenHeight, frameDeltaTicks, gameState);
     }
 
     private void render(GuiGraphicsExtractor graphics) {
-      if (context != null) {
+      if (active) {
         module.renderInGame(graphics, context);
       }
+    }
+
+    private void captureBounds(int screenWidth, int screenHeight) {
+      if (module instanceof BaseHudModule baseModule) {
+        baseModule.resolveBoundsInto(bounds, screenWidth, screenHeight);
+        return;
+      }
+      bounds.set(module.bounds(screenWidth, screenHeight));
     }
   }
 }
