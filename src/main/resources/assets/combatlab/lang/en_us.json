@@ -2,5 +2,15 @@
   "key.combatlab.open_options": "Open Combat Lab Options",
   "key.combatlab.zoom": "Zoom",
   "key.combatlab.freelook": "Freelook",
-  "screen.combatlab.hud_editor": "HUD Editor"
+  "screen.combatlab.hud_editor": "HUD Editor",
+  "options.combatlab.title": "Combat Lab Options",
+  "options.combatlab.section.general": "General",
+  "options.combatlab.section.hud": "HUD",
+  "options.combatlab.fullbright": "Fullbright",
+  "options.combatlab.fullbright.tooltip": "Brightens dark areas without applying a potion effect.",
+  "options.combatlab.dynamic_fov": "Dynamic FOV",
+  "options.combatlab.dynamic_fov.tooltip": "Controls movement-based FOV changes, including sprinting and speed effects.",
+  "options.combatlab.debug_logging": "Debug logging",
+  "options.combatlab.disable_achievement_notifications": "Disable achievement notifications",
+  "options.combatlab.hud_module.tooltip": "Show or hide this module in game and in the HUD editor."
 }
