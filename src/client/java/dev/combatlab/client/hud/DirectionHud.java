@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class DirectionHud extends ResizableBaseHudModule implements AdaptiveLayoutHudModule {
+  private static final long LAYOUT_ANIMATION_NANOS = 220_000_000L;
   private static final int WIDTH = 112;
   private static final int SIDE_WIDTH = 58;
   private static final int COMPASS_HEIGHT = 12;
@@ -61,6 +62,11 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private DirectionHudLayout lockedLayout;
   private DirectionHudLayout overrideLayout;
   private DirectionHudLayout floatingLayout = FLOATING_LAYOUT;
+  private DirectionHudLayout previewLayout;
+  private double previewWidth;
+  private double layoutAnimationStartWidth;
+  private long layoutAnimationStartNanos;
+  private boolean previewWidthInitialized;
 
   public static HudModuleDescriptor descriptor() {
     return new HudModuleDescriptor(
@@ -149,10 +155,13 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     graphics.pose().scale((float) scale(), (float) scale());
 
     DirectionHudLayout layout = layout();
+    int compassWidth = animatedCompassWidth(context, layout);
+    int compassX = (layout.width() - compassWidth) / 2;
     int degreeY = degreeY(context);
     int compassY = compassY(context, context.font());
-    graphics.fill(0, compassY, layout.width(), compassY + COMPASS_HEIGHT, 0x77000000);
-    graphics.outline(0, compassY, layout.width(), COMPASS_HEIGHT, 0x44FFFFFF);
+    graphics.fill(
+        compassX, compassY, compassX + compassWidth, compassY + COMPASS_HEIGHT, 0x77000000);
+    graphics.outline(compassX, compassY, compassWidth, COMPASS_HEIGHT, 0x44FFFFFF);
     graphics.fill(
         layout.centerX(),
         compassY + 1,
@@ -164,6 +173,46 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     renderDegree(graphics, context.font(), layout, degreeY, bearing);
 
     graphics.pose().popMatrix();
+  }
+
+  private int animatedCompassWidth(HudRenderContext context, DirectionHudLayout layout) {
+    if (!context.editorPreview()) {
+      previewWidthInitialized = false;
+      return layout.width();
+    }
+
+    if (lockedLayout != null) {
+      previewLayout = layout;
+      previewWidth = layout.width();
+      layoutAnimationStartWidth = previewWidth;
+      previewWidthInitialized = true;
+      return layout.width();
+    }
+
+    long nowNanos = System.nanoTime();
+    if (!previewWidthInitialized) {
+      previewLayout = layout;
+      previewWidth = layout.width();
+      layoutAnimationStartWidth = previewWidth;
+      layoutAnimationStartNanos = nowNanos - LAYOUT_ANIMATION_NANOS;
+      previewWidthInitialized = true;
+      return layout.width();
+    }
+
+    if (previewLayout != layout) {
+      previewLayout = layout;
+      layoutAnimationStartWidth = previewWidth;
+      layoutAnimationStartNanos = nowNanos;
+    }
+
+    double progress =
+        Math.clamp(
+            (double) (nowNanos - layoutAnimationStartNanos) / LAYOUT_ANIMATION_NANOS, 0.0D, 1.0D);
+    previewWidth = lerp(layoutAnimationStartWidth, layout.width(), settleProgress(progress));
+    if (progress >= 1.0D) {
+      previewWidth = layout.width();
+    }
+    return Math.max(SIDE_WIDTH, (int) Math.round(previewWidth));
   }
 
   private double renderBearing(HudRenderContext context) {
@@ -331,6 +380,14 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
 
   private static double clamp(double value, double minimum, double maximum) {
     return Math.clamp(value, minimum, maximum);
+  }
+
+  private static double settleProgress(double progress) {
+    return progress * progress * progress * (progress * (progress * 6.0D - 15.0D) + 10.0D);
+  }
+
+  private static double lerp(double start, double end, double progress) {
+    return start + (end - start) * progress;
   }
 
   private record DirectionMark(String label, int degrees) {}
