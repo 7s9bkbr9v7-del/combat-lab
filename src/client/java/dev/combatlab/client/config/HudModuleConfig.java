@@ -4,7 +4,7 @@ public final class HudModuleConfig {
   boolean enabled;
   double normalizedX;
   double normalizedY;
-  double scale = 1.0;
+  double scale = HudModuleSettings.DEFAULT_SCALE;
   String layout;
   String attachedTo;
   String attachmentSide;

@@ -1,5 +1,6 @@
 package dev.combatlab.client.screen.hudeditor;
 
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudCorner;
@@ -77,7 +78,8 @@ public final class HudResizeController {
     resizedModule.savePosition();
     debug.info(
         "{} resized to {}%",
-        resizedModule.displayName().getString(), Math.round(resizedModule.scale() * 100.0));
+        resizedModule.displayName().getString(),
+        HudModuleSettings.displayPercent(resizedModule.scale()));
     resizedModule = null;
     resizedCorner = null;
     return true;

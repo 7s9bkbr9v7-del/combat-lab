@@ -1,6 +1,7 @@
 package dev.combatlab.client.config;
 
 public final class HudModuleSettings {
+  public static final double DEFAULT_SCALE = 0.9;
   public static final double MIN_SCALE = 0.5;
   public static final double MAX_SCALE = 4.0;
 
@@ -41,6 +42,10 @@ public final class HudModuleSettings {
 
   public void updateScale(double scale) {
     config.scale = clampScale(scale);
+  }
+
+  public static int displayPercent(double scale) {
+    return (int) Math.round(scale / DEFAULT_SCALE * 100.0);
   }
 
   public String layout() {
@@ -115,7 +120,7 @@ public final class HudModuleSettings {
 
   private static double clampScale(double value) {
     if (value <= 0.0) {
-      return 1.0;
+      return DEFAULT_SCALE;
     }
     return Math.clamp(value, MIN_SCALE, MAX_SCALE);
   }

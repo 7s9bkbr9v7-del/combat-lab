@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.combatlab.client.config.CombatLabConfigCodec;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
@@ -82,17 +83,17 @@ class DirectionHudTest {
     hud.updatePosition(0, 30, 320, 180);
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(58, 22), hud.size());
+    assertEquals(scaledSize(58, 22), hud.size());
 
     hud.cycleLayout();
 
     assertEquals("FLOATING", hud.currentLayout());
-    assertEquals(new HudSize(112, 22), hud.size());
+    assertEquals(scaledSize(112, 22), hud.size());
 
     hud.cycleLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(58, 22), hud.size());
+    assertEquals(scaledSize(58, 22), hud.size());
   }
 
   @Test
@@ -106,7 +107,7 @@ class DirectionHudTest {
     DirectionHud reloaded = hud(configPath);
 
     assertEquals("FLOATING", reloaded.currentLayout());
-    assertEquals(new HudSize(112, 22), reloaded.size());
+    assertEquals(scaledSize(112, 22), reloaded.size());
   }
 
   @Test
@@ -122,7 +123,7 @@ class DirectionHudTest {
     hud.unlockLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(112, 22), hud.size());
+    assertEquals(scaledSize(112, 22), hud.size());
   }
 
   @Test
@@ -135,7 +136,7 @@ class DirectionHudTest {
     hud.unlockLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(58, 22), hud.size());
+    assertEquals(scaledSize(58, 22), hud.size());
   }
 
   @Test
@@ -143,12 +144,20 @@ class DirectionHudTest {
     DirectionHud hud = hud();
     hud.updatePosition(120, 30, 320, 180);
 
-    assertEquals(112, hud.editorBounds(320, 180).width());
+    assertEquals(scaled(112), hud.editorBounds(320, 180).width());
 
     hud.updatePosition(0, 30, 320, 180);
 
-    assertEquals(58, hud.size().width());
+    assertEquals(scaled(58), hud.size().width());
     assertTrue(hud.editorBounds(320, 180).width() > hud.size().width());
+  }
+
+  private static HudSize scaledSize(int width, int height) {
+    return new HudSize(scaled(width), scaled(height));
+  }
+
+  private static int scaled(int value) {
+    return (int) Math.ceil(value * HudModuleSettings.DEFAULT_SCALE);
   }
 
   private DirectionHud hud() {

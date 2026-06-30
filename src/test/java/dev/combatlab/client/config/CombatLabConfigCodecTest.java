@@ -79,7 +79,8 @@ class CombatLabConfigCodecTest {
 				}
 				""");
 
-    assertEquals(1.0, decoded.hudModules.get("combatlab:fps").scale, 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_SCALE, decoded.hudModules.get("combatlab:fps").scale, 0.0001);
     assertTrue(decoded.dynamicFovEnabled);
   }
 

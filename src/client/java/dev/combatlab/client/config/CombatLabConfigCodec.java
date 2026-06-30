@@ -119,11 +119,11 @@ public final class CombatLabConfigCodec {
 
   private static double optionalScale(JsonObject root, String id) {
     if (!root.has("scale") || root.get("scale").isJsonNull()) {
-      return 1.0;
+      return HudModuleSettings.DEFAULT_SCALE;
     }
     double scale = doubleValue(root, "scale", "HUD module '" + id + "'");
     if (scale <= 0.0) {
-      return 1.0;
+      return HudModuleSettings.DEFAULT_SCALE;
     }
     return Math.clamp(scale, HudModuleSettings.MIN_SCALE, HudModuleSettings.MAX_SCALE);
   }

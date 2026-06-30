@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.combatlab.client.config.CombatLabConfigCodec;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.screen.hudeditor.HudEditorHistory;
 import dev.combatlab.client.state.ClientGameState;
@@ -39,12 +40,14 @@ class HudEditorHistoryTest {
     assertTrue(history.undo());
     assertEquals(0.25, registry.settings("combatlab:fps").normalizedX(), 0.0001);
     assertEquals(0.75, registry.settings("combatlab:fps").normalizedY(), 0.0001);
-    assertEquals(1.0, registry.settings("combatlab:fps").scale(), 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_SCALE, registry.settings("combatlab:fps").scale(), 0.0001);
 
     assertTrue(history.undo());
     assertEquals(0.0, registry.settings("combatlab:fps").normalizedX(), 0.0001);
     assertEquals(0.0, registry.settings("combatlab:fps").normalizedY(), 0.0001);
-    assertEquals(1.0, registry.settings("combatlab:fps").scale(), 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_SCALE, registry.settings("combatlab:fps").scale(), 0.0001);
 
     assertFalse(history.undo());
   }
@@ -64,7 +67,8 @@ class HudEditorHistoryTest {
     assertTrue(history.redo());
     assertEquals(0.25, registry.settings("combatlab:fps").normalizedX(), 0.0001);
     assertEquals(0.75, registry.settings("combatlab:fps").normalizedY(), 0.0001);
-    assertEquals(1.0, registry.settings("combatlab:fps").scale(), 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_SCALE, registry.settings("combatlab:fps").scale(), 0.0001);
 
     assertTrue(history.redo());
     assertEquals(0.25, registry.settings("combatlab:fps").normalizedX(), 0.0001);

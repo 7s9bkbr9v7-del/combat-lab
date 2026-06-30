@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import dev.combatlab.client.config.CombatLabConfigCodec;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.screen.hudeditor.HudEditorHistory;
 import java.nio.file.Path;
@@ -54,22 +55,22 @@ class ArmorHudLayoutTest {
     hud.updatePosition(0, 80, 320, 180);
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(18, 66), hud.size());
+    assertEquals(scaledSize(18, 66), hud.size());
 
     hud.cycleLayout();
 
     assertEquals("HORIZONTAL", hud.currentLayout());
-    assertEquals(new HudSize(66, 18), hud.size());
+    assertEquals(scaledSize(66, 18), hud.size());
 
     hud.cycleLayout();
 
     assertEquals("GRID", hud.currentLayout());
-    assertEquals(new HudSize(34, 34), hud.size());
+    assertEquals(scaledSize(34, 34), hud.size());
 
     hud.cycleLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(18, 66), hud.size());
+    assertEquals(scaledSize(18, 66), hud.size());
   }
 
   @Test
@@ -83,7 +84,7 @@ class ArmorHudLayoutTest {
     ArmorHud reloaded = armorHud(configPath);
 
     assertEquals("HORIZONTAL", reloaded.currentLayout());
-    assertEquals(new HudSize(66, 18), reloaded.size());
+    assertEquals(scaledSize(66, 18), reloaded.size());
   }
 
   @Test
@@ -105,7 +106,7 @@ class ArmorHudLayoutTest {
     history.undo();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(18, 66), hud.size());
+    assertEquals(scaledSize(18, 66), hud.size());
   }
 
   @Test
@@ -121,7 +122,7 @@ class ArmorHudLayoutTest {
     hud.unlockLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(18, 66), hud.size());
+    assertEquals(scaledSize(18, 66), hud.size());
   }
 
   @Test
@@ -134,7 +135,7 @@ class ArmorHudLayoutTest {
     hud.unlockLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(new HudSize(18, 66), hud.size());
+    assertEquals(scaledSize(18, 66), hud.size());
   }
 
   @Test
@@ -143,13 +144,13 @@ class ArmorHudLayoutTest {
     hud.updatePosition(0, 80, 320, 180);
     HudRectangle verticalBounds = hud.editorBounds(320, 180);
 
-    assertEquals(18, verticalBounds.width());
-    assertEquals(66, verticalBounds.height());
+    assertEquals(scaled(18), verticalBounds.width());
+    assertEquals(scaled(66), verticalBounds.height());
 
     hud.updatePosition(160, 0, 320, 180);
     HudRectangle animatedBounds = hud.editorBounds(320, 180);
 
-    assertEquals(new HudSize(66, 18), hud.size());
+    assertEquals(scaledSize(66, 18), hud.size());
     assertEquals(verticalBounds.width(), animatedBounds.width());
     assertEquals(verticalBounds.height(), animatedBounds.height());
   }
@@ -173,9 +174,17 @@ class ArmorHudLayoutTest {
     HudRectangle attachedEditorBounds = direction.editorBounds(320, 180);
     HudRectangle animatedArmorBounds = armor.editorBounds(320, 180);
 
-    assertEquals(18, armor.bounds(320, 180).width());
+    assertEquals(scaled(18), armor.bounds(320, 180).width());
     assertEquals(animatedArmorBounds.right(), attachedEditorBounds.x());
     assertEquals(animatedArmorBounds.y(), attachedEditorBounds.y());
+  }
+
+  private static HudSize scaledSize(int width, int height) {
+    return new HudSize(scaled(width), scaled(height));
+  }
+
+  private static int scaled(int value) {
+    return (int) Math.ceil(value * HudModuleSettings.DEFAULT_SCALE);
   }
 
   private ArmorHud armorHud() {

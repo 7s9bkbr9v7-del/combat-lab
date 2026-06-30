@@ -1,5 +1,6 @@
 package dev.combatlab.client.screen.hudeditor;
 
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleRegistry;
@@ -425,7 +426,7 @@ public final class HudEditorRenderer {
       return;
     }
 
-    String percent = Math.round(resizedModule.scale() * 100.0) + "%";
+    String percent = HudModuleSettings.displayPercent(resizedModule.scale()) + "%";
     int textWidth = font.width(percent);
     int textX = clampToScreen(mouseX - textWidth / 2, Math.max(0, screenWidth - textWidth));
     int textY = clampToScreen(mouseY + 8, Math.max(0, screenHeight - font.lineHeight));
