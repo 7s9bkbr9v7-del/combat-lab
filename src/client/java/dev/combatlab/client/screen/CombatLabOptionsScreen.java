@@ -93,12 +93,14 @@ public final class CombatLabOptionsScreen extends OptionsSubScreen {
 
   private OptionInstance<Boolean> achievementToastOption() {
     return OptionInstance.createBoolean(
-        "options.combatlab.disable_achievement_notifications",
-        combatLabOptions.achievementToastsDisabled(),
+        "options.combatlab.achievement_notification",
+        tooltip("options.combatlab.achievement_notification.tooltip"),
+        !combatLabOptions.achievementToastsDisabled(),
         selected -> {
-          combatLabOptions.setAchievementToastsDisabled(selected);
-          AchievementToastController.setDisabled(selected);
-          debug.info("Achievement notifications {}", selected ? "disabled" : "enabled");
+          boolean disabled = !selected;
+          combatLabOptions.setAchievementToastsDisabled(disabled);
+          AchievementToastController.setDisabled(disabled);
+          debug.info("Achievement notifications {}", selected ? "enabled" : "disabled");
         });
   }
 
