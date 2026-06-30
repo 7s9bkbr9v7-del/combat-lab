@@ -7,6 +7,8 @@ import dev.combatlab.client.hud.HudRectangle;
 import dev.combatlab.client.hud.HudSize;
 import dev.combatlab.client.hud.HudSnapper;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class HudEditorModuleActions {
   private final HudModuleRegistry modules;
@@ -25,14 +27,20 @@ public final class HudEditorModuleActions {
     this.addSnapThreshold = addSnapThreshold;
   }
 
-  public void disable(HudModule module) {
-    history.recordChange(() -> modules.setEnabled(module.id().toString(), false));
+  public void disable(HudModule module, int screenWidth, int screenHeight) {
+    history.recordChange(
+        () -> modules.setEnabled(module.id().toString(), false, screenWidth, screenHeight));
   }
 
-  public void disableAll(List<HudModule> selectedModules) {
+  public void disableAll(List<HudModule> selectedModules, int screenWidth, int screenHeight) {
     history.recordChange(
         () -> {
+          Set<String> disabledIds =
+              selectedModules.stream()
+                  .map(module -> module.id().toString())
+                  .collect(Collectors.toSet());
           for (HudModule module : selectedModules) {
+            promoteFirstChild(module, disabledIds, screenWidth, screenHeight);
             modules.setEnabled(module.id().toString(), false);
           }
         });
@@ -66,5 +74,30 @@ public final class HudEditorModuleActions {
         selection, added, snappedRectangle, others, addSnapThreshold, screenWidth, screenHeight);
     added.savePosition();
     history.commitChange();
+  }
+
+  private void promoteFirstChild(
+      HudModule disabledModule, Set<String> disabledIds, int screenWidth, int screenHeight) {
+    HudModule child = firstEnabledChild(disabledModule, disabledIds);
+    if (child == null) {
+      return;
+    }
+
+    HudRectangle disabledBounds = selection.rectangle(disabledModule, screenWidth, screenHeight);
+    child.clearAttachment();
+    child.updatePosition(disabledBounds.x(), disabledBounds.y(), screenWidth, screenHeight);
+    child.savePosition();
+  }
+
+  private HudModule firstEnabledChild(HudModule parent, Set<String> disabledIds) {
+    String parentId = parent.id().toString();
+    for (HudModule candidate : modules.modules()) {
+      if (candidate.enabled()
+          && !disabledIds.contains(candidate.id().toString())
+          && parentId.equals(candidate.attachmentTargetId())) {
+        return candidate;
+      }
+    }
+    return null;
   }
 }

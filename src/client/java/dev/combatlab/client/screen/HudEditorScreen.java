@@ -226,7 +226,7 @@ public final class HudEditorScreen extends Screen {
       return true;
     }
     if (event.key() == GLFW.GLFW_KEY_DELETE || event.key() == GLFW.GLFW_KEY_BACKSPACE) {
-      moduleActions.disableAll(moduleSelection.selectedModules(modules.modules()));
+      moduleActions.disableAll(moduleSelection.selectedModules(modules.modules()), width, height);
       moduleSelection.clear();
       contextMenu.close();
       return true;

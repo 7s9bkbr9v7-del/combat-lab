@@ -31,6 +31,7 @@ public final class HudModuleRegistry implements HudElement {
   private final List<HudModule> modules = new ArrayList<>();
   private final List<HudModule> moduleView = Collections.unmodifiableList(modules);
   private final Map<String, HudModule> modulesById = new HashMap<>();
+  private final Map<String, PendingAnchorPromotion> pendingAnchorPromotions = new HashMap<>();
   private boolean frozen;
   private boolean editorOpen;
   private ClientGameState gameState = ClientGameState.empty();
@@ -107,6 +108,17 @@ public final class HudModuleRegistry implements HudElement {
         enabled ? "enabled" : "disabled");
   }
 
+  public void setEnabled(String id, boolean enabled, int screenWidth, int screenHeight) {
+    if (!enabled) {
+      promoteFirstChild(id, screenWidth, screenHeight);
+      setEnabled(id, false);
+      return;
+    }
+
+    setEnabled(id, enabled);
+    restoreFirstChild(id, screenWidth, screenHeight);
+  }
+
   public void tick(ClientGameState gameState) {
     this.gameState = gameState;
     for (HudModule module : modules) {
@@ -177,6 +189,61 @@ public final class HudModuleRegistry implements HudElement {
     refreshFrameSnapshot();
   }
 
+  private void promoteFirstChild(String parentId, int screenWidth, int screenHeight) {
+    HudModule parent = module(parentId);
+    HudModule child = firstEnabledChild(parentId);
+    if (parent == null || child == null) {
+      pendingAnchorPromotions.remove(parentId);
+      return;
+    }
+
+    HudRectangle parentBounds = parent.editorBounds(screenWidth, screenHeight);
+    HudAttachmentSide side =
+        HudAttachmentSide.fromStored(settings(child.id().toString()).attachmentSide());
+    if (side == null) {
+      pendingAnchorPromotions.remove(parentId);
+      return;
+    }
+
+    pendingAnchorPromotions.put(
+        parentId,
+        new PendingAnchorPromotion(
+            child.id().toString(),
+            parentBounds.x(),
+            parentBounds.y(),
+            side,
+            settings(child.id().toString()).attachmentOffset()));
+    child.clearAttachment();
+    child.updatePosition(parentBounds.x(), parentBounds.y(), screenWidth, screenHeight);
+    child.savePosition();
+  }
+
+  private void restoreFirstChild(String parentId, int screenWidth, int screenHeight) {
+    PendingAnchorPromotion promotion = pendingAnchorPromotions.remove(parentId);
+    HudModule parent = module(parentId);
+    HudModule child = promotion == null ? null : module(promotion.childId());
+    if (parent == null || child == null || child.attachmentTargetId() != null) {
+      return;
+    }
+
+    HudRectangle childBounds = child.editorBounds(screenWidth, screenHeight);
+    if (childBounds.x() != promotion.promotedX() || childBounds.y() != promotion.promotedY()) {
+      return;
+    }
+
+    child.attachTo(parent, promotion.side(), promotion.offset());
+    child.savePosition();
+  }
+
+  private HudModule firstEnabledChild(String parentId) {
+    for (HudModule candidate : modules) {
+      if (candidate.enabled() && parentId.equals(candidate.attachmentTargetId())) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
   private HudModuleSettings requireSettings(String id) {
     HudModuleSettings settings = settingsById.get(id);
     if (settings == null) {
@@ -188,4 +255,7 @@ public final class HudModuleRegistry implements HudElement {
   private void refreshFrameSnapshot() {
     frameSnapshot = new HudFrameSnapshot(moduleView);
   }
+
+  private record PendingAnchorPromotion(
+      String childId, int promotedX, int promotedY, HudAttachmentSide side, int offset) {}
 }

@@ -288,8 +288,13 @@ public final class HudEditorRenderer {
   private static Set<String> attachmentRootIds(List<ModuleLayout> layouts) {
     Set<String> attachedModuleIds = new HashSet<>();
     Set<String> roots = new HashSet<>();
+    Set<String> visibleModuleIds = new HashSet<>();
     for (ModuleLayout layout : layouts) {
-      if (layout.module().attachmentTargetId() != null) {
+      visibleModuleIds.add(layout.module().id().toString());
+    }
+
+    for (ModuleLayout layout : layouts) {
+      if (visibleModuleIds.contains(layout.module().attachmentTargetId())) {
         attachedModuleIds.add(layout.module().id().toString());
       }
     }

@@ -110,7 +110,7 @@ public final class CombatLabOptionsScreen extends OptionsSubScreen {
         module.definition().displayName().getString(),
         tooltip("options.combatlab.hud_module.tooltip"),
         modules.enabled(id),
-        selected -> modules.setEnabled(id, selected));
+        selected -> modules.setEnabled(id, selected, width, height));
   }
 
   private static OptionInstance.TooltipSupplier<Boolean> tooltip(String key) {

@@ -101,14 +101,14 @@ public final class HudContextMenu {
 
     if (type == MenuType.MODULE
         && itemIndexAt(mouseX, mouseY, x, y, MAIN_WIDTH, mainHeight()) == 0) {
-      moduleActions.disable(module);
+      moduleActions.disable(module, screenWidth, screenHeight);
       close();
       return true;
     }
 
     if (type == MenuType.SELECTION
         && itemIndexAt(mouseX, mouseY, x, y, MAIN_WIDTH, mainHeight()) == 0) {
-      moduleActions.disableAll(selectedModules);
+      moduleActions.disableAll(selectedModules, screenWidth, screenHeight);
       close();
       return true;
     }
