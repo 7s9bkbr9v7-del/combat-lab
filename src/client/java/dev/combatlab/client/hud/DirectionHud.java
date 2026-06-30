@@ -4,6 +4,7 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.DirectionState;
+import dev.combatlab.client.state.PlayerState;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -85,7 +86,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
 
   @Override
   public void tick(ClientGameState gameState) {
-    DirectionState direction = gameState.player().direction();
+    DirectionState direction = direction(gameState);
     if (!direction.present()) {
       bearingInitialized = false;
       bearingVelocity = 0.0D;
@@ -135,7 +136,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
 
   private double renderBearing(HudRenderContext context) {
     if (context.editorPreview()) {
-      DirectionState direction = context.gameState().player().direction();
+      DirectionState direction = direction(context.gameState());
       return direction.present() ? direction.bearingDegrees() : 21.0D;
     }
     if (!bearingInitialized) {
@@ -173,6 +174,11 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
       return 0.0D;
     }
     return Math.min(frameDeltaTicks, 1.0F);
+  }
+
+  private static DirectionState direction(ClientGameState gameState) {
+    PlayerState player = gameState.player();
+    return player == null ? DirectionState.absent() : player.direction();
   }
 
   private static int degreeY(HudRenderContext context) {
