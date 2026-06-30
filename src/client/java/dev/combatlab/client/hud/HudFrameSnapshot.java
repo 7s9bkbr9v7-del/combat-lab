@@ -33,8 +33,7 @@ final class HudFrameSnapshot {
   private static final class ModuleFrame {
     private final HudModule module;
     private final HudRectangle bounds = new HudRectangle(0, 0, 0, 0);
-    private final HudRenderContext context =
-        new HudRenderContext(null, bounds, 0, 0, 1.0F, null);
+    private final HudRenderContext context = new HudRenderContext(null, bounds, 0, 0, 1.0F, null);
     private boolean active;
 
     private ModuleFrame(HudModule module) {

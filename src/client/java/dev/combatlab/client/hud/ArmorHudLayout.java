@@ -48,6 +48,11 @@ enum ArmorHudLayout {
     }
   }
 
+  ArmorHudLayout next() {
+    ArmorHudLayout[] layouts = values();
+    return layouts[(ordinal() + 1) % layouts.length];
+  }
+
   int columns() {
     return columns;
   }

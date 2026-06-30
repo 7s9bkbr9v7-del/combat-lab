@@ -1,5 +1,6 @@
 package dev.combatlab.client.screen.hudeditor;
 
+import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.hud.HudOrientation;
@@ -24,6 +25,8 @@ public final class HudEditorRenderer {
   private static final int HOVER_FILL_COLOR = 0x554B5563;
   private static final int SELECTION_BOX_FILL_COLOR = 0x3360A5FA;
   private static final int RESIZE_HANDLE_COLOR = 0xFF22C55E;
+  private static final int LAYOUT_BUTTON_ICON_COLOR = 0xFFC7CCD4;
+  private static final int LAYOUT_BUTTON_ICON_HOVER_COLOR = 0xFFFFFFFF;
 
   private final HudModuleRegistry modules;
   private final HudSelection selection;
@@ -32,6 +35,7 @@ public final class HudEditorRenderer {
   private final HudBoxSelectionController boxSelectionController;
   private final HudResizeController resizeController;
   private final int handleSize;
+  private final int layoutButtonSize;
 
   public HudEditorRenderer(
       HudModuleRegistry modules,
@@ -40,7 +44,8 @@ public final class HudEditorRenderer {
       HudDragController dragController,
       HudBoxSelectionController boxSelectionController,
       HudResizeController resizeController,
-      int handleSize) {
+      int handleSize,
+      int layoutButtonSize) {
     this.modules = modules;
     this.selection = selection;
     this.moduleSelection = moduleSelection;
@@ -48,6 +53,7 @@ public final class HudEditorRenderer {
     this.boxSelectionController = boxSelectionController;
     this.resizeController = resizeController;
     this.handleSize = handleSize;
+    this.layoutButtonSize = layoutButtonSize;
   }
 
   public boolean renderEditorLayer(
@@ -82,6 +88,7 @@ public final class HudEditorRenderer {
         graphics, layouts, attachmentRootIds, dragController.activeModule(), mouseX, mouseY);
     renderModuleOutlines(graphics, layouts, rectangles, attachmentRootIds);
     renderResizeHandles(graphics, layouts);
+    renderLayoutButtons(graphics, layouts, mouseX, mouseY);
     renderSelectionBox(graphics);
     renderResizePercent(graphics, font, screenWidth, screenHeight, mouseX, mouseY);
     return !layouts.isEmpty();
@@ -252,6 +259,31 @@ public final class HudEditorRenderer {
     }
   }
 
+  private void renderLayoutButtons(
+      GuiGraphicsExtractor graphics, List<ModuleLayout> layouts, int mouseX, int mouseY) {
+    for (ModuleLayout layout : layouts) {
+      if (layout.module() instanceof AdaptiveLayoutHudModule adaptive
+          && adaptive.availableLayouts().size() > 1) {
+        HudRectangle button = selection.layoutButton(layout.bounds(), layoutButtonSize);
+        boolean hovered = button.contains(mouseX, mouseY);
+        renderCycleGlyph(
+            graphics, button, hovered ? LAYOUT_BUTTON_ICON_HOVER_COLOR : LAYOUT_BUTTON_ICON_COLOR);
+      }
+    }
+  }
+
+  private static void renderCycleGlyph(
+      GuiGraphicsExtractor graphics, HudRectangle button, int color) {
+    int x = button.x() + 3;
+    int y = button.y() + 3;
+    graphics.fill(x + 1, y, x + 5, y + 2, color);
+    graphics.fill(x + 5, y + 1, x + 7, y + 4, color);
+    graphics.fill(x + 4, y + 3, x + 7, y + 5, color);
+    graphics.fill(x + 2, y + 5, x + 6, y + 7, color);
+    graphics.fill(x, y + 3, x + 2, y + 6, color);
+    graphics.fill(x, y + 2, x + 3, y + 4, color);
+  }
+
   private void renderSelectionBox(GuiGraphicsExtractor graphics) {
     if (!boxSelectionController.active()) {
       return;
@@ -296,8 +328,8 @@ public final class HudEditorRenderer {
 
     String percent = Math.round(resizedModule.scale() * 100.0) + "%";
     int textWidth = font.width(percent);
-    int textX = clamp(mouseX - textWidth / 2, 0, Math.max(0, screenWidth - textWidth));
-    int textY = clamp(mouseY + 8, 0, Math.max(0, screenHeight - font.lineHeight));
+    int textX = clampToScreen(mouseX - textWidth / 2, Math.max(0, screenWidth - textWidth));
+    int textY = clampToScreen(mouseY + 8, Math.max(0, screenHeight - font.lineHeight));
     graphics.text(font, percent, textX, textY, 0xFFFFFFFF, true);
   }
 
@@ -322,8 +354,8 @@ public final class HudEditorRenderer {
     }
   }
 
-  private static int clamp(int value, int minimum, int maximum) {
-    return Math.clamp(value, minimum, maximum);
+  private static int clampToScreen(int value, int maximum) {
+    return Math.clamp(value, 0, maximum);
   }
 
   private static int withAlpha(int color, float alpha) {

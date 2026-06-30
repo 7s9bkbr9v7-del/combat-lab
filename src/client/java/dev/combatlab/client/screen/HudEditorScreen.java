@@ -2,6 +2,7 @@ package dev.combatlab.client.screen;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.screen.hudeditor.HudBoxSelectionController;
@@ -25,6 +26,7 @@ public final class HudEditorScreen extends Screen {
   private static final int SNAP_THRESHOLD = 6;
   private static final int ADD_SNAP_THRESHOLD = 18;
   private static final int RESIZE_HANDLE_SIZE = 3;
+  private static final int LAYOUT_BUTTON_SIZE = 11;
   private static final long OPEN_ANIMATION_NANOS = 180_000_000L;
 
   private final HudDragController dragController;
@@ -57,7 +59,8 @@ public final class HudEditorScreen extends Screen {
             dragController,
             boxSelectionController,
             resizeController,
-            RESIZE_HANDLE_SIZE);
+            RESIZE_HANDLE_SIZE,
+            LAYOUT_BUTTON_SIZE);
     this.navigation = new HudOptionsNavigation(options, modules, debug);
   }
 
@@ -70,6 +73,7 @@ public final class HudEditorScreen extends Screen {
   }
 
   @Override
+  @SuppressWarnings("NullableProblems")
   public void extractRenderState(
       GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
     float animationProgress = openingAnimationProgress(System.nanoTime());
@@ -122,6 +126,13 @@ public final class HudEditorScreen extends Screen {
       return false;
     }
     contextMenu.close();
+    HudModule layoutButtonModule =
+        selection.topLayoutButtonAt(event.x(), event.y(), width, height, LAYOUT_BUTTON_SIZE);
+    if (layoutButtonModule instanceof AdaptiveLayoutHudModule adaptive) {
+      adaptive.cycleLayout();
+      moduleSelection.select(layoutButtonModule, false, false, modules.modules());
+      return true;
+    }
     HudModule clickedModule = selection.topModuleAt(event.x(), event.y(), width, height);
     boolean resizeStarted = resizeController.begin(event.x(), event.y(), width, height);
     if (resizeStarted) {
@@ -151,6 +162,7 @@ public final class HudEditorScreen extends Screen {
   }
 
   @Override
+  @SuppressWarnings("NullableProblems")
   public boolean keyPressed(KeyEvent event) {
     if (controlDown(event) && event.key() == GLFW.GLFW_KEY_A) {
       moduleSelection.selectAll(modules.modules());
@@ -229,17 +241,13 @@ public final class HudEditorScreen extends Screen {
   }
 
   private boolean leftShiftDown() {
-    return minecraft != null
-        && minecraft.getWindow() != null
-        && GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_LEFT_SHIFT)
-            == GLFW.GLFW_PRESS;
+    return GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_LEFT_SHIFT)
+        == GLFW.GLFW_PRESS;
   }
 
   private boolean leftControlDown() {
-    return minecraft != null
-        && minecraft.getWindow() != null
-        && GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_LEFT_CONTROL)
-            == GLFW.GLFW_PRESS;
+    return GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_LEFT_CONTROL)
+        == GLFW.GLFW_PRESS;
   }
 
   private static boolean controlDown(KeyEvent event) {

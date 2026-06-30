@@ -1,5 +1,6 @@
 package dev.combatlab.client.screen.hudeditor;
 
+import dev.combatlab.client.hud.AdaptiveLayoutHudModule;
 import dev.combatlab.client.hud.HudCorner;
 import dev.combatlab.client.hud.HudHorizontalSide;
 import dev.combatlab.client.hud.HudModule;
@@ -76,24 +77,31 @@ public final class HudSelection {
     return module.bounds(screenWidth, screenHeight);
   }
 
-  public HudCorner cornerFacingCenter(HudModule module, int screenWidth, int screenHeight) {
-    return module.orientation(screenWidth, screenHeight).cornerFacingCenter();
-  }
-
-  public HudRectangle resizeHandle(
-      HudModule module, int screenWidth, int screenHeight, int handleSize) {
-    return resizeHandle(
-        rectangle(module, screenWidth, screenHeight),
-        cornerFacingCenter(module, screenWidth, screenHeight),
-        handleSize);
-  }
-
   public HudRectangle resizeHandle(HudRectangle rectangle, HudCorner corner, int handleSize) {
     return new HudRectangle(
         corner.x(rectangle) - handleOffsetX(corner, handleSize),
         corner.y(rectangle) - handleOffsetY(corner, handleSize),
         handleSize,
         handleSize);
+  }
+
+  public HudRectangle layoutButton(HudRectangle rectangle, int buttonSize) {
+    return new HudRectangle(
+        rectangle.x() - 1, rectangle.bottom() - buttonSize + 1, buttonSize, buttonSize);
+  }
+
+  public HudModule topLayoutButtonAt(
+      double mouseX, double mouseY, int screenWidth, int screenHeight, int buttonSize) {
+    for (HudModule module : modules.modules().reversed()) {
+      if (module.enabled()
+          && module instanceof AdaptiveLayoutHudModule adaptive
+          && adaptive.availableLayouts().size() > 1
+          && layoutButton(rectangle(module, screenWidth, screenHeight), buttonSize)
+              .contains(mouseX, mouseY)) {
+        return module;
+      }
+    }
+    return null;
   }
 
   private static int handleOffsetX(HudCorner corner, int handleSize) {

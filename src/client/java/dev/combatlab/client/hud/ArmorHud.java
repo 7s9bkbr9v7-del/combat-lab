@@ -2,6 +2,7 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -24,9 +25,12 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   }
 
   private ArmorHudLayout lockedLayout;
+  private ArmorHudLayout overrideLayout;
+  private ArmorHudLayout floatingLayout = ArmorHudLayout.GRID;
 
   public ArmorHud(CombatLabOptions options, DebugLogger debug) {
     super(DEFINITION, options, debug);
+    floatingLayout = storedLayout();
   }
 
   @Override
@@ -37,18 +41,42 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   }
 
   @Override
+  public List<String> availableLayouts() {
+    return List.of(
+        ADAPTIVE_LAYOUT,
+        ArmorHudLayout.VERTICAL.name(),
+        ArmorHudLayout.HORIZONTAL.name(),
+        ArmorHudLayout.GRID.name());
+  }
+
+  @Override
+  public String currentLayout() {
+    return overrideLayout == null ? ADAPTIVE_LAYOUT : overrideLayout.name();
+  }
+
+  @Override
+  public void cycleLayout() {
+    ArmorHudLayout adaptiveLayout = resolvedLayout();
+    ArmorHudLayout nextLayout =
+        overrideLayout == null ? adaptiveLayout.next() : overrideLayout.next();
+    overrideLayout = nextLayout == adaptiveLayout ? null : nextLayout;
+  }
+
+  @Override
   public void lockLayout() {
-    lockedLayout = resolvedLayout();
+    lockedLayout = layout();
   }
 
   @Override
   public void unlockLayout() {
-    ArmorHudLayout finalLayout =
+    if (snappedToAdaptiveEdge()) {
+      overrideLayout = null;
+    }
+    floatingLayout =
         ArmorHudLayout.resolve(
             settings().normalizedX(),
             settings().normalizedY(),
-            lockedLayout != null ? lockedLayout : storedLayout());
-    settings().updateLayout(finalLayout.name());
+            lockedLayout != null ? lockedLayout : floatingLayout);
     lockedLayout = null;
   }
 
@@ -73,15 +101,24 @@ public final class ArmorHud extends ResizableBaseHudModule implements AdaptiveLa
   }
 
   private ArmorHudLayout layout() {
-    return lockedLayout != null ? lockedLayout : resolvedLayout();
+    if (lockedLayout != null) {
+      return lockedLayout;
+    }
+    return overrideLayout != null ? overrideLayout : resolvedLayout();
   }
 
   private ArmorHudLayout resolvedLayout() {
     return ArmorHudLayout.resolve(
-        settings().normalizedX(), settings().normalizedY(), storedLayout());
+        settings().normalizedX(), settings().normalizedY(), floatingLayout);
   }
 
   private ArmorHudLayout storedLayout() {
     return ArmorHudLayout.fromStored(settings().layout());
+  }
+
+  private boolean snappedToAdaptiveEdge() {
+    HudEdgeContact edgeContact =
+        HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY());
+    return edgeContact.sideEdge() || edgeContact.topOrBottomEdge();
   }
 }

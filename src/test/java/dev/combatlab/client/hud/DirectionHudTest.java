@@ -76,6 +76,54 @@ class DirectionHudTest {
     assertEquals(21.0D, renderBearing(hud, previewContext(nullPlayerState)));
   }
 
+  @Test
+  void cycleLayoutCanReturnToAdaptiveDirectionLayout() {
+    DirectionHud hud = hud();
+    hud.updatePosition(0, 30, 320, 180);
+
+    assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
+    assertEquals(new HudSize(58, 22), hud.size());
+
+    hud.cycleLayout();
+
+    assertEquals("FLOATING", hud.currentLayout());
+    assertEquals(new HudSize(112, 22), hud.size());
+
+    hud.cycleLayout();
+
+    assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
+    assertEquals(new HudSize(58, 22), hud.size());
+  }
+
+  @Test
+  void clearsManualLayoutWhenReleasedOnEdge() {
+    DirectionHud hud = hud();
+    hud.updatePosition(120, 30, 320, 180);
+    hud.cycleLayout();
+
+    assertEquals("SIDE", hud.currentLayout());
+
+    hud.lockLayout();
+    hud.updatePosition(120, 0, 320, 180);
+    hud.unlockLayout();
+
+    assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
+    assertEquals(new HudSize(112, 22), hud.size());
+  }
+
+  @Test
+  void keepsAdaptiveLockedLayoutWhenDraggedAwayFromSideEdge() {
+    DirectionHud hud = hud();
+    hud.updatePosition(0, 30, 320, 180);
+    hud.lockLayout();
+
+    hud.updatePosition(120, 30, 320, 180);
+    hud.unlockLayout();
+
+    assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
+    assertEquals(new HudSize(58, 22), hud.size());
+  }
+
   private DirectionHud hud() {
     ConfigStore store =
         new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());

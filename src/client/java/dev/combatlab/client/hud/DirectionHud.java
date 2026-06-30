@@ -59,6 +59,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private double animatedBearing;
   private double bearingVelocity;
   private DirectionHudLayout lockedLayout;
+  private DirectionHudLayout overrideLayout;
+  private DirectionHudLayout floatingLayout = FLOATING_LAYOUT;
 
   public static HudModuleDescriptor descriptor() {
     return new HudModuleDescriptor(
@@ -75,12 +77,42 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   }
 
   @Override
+  public List<String> availableLayouts() {
+    return List.of(ADAPTIVE_LAYOUT, "FLOATING", "SIDE");
+  }
+
+  @Override
+  public String currentLayout() {
+    return overrideLayout == null ? ADAPTIVE_LAYOUT : layoutName(overrideLayout);
+  }
+
+  @Override
+  public void cycleLayout() {
+    DirectionHudLayout adaptiveLayout = resolvedLayout();
+    DirectionHudLayout nextLayout =
+        overrideLayout == null ? nextLayout(adaptiveLayout) : nextLayout(overrideLayout);
+    overrideLayout = nextLayout == adaptiveLayout ? null : nextLayout;
+  }
+
+  @Override
   public void lockLayout() {
-    lockedLayout = resolvedLayout();
+    lockedLayout = layout();
   }
 
   @Override
   public void unlockLayout() {
+    HudEdgeContact edgeContact =
+        HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY());
+    if (snappedToAdaptiveEdge()) {
+      overrideLayout = null;
+    }
+    if (edgeContact.sideEdge()) {
+      floatingLayout = SIDE_LAYOUT;
+    } else if (edgeContact.topOrBottomEdge()) {
+      floatingLayout = FLOATING_LAYOUT;
+    } else {
+      floatingLayout = lockedLayout != null ? lockedLayout : floatingLayout;
+    }
     lockedLayout = null;
   }
 
@@ -194,14 +226,31 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   }
 
   private DirectionHudLayout layout() {
-    return lockedLayout != null ? lockedLayout : resolvedLayout();
+    if (lockedLayout != null) {
+      return lockedLayout;
+    }
+    return overrideLayout != null ? overrideLayout : resolvedLayout();
   }
 
   private DirectionHudLayout resolvedLayout() {
     return HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY())
             .sideEdge()
         ? SIDE_LAYOUT
-        : FLOATING_LAYOUT;
+        : floatingLayout;
+  }
+
+  private boolean snappedToAdaptiveEdge() {
+    HudEdgeContact edgeContact =
+        HudEdgeContact.fromNormalizedPosition(settings().normalizedX(), settings().normalizedY());
+    return edgeContact.sideEdge() || edgeContact.topOrBottomEdge();
+  }
+
+  private static DirectionHudLayout nextLayout(DirectionHudLayout layout) {
+    return layout == SIDE_LAYOUT ? FLOATING_LAYOUT : SIDE_LAYOUT;
+  }
+
+  private static String layoutName(DirectionHudLayout layout) {
+    return layout == SIDE_LAYOUT ? "SIDE" : "FLOATING";
   }
 
   private static void renderTicks(
