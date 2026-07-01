@@ -2,6 +2,7 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.PlayerEffectTimer;
 import java.util.List;
@@ -51,7 +52,7 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
 
   @Override
   protected boolean shouldRenderInGame(HudRenderContext context) {
-    return !context.hud().effects().emptyActiveEffects();
+    return !visibleEffects(context.hud().effects().active()).isEmpty();
   }
 
   @Override
@@ -159,7 +160,13 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
   }
 
   private static List<PlayerEffectTimer> visibleEffects(List<PlayerEffectTimer> effects) {
-    return effects.size() <= MAX_EFFECTS ? effects : effects.subList(0, MAX_EFFECTS);
+    List<PlayerEffectTimer> visibleEffects =
+        effects.stream()
+            .filter(effect -> !FullbrightController.shouldHideEffectStatus(effect.id()))
+            .toList();
+    return visibleEffects.size() <= MAX_EFFECTS
+        ? visibleEffects
+        : visibleEffects.subList(0, MAX_EFFECTS);
   }
 
   private static String amplifierSuffix(int amplifier) {

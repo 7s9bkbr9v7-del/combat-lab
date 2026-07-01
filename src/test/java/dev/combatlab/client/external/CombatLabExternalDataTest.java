@@ -19,10 +19,16 @@ import dev.combatlab.client.hud.HudRenderContext;
 import dev.combatlab.client.hud.HudSize;
 import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
+import dev.combatlab.client.state.DirectionState;
 import dev.combatlab.client.state.InputState;
+import dev.combatlab.client.state.MovementState;
+import dev.combatlab.client.state.PlayerArmor;
+import dev.combatlab.client.state.PlayerEffectTimer;
+import dev.combatlab.client.state.PlayerEffects;
 import dev.combatlab.client.state.PlayerState;
 import dev.combatlab.client.state.TargetState;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -89,6 +95,37 @@ class CombatLabExternalDataTest {
     assertTrue(encoded.contains("\"schemaVersion\""));
     assertTrue(encoded.contains("\"target\""));
     assertTrue(encoded.contains("\"effects\""));
+  }
+
+  @Test
+  void exportsTelemetrySnapshotEffectsFromState() {
+    PlayerEffectTimer nightVision =
+        new PlayerEffectTimer(
+            "minecraft:night_vision",
+            "Night Vision",
+            0,
+            600,
+            false,
+            false,
+            0x1F1FA1,
+            Identifier.fromNamespaceAndPath(
+                "minecraft", "textures/mob_effect/night_vision.png"));
+    ClientGameState state =
+        new ClientGameState(
+            new PlayerState(
+                true,
+                DirectionState.absent(),
+                MovementState.inactive(),
+                PlayerArmor.empty(),
+                new PlayerEffects(List.of(nightVision))),
+            InputState.empty(),
+            CombatSnapshot.empty(),
+            60);
+
+    ExternalTelemetrySnapshot snapshot = CombatLabExternalData.telemetrySnapshot(state);
+
+    assertEquals(1, snapshot.effects().size());
+    assertEquals("minecraft:night_vision", snapshot.effects().getFirst().id());
   }
 
   private HudModuleRegistry registry(CombatLabOptions options) {
