@@ -3,8 +3,6 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.state.DirectionState;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -20,6 +18,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private static final int CONTENT_PADDING = 3;
   private static final int DEGREE_GAP = 1;
   private static final int LABEL_Y = 2;
+  private static final int MARK_OVERLAP_GAP = 2;
   private static final int ACCENT_COLOR = 0xFF60A5FA;
   private static final double DEGREES_PER_PIXEL = 2.25D;
   private static final double SPRING_STRENGTH = 0.92D;
@@ -58,6 +57,12 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   private double bearingVelocity;
   private DirectionHudLayout lockedLayout;
   private DirectionHudLayout floatingLayout = FLOATING_LAYOUT;
+  private final double[] markTextXs = new double[MARKS.length];
+  private final double[] markTextWidths = new double[MARKS.length];
+  private final int[] markColors = new int[MARKS.length];
+  private final boolean[] visibleMarks = new boolean[MARKS.length];
+  private int cachedDegree = Integer.MIN_VALUE;
+  private String cachedDegreeText = "0";
   private final HudAdaptiveLayoutAnimation<DirectionHudLayout> layoutAnimation =
       new HudAdaptiveLayoutAnimation<>();
 
@@ -195,7 +200,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         moduleScale,
         textScale,
         degreeY,
-        bearing);
+        degreeText(bearing));
   }
 
   private CompassRenderFrame renderFrame(HudRenderContext context, DirectionHudLayout layout) {
@@ -332,7 +337,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     }
   }
 
-  private static void renderMarks(
+  private void renderMarks(
       GuiGraphicsExtractor graphics,
       Font font,
       CompassRenderFrame frame,
@@ -344,30 +349,53 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
     double labelY = frame.y() + (compassY + LABEL_Y) * moduleScale;
     double contentLeft = frame.x() + CONTENT_LEFT * moduleScale;
     double contentRight = frame.x() + layout.contentRight() * moduleScale;
-    List<VisibleDirectionMark> visibleMarks = new ArrayList<>(MARKS.length);
     int activeDirection = nearestCardinal(bearing);
-    for (DirectionMark mark : MARKS) {
+    for (int index = 0; index < MARKS.length; index++) {
+      DirectionMark mark = MARKS[index];
       int x = xFor(layout, mark.degrees(), bearing);
       double centerX = frame.x() + x * moduleScale;
       double textWidth = font.width(mark.label()) * textScale;
       double textX = centerX - textWidth / 2.0D;
       if (textX < contentLeft || textX + textWidth > contentRight) {
+        visibleMarks[index] = false;
         continue;
       }
-      int color = mark.degrees() == activeDirection ? ACCENT_COLOR : 0xFFE5E7EB;
-      visibleMarks.add(new VisibleDirectionMark(mark.label(), textX, textWidth, color));
+      visibleMarks[index] = true;
+      markTextXs[index] = textX;
+      markTextWidths[index] = textWidth;
+      markColors[index] = mark.degrees() == activeDirection ? ACCENT_COLOR : 0xFFE5E7EB;
     }
 
-    visibleMarks.sort(Comparator.comparingDouble(VisibleDirectionMark::textX));
     double lastTextRight = Double.NEGATIVE_INFINITY;
-    for (VisibleDirectionMark mark : visibleMarks) {
-      if (mark.textX() <= lastTextRight + 2) {
-        continue;
+    while (true) {
+      int nextIndex = nextVisibleMarkAfter(lastTextRight);
+      if (nextIndex < 0) {
+        return;
       }
       HudTextScale.draw(
-          graphics, font, mark.label(), mark.textX(), labelY, textScale, mark.color(), true);
-      lastTextRight = mark.textX() + mark.textWidth();
+          graphics,
+          font,
+          MARKS[nextIndex].label(),
+          markTextXs[nextIndex],
+          labelY,
+          textScale,
+          markColors[nextIndex],
+          true);
+      lastTextRight = markTextXs[nextIndex] + markTextWidths[nextIndex];
     }
+  }
+
+  private int nextVisibleMarkAfter(double lastTextRight) {
+    int nextIndex = -1;
+    double nextTextX = Double.POSITIVE_INFINITY;
+    for (int index = 0; index < MARKS.length; index++) {
+      double textX = markTextXs[index];
+      if (visibleMarks[index] && textX > lastTextRight + MARK_OVERLAP_GAP && textX < nextTextX) {
+        nextIndex = index;
+        nextTextX = textX;
+      }
+    }
+    return nextIndex;
   }
 
   private static void renderDegree(
@@ -378,8 +406,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
       double moduleScale,
       double textScale,
       int y,
-      double bearing) {
-    String text = Integer.toString(normalize(bearing));
+      String text) {
     double centerX = frame.x() + layout.centerX() * moduleScale;
     HudTextScale.draw(
         graphics,
@@ -390,6 +417,15 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         textScale,
         0xFFE5E7EB,
         true);
+  }
+
+  private String degreeText(double bearing) {
+    int degree = normalize(bearing);
+    if (degree != cachedDegree) {
+      cachedDegree = degree;
+      cachedDegreeText = Integer.toString(degree);
+    }
+    return cachedDegreeText;
   }
 
   private static int xFor(DirectionHudLayout layout, int degrees, double bearing) {
@@ -421,8 +457,6 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
   }
 
   private record DirectionMark(String label, int degrees) {}
-
-  private record VisibleDirectionMark(String label, double textX, double textWidth, int color) {}
 
   private record CompassRenderFrame(double x, int y, int width) {}
 

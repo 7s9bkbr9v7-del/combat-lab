@@ -2,7 +2,6 @@ package dev.combatlab.client;
 
 import dev.combatlab.client.bridge.MinecraftAttackRecorder;
 import dev.combatlab.client.bridge.MinecraftCombatBridge;
-import dev.combatlab.client.bridge.MinecraftHudGameStateProvider;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.debug.DebugTelemetry;
@@ -22,6 +21,7 @@ import dev.combatlab.client.hud.DirectionHud;
 import dev.combatlab.client.hud.FpsHud;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.hud.KeystrokesHud;
+import dev.combatlab.client.hud.MinecraftHudGameStateProvider;
 import dev.combatlab.client.hud.MovementStatusHud;
 import dev.combatlab.client.hud.PingHud;
 import dev.combatlab.client.hud.PotionEffectsHud;

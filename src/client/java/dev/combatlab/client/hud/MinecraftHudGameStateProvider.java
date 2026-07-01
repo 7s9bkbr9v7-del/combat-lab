@@ -1,6 +1,5 @@
-package dev.combatlab.client.bridge;
+package dev.combatlab.client.hud;
 
-import dev.combatlab.client.hud.HudGameState;
 import dev.combatlab.client.input.CpsTracker;
 import dev.combatlab.client.model.CombatState;
 import dev.combatlab.client.state.ArmorSlot;
