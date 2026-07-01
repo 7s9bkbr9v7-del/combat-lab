@@ -3,6 +3,8 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.state.HudModuleCatalog;
+import dev.combatlab.client.state.HudModuleSettingsView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +77,14 @@ public final class HudModuleRegistry implements HudElement {
 
   public List<HudModuleDescriptor> descriptors() {
     return descriptorView;
+  }
+
+  public HudModuleCatalog moduleCatalog() {
+    return new HudModuleCatalog(descriptors.stream().map(this::catalogModule).toList());
+  }
+
+  public List<HudModuleSettingsView> moduleSettings() {
+    return descriptors.stream().map(this::settingsView).toList();
   }
 
   public List<HudModule> modules() {
@@ -256,6 +266,31 @@ public final class HudModuleRegistry implements HudElement {
       throw new IllegalArgumentException("Unknown HUD module id: " + id);
     }
     return settings;
+  }
+
+  private HudModuleCatalog.Module catalogModule(HudModuleDescriptor descriptor) {
+    return new HudModuleCatalog.Module(
+        descriptor.id(),
+        descriptor.definition().displayName().getString(),
+        descriptor.definition().defaultX(),
+        descriptor.definition().defaultY(),
+        descriptor.definition().resizable(),
+        descriptor.loadWhenDisabled());
+  }
+
+  private HudModuleSettingsView settingsView(HudModuleDescriptor descriptor) {
+    HudModuleSettings settings = requireSettings(descriptor.id());
+    return new HudModuleSettingsView(
+        descriptor.id(),
+        descriptor.definition().displayName().getString(),
+        settings.enabled(),
+        settings.normalizedX(),
+        settings.normalizedY(),
+        settings.scale(),
+        settings.layout(),
+        settings.attachedTo(),
+        settings.attachmentSide(),
+        settings.attachmentOffset());
   }
 
   private void refreshFrameSnapshot() {

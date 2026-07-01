@@ -1,12 +1,11 @@
 package dev.combatlab.client.external;
 
 import dev.combatlab.client.config.CombatLabOptions;
-import dev.combatlab.client.config.HudModuleSettings;
-import dev.combatlab.client.hud.HudGameState;
-import dev.combatlab.client.hud.HudModuleDescriptor;
-import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.state.ClientGameState;
+import dev.combatlab.client.state.HudModuleCatalog;
+import dev.combatlab.client.state.HudModuleSettingsView;
 import dev.combatlab.client.state.PlayerEffectTimer;
+import dev.combatlab.client.state.PlayerEffects;
 import dev.combatlab.client.state.TargetState;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public final class CombatLabExternalData {
   private CombatLabExternalData() {}
 
   public static ExternalCombatLabSettingsDocument settingsDocument(
-      CombatLabOptions options, HudModuleRegistry modules) {
+      CombatLabOptions options, List<HudModuleSettingsView> modules) {
     return new ExternalCombatLabSettingsDocument(
         CombatLabExternalSchema.SETTINGS_SCHEMA_VERSION,
         options.debugLoggingEnabled(),
@@ -24,19 +23,19 @@ public final class CombatLabExternalData {
         moduleSettings(modules));
   }
 
-  public static ExternalHudModuleManifest moduleManifest(HudModuleRegistry modules) {
+  public static ExternalHudModuleManifest moduleManifest(HudModuleCatalog modules) {
     return new ExternalHudModuleManifest(
         CombatLabExternalSchema.MODULE_MANIFEST_SCHEMA_VERSION,
-        modules.descriptors().stream().map(CombatLabExternalData::moduleDefinition).toList());
+        modules.modules().stream().map(CombatLabExternalData::moduleDefinition).toList());
   }
 
   public static ExternalTelemetrySnapshot telemetrySnapshot(ClientGameState state) {
-    return telemetrySnapshot(state, HudGameState.empty());
+    return telemetrySnapshot(state, PlayerEffects.empty());
   }
 
   public static ExternalTelemetrySnapshot telemetrySnapshot(
-      ClientGameState state, HudGameState hud) {
-    HudGameState safeHud = hud == null ? HudGameState.empty() : hud;
+      ClientGameState state, PlayerEffects effects) {
+    PlayerEffects safeEffects = effects == null ? PlayerEffects.empty() : effects;
     return new ExternalTelemetrySnapshot(
         CombatLabExternalSchema.TELEMETRY_SCHEMA_VERSION,
         state.fps(),
@@ -54,21 +53,18 @@ public final class CombatLabExternalData {
             state.input().attack(),
             state.input().use()),
         target(state.combat().target()),
-        safeHud.effects().active().stream().map(CombatLabExternalData::effect).toList());
+        safeEffects.active().stream().map(CombatLabExternalData::effect).toList());
   }
 
-  private static List<ExternalHudModuleSettings> moduleSettings(HudModuleRegistry modules) {
-    return modules.descriptors().stream()
-        .map(descriptor -> moduleSettings(modules, descriptor))
-        .toList();
+  private static List<ExternalHudModuleSettings> moduleSettings(
+      List<HudModuleSettingsView> modules) {
+    return modules.stream().map(CombatLabExternalData::moduleSettings).toList();
   }
 
-  private static ExternalHudModuleSettings moduleSettings(
-      HudModuleRegistry modules, HudModuleDescriptor descriptor) {
-    HudModuleSettings settings = modules.settings(descriptor.id());
+  private static ExternalHudModuleSettings moduleSettings(HudModuleSettingsView settings) {
     return new ExternalHudModuleSettings(
-        descriptor.id(),
-        descriptor.definition().displayName().getString(),
+        settings.id(),
+        settings.displayName(),
         settings.enabled(),
         settings.normalizedX(),
         settings.normalizedY(),
@@ -79,14 +75,14 @@ public final class CombatLabExternalData {
         settings.attachmentOffset());
   }
 
-  private static ExternalHudModuleDefinition moduleDefinition(HudModuleDescriptor descriptor) {
+  private static ExternalHudModuleDefinition moduleDefinition(HudModuleCatalog.Module module) {
     return new ExternalHudModuleDefinition(
-        descriptor.id(),
-        descriptor.definition().displayName().getString(),
-        descriptor.definition().defaultX(),
-        descriptor.definition().defaultY(),
-        descriptor.definition().resizable(),
-        descriptor.loadWhenDisabled());
+        module.id(),
+        module.displayName(),
+        module.defaultX(),
+        module.defaultY(),
+        module.resizable(),
+        module.loadWhenDisabled());
   }
 
   private static ExternalTargetSnapshot target(TargetState target) {
