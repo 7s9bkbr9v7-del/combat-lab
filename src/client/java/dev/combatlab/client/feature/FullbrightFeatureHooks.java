@@ -4,6 +4,10 @@ import net.minecraft.client.renderer.LightmapRenderStateExtractor;
 import net.minecraft.client.renderer.state.LightmapRenderState;
 
 public final class FullbrightFeatureHooks {
+  private static final Result ACTIVE = new Result(true, false);
+  private static final Result DISABLED_AFTER_ACTIVE = new Result(false, true);
+  private static final Result DISABLED = new Result(false, false);
+
   private FullbrightFeatureHooks() {}
 
   public static Result apply(LightmapRenderState state, boolean wasFullbright) {
@@ -15,10 +19,10 @@ public final class FullbrightFeatureHooks {
         state.darknessEffectScale = 0.0F;
         state.bossOverlayWorldDarkening = 0.0F;
       }
-      return new Result(true, false);
+      return ACTIVE;
     }
 
-    return wasFullbright ? new Result(false, true) : new Result(false, false);
+    return wasFullbright ? DISABLED_AFTER_ACTIVE : DISABLED;
   }
 
   public record Result(boolean wasFullbright, boolean extractorNeedsUpdate) {}
