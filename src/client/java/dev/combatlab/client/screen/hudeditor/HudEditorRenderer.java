@@ -396,22 +396,30 @@ public final class HudEditorRenderer {
 
   private void renderSnapGuide(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight) {
     for (HudSnapGuide guide : dragController.snapGuides()) {
-      if (guide.axis() == HudSnapGuide.Axis.VERTICAL) {
+      HudRectangle bounds = snapGuideLineBounds(guide, screenWidth, screenHeight);
+      if (bounds != null) {
         graphics.fill(
-            guide.coordinate(),
-            0,
-            guide.coordinate() + 1,
-            screenHeight,
-            ATTACHMENT_ANCHOR_OUTLINE_COLOR);
-      } else {
-        graphics.fill(
-            0,
-            guide.coordinate(),
-            screenWidth,
-            guide.coordinate() + 1,
+            bounds.x(),
+            bounds.y(),
+            bounds.right(),
+            bounds.bottom(),
             ATTACHMENT_ANCHOR_OUTLINE_COLOR);
       }
     }
+  }
+
+  static HudRectangle snapGuideLineBounds(
+      HudSnapGuide guide, int screenWidth, int screenHeight) {
+    if (guide.axis() == HudSnapGuide.Axis.VERTICAL) {
+      if (guide.coordinate() <= 0 || guide.coordinate() >= screenWidth - 1 || screenHeight <= 2) {
+        return null;
+      }
+      return new HudRectangle(guide.coordinate(), 1, 1, screenHeight - 2);
+    }
+    if (guide.coordinate() <= 0 || guide.coordinate() >= screenHeight - 1 || screenWidth <= 2) {
+      return null;
+    }
+    return new HudRectangle(1, guide.coordinate(), screenWidth - 2, 1);
   }
 
   private void renderResizePercent(
