@@ -83,17 +83,17 @@ class DirectionHudTest {
     hud.updatePosition(0, 30, 320, 180);
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(scaledSize(58, 22), hud.size());
+    assertEquals(scaledDirectionSize(58), hud.size());
 
     hud.cycleLayout();
 
     assertEquals("FLOATING", hud.currentLayout());
-    assertEquals(scaledSize(112, 22), hud.size());
+    assertEquals(scaledDirectionSize(112), hud.size());
 
     hud.cycleLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(scaledSize(58, 22), hud.size());
+    assertEquals(scaledDirectionSize(58), hud.size());
   }
 
   @Test
@@ -107,7 +107,7 @@ class DirectionHudTest {
     DirectionHud reloaded = hud(configPath);
 
     assertEquals("FLOATING", reloaded.currentLayout());
-    assertEquals(scaledSize(112, 22), reloaded.size());
+    assertEquals(scaledDirectionSize(112), reloaded.size());
   }
 
   @Test
@@ -123,7 +123,7 @@ class DirectionHudTest {
     hud.unlockLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(scaledSize(112, 22), hud.size());
+    assertEquals(scaledDirectionSize(112), hud.size());
   }
 
   @Test
@@ -136,7 +136,7 @@ class DirectionHudTest {
     hud.unlockLayout();
 
     assertEquals(AdaptiveLayoutHudModule.ADAPTIVE_LAYOUT, hud.currentLayout());
-    assertEquals(scaledSize(58, 22), hud.size());
+    assertEquals(scaledDirectionSize(58), hud.size());
   }
 
   @Test
@@ -152,8 +152,8 @@ class DirectionHudTest {
     assertTrue(hud.editorBounds(320, 180).width() > hud.size().width());
   }
 
-  private static HudSize scaledSize(int width, int height) {
-    return new HudSize(scaled(width), scaled(height));
+  private static HudSize scaledDirectionSize(int width) {
+    return new HudSize(scaled(width), scaled(22));
   }
 
   private static int scaled(int value) {
@@ -190,16 +190,14 @@ class DirectionHudTest {
   }
 
   private static ClientGameState nullPlayerState() {
-    return new ClientGameState(
-        HudGameState.empty(), null, InputState.empty(), CombatSnapshot.empty(), 60);
+    return new ClientGameState(null, InputState.empty(), CombatSnapshot.empty(), 60);
   }
 
   private static ClientGameState stateWithPlayer(PlayerState player) {
     InputState input = InputState.empty();
     CombatSnapshot combat = CombatSnapshot.empty();
     int fps = 60;
-    return new ClientGameState(
-        HudGameState.from(fps, player, input, combat), player, input, combat, fps);
+    return new ClientGameState(player, input, combat, fps);
   }
 
   private static double renderBearing(DirectionHud hud, HudRenderContext context) {

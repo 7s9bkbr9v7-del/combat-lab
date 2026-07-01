@@ -9,7 +9,6 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.HudAttachmentSide;
-import dev.combatlab.client.hud.HudGameState;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleDefinition;
 import dev.combatlab.client.hud.HudModuleDescriptor;
@@ -70,7 +69,6 @@ class CombatLabExternalDataTest {
     UUID targetId = UUID.fromString("0b15b31f-fd8b-4c2e-8fd6-0cd7c11a861d");
     ClientGameState state =
         new ClientGameState(
-            HudGameState.empty(),
             PlayerState.absent(),
             new InputState(12),
             new CombatSnapshot(0.75F, 42, new TargetState(targetId, "Target", 3.5F)),

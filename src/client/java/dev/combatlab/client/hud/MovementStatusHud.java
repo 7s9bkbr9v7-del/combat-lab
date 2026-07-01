@@ -30,7 +30,7 @@ public final class MovementStatusHud extends TextHudModule {
 
   @Override
   public void tick(ClientGameState gameState) {
-    MovementState movement = gameState.player().movement();
+    MovementState movement = HudGameState.from(gameState).movement();
     String status =
         MovementStatusText.resolve(
             movement.crouching(), movement.sprinting(), movement.sprintToggled());

@@ -46,7 +46,7 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
 
   @Override
   public void tick(ClientGameState gameState) {
-    updateSize(gameState.hud().effects().active());
+    updateSize(HudGameState.from(gameState).effects().active());
   }
 
   @Override

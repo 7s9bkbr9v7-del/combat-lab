@@ -11,6 +11,7 @@ public final class HudRenderContext {
   private boolean editorPreview;
   private float frameDeltaTicks;
   private ClientGameState gameState;
+  private HudGameState hud;
 
   public HudRenderContext(
       Font font,
@@ -39,7 +40,27 @@ public final class HudRenderContext {
       boolean editorPreview,
       float frameDeltaTicks,
       ClientGameState gameState) {
-    update(font, bounds, screenWidth, screenHeight, editorPreview, frameDeltaTicks, gameState);
+    this(
+        font,
+        bounds,
+        screenWidth,
+        screenHeight,
+        editorPreview,
+        frameDeltaTicks,
+        gameState,
+        HudGameState.from(gameState));
+  }
+
+  HudRenderContext(
+      Font font,
+      HudRectangle bounds,
+      int screenWidth,
+      int screenHeight,
+      boolean editorPreview,
+      float frameDeltaTicks,
+      ClientGameState gameState,
+      HudGameState hud) {
+    update(font, bounds, screenWidth, screenHeight, editorPreview, frameDeltaTicks, gameState, hud);
   }
 
   void update(
@@ -49,7 +70,15 @@ public final class HudRenderContext {
       int screenHeight,
       float frameDeltaTicks,
       ClientGameState gameState) {
-    update(font, bounds, screenWidth, screenHeight, false, frameDeltaTicks, gameState);
+    update(
+        font,
+        bounds,
+        screenWidth,
+        screenHeight,
+        false,
+        frameDeltaTicks,
+        gameState,
+        HudGameState.from(gameState));
   }
 
   private void update(
@@ -59,7 +88,8 @@ public final class HudRenderContext {
       int screenHeight,
       boolean editorPreview,
       float frameDeltaTicks,
-      ClientGameState gameState) {
+      ClientGameState gameState,
+      HudGameState hud) {
     this.font = font;
     this.bounds = bounds;
     this.screenWidth = screenWidth;
@@ -67,6 +97,7 @@ public final class HudRenderContext {
     this.editorPreview = editorPreview;
     this.frameDeltaTicks = frameDeltaTicks;
     this.gameState = gameState;
+    this.hud = hud;
   }
 
   public Font font() {
@@ -98,7 +129,7 @@ public final class HudRenderContext {
   }
 
   public HudGameState hud() {
-    return gameState.hud();
+    return hud;
   }
 
   public HudOrientation orientation() {

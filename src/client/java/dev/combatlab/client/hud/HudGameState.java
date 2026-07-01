@@ -1,5 +1,6 @@
 package dev.combatlab.client.hud;
 
+import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
 import dev.combatlab.client.state.InputState;
 import dev.combatlab.client.state.MovementState;
@@ -13,10 +14,23 @@ public record HudGameState(
     return from(0, PlayerState.absent(), InputState.empty(), CombatSnapshot.empty());
   }
 
+  public static HudGameState from(ClientGameState state) {
+    if (state == null) {
+      return empty();
+    }
+    return from(state.fps(), state.player(), state.input(), state.combat());
+  }
+
   public static HudGameState from(
       int fps, PlayerState player, InputState input, CombatSnapshot combat) {
+    PlayerState safePlayer = player == null ? PlayerState.absent() : player;
     return new HudGameState(
-        fps, input.cps(), combat.ping(), player.movement(), player.armor(), player.effects());
+        fps,
+        input.cps(),
+        combat.ping(),
+        safePlayer.movement(),
+        safePlayer.armor(),
+        safePlayer.effects());
   }
 
   public HudGameState forEditorPreview() {

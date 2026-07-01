@@ -26,6 +26,6 @@ public final class FpsHud extends TextHudModule {
 
   @Override
   public void tick(ClientGameState gameState) {
-    setText(gameState.hud().fps() + " FPS");
+    setText(gameState.fps() + " FPS");
   }
 }

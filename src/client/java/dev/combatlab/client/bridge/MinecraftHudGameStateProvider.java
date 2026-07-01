@@ -1,7 +1,6 @@
 package dev.combatlab.client.bridge;
 
 import dev.combatlab.client.feature.FullbrightController;
-import dev.combatlab.client.hud.HudGameState;
 import dev.combatlab.client.input.CpsTracker;
 import dev.combatlab.client.model.CombatState;
 import dev.combatlab.client.state.ArmorSlot;
@@ -21,6 +20,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -34,12 +34,7 @@ public final class MinecraftHudGameStateProvider {
     InputState inputState = inputState(client, cpsTracker, nowNanos);
     CombatSnapshot combatSnapshot = combatSnapshot(combatState);
     int fps = client.getFps();
-    return new ClientGameState(
-        HudGameState.from(fps, playerState, inputState, combatSnapshot),
-        playerState,
-        inputState,
-        combatSnapshot,
-        fps);
+    return new ClientGameState(playerState, inputState, combatSnapshot, fps);
   }
 
   private static PlayerState playerState(Minecraft client, LocalPlayer player) {
@@ -117,7 +112,7 @@ public final class MinecraftHudGameStateProvider {
         effect
             .getEffect()
             .unwrapKey()
-            .map(key -> key.identifier())
+            .map(ResourceKey::identifier)
             .orElse(Identifier.withDefaultNamespace(type.getDescriptionId()));
     return new PlayerEffectTimer(
         effectId.toString(),

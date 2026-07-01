@@ -121,7 +121,8 @@ public abstract class BaseHudModule implements HudModule {
             screenHeight,
             true,
             1.0F,
-            gameState.withHud(gameState.hud().forEditorPreview())));
+            gameState,
+            HudGameState.from(gameState).forEditorPreview()));
   }
 
   protected final HudModuleSettings settings() {
