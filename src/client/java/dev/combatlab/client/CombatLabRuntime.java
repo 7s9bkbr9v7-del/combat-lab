@@ -12,6 +12,7 @@ import dev.combatlab.client.event.CombatEventBus;
 import dev.combatlab.client.event.TargetChangedEvent;
 import dev.combatlab.client.feature.CombatLabOptionsApplier;
 import dev.combatlab.client.feature.FreelookController;
+import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.feature.PauseMenuFeatureHooks;
 import dev.combatlab.client.feature.VanillaHudFeatureHooks;
 import dev.combatlab.client.feature.ZoomController;
@@ -102,7 +103,11 @@ public final class CombatLabRuntime {
         AttackRecordedEvent.class,
         event -> debugTelemetry.onAttackRecorded(event, options.debugLoggingEnabled(), debug));
     HudModuleRegistry hudModules =
-        new HudModuleRegistry(options, debug, VanillaHudFeatureHooks::updateHudModuleState);
+        new HudModuleRegistry(
+            options,
+            debug,
+            VanillaHudFeatureHooks::updateHudModuleState,
+            FullbrightController::shouldHideEffectStatus);
     hudModules.registerDescriptor(FpsHud.descriptor());
     hudModules.registerDescriptor(CpsHud.descriptor());
     hudModules.registerDescriptor(MovementStatusHud.descriptor());

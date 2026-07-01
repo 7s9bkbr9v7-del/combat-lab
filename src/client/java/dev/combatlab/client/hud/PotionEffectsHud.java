@@ -2,7 +2,6 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.state.PlayerEffectTimer;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -30,13 +29,22 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
   public static HudModuleDescriptor descriptor() {
     return new HudModuleDescriptor(
         DEFINITION,
-        dependencies -> new PotionEffectsHud(dependencies.options(), dependencies.debug()));
+        dependencies ->
+            new PotionEffectsHud(
+                dependencies.options(),
+                dependencies.debug(),
+                dependencies.statusEffectVisibilityPolicy()));
   }
 
+  private final StatusEffectVisibilityPolicy statusEffectVisibilityPolicy;
   private HudSize unscaledSize = EMPTY_SIZE;
 
-  public PotionEffectsHud(CombatLabOptions options, DebugLogger debug) {
+  public PotionEffectsHud(
+      CombatLabOptions options,
+      DebugLogger debug,
+      StatusEffectVisibilityPolicy statusEffectVisibilityPolicy) {
     super(DEFINITION, options, debug);
+    this.statusEffectVisibilityPolicy = statusEffectVisibilityPolicy;
   }
 
   @Override
@@ -158,10 +166,10 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
     unscaledSize = new HudSize(width, ROW_HEIGHT * effects.size());
   }
 
-  private static List<PlayerEffectTimer> visibleEffects(List<PlayerEffectTimer> effects) {
+  private List<PlayerEffectTimer> visibleEffects(List<PlayerEffectTimer> effects) {
     List<PlayerEffectTimer> visibleEffects =
         effects.stream()
-            .filter(effect -> !FullbrightController.shouldHideEffectStatus(effect.id()))
+            .filter(effect -> !statusEffectVisibilityPolicy.shouldHide(effect.id()))
             .toList();
     return visibleEffects.size() <= MAX_EFFECTS
         ? visibleEffects

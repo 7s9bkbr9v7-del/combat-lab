@@ -41,10 +41,18 @@ public final class HudModuleRegistry implements HudElement {
 
   public HudModuleRegistry(
       CombatLabOptions options, DebugLogger debug, HudModuleStateListener stateListener) {
+    this(options, debug, stateListener, StatusEffectVisibilityPolicy.SHOW_ALL);
+  }
+
+  public HudModuleRegistry(
+      CombatLabOptions options,
+      DebugLogger debug,
+      HudModuleStateListener stateListener,
+      StatusEffectVisibilityPolicy statusEffectVisibilityPolicy) {
     this.options = options;
     this.debug = debug;
     this.stateListener = Objects.requireNonNull(stateListener, "stateListener");
-    this.dependencies = new HudModuleDependencies(options, debug);
+    this.dependencies = new HudModuleDependencies(options, debug, statusEffectVisibilityPolicy);
   }
 
   public HudModuleRegistry(CombatLabOptions options, DebugLogger debug) {
