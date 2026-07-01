@@ -2,7 +2,6 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -25,7 +24,7 @@ public final class FpsHud extends TextHudModule {
   }
 
   @Override
-  public void tick(ClientGameState gameState) {
+  public void tick(HudGameState gameState) {
     setText(gameState.fps() + " FPS");
   }
 }

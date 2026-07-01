@@ -8,7 +8,6 @@ import dev.combatlab.client.config.CombatLabConfigCodec;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,7 @@ class HudModuleRegistryTest {
 
     registry.setEnabled("combatlab:enabled", true);
 
-    registry.tick(ClientGameState.empty());
+    registry.tick(HudGameState.empty());
 
     assertNull(registry.module("combatlab:disabled"));
     assertNotNull(registry.module("combatlab:enabled"));
@@ -81,7 +80,7 @@ class HudModuleRegistryTest {
     CountingModule enabled = new CountingModule("enabled", true, false);
     HudFrameSnapshot snapshot = new HudFrameSnapshot(List.of(disabled, enabled));
 
-    snapshot.capture(ClientGameState.empty(), null, 320, 180, 1.0F);
+    snapshot.capture(HudGameState.empty(), null, 320, 180, 1.0F);
     snapshot.render(null);
 
     assertEquals(0, disabled.boundsCount);
@@ -192,10 +191,10 @@ class HudModuleRegistryTest {
         HudRectangle bounds,
         int screenWidth,
         int screenHeight,
-        ClientGameState gameState) {}
+        HudGameState gameState) {}
 
     @Override
-    public void tick(ClientGameState gameState) {
+    public void tick(HudGameState gameState) {
       tickCount++;
     }
 

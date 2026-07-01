@@ -9,7 +9,6 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
 import dev.combatlab.client.state.DirectionState;
 import dev.combatlab.client.state.InputState;
@@ -62,15 +61,26 @@ class DirectionHudTest {
   void editorPreviewFallsBackWhenDirectionIsAbsent() {
     DirectionHud hud = hud();
 
-    double bearing = renderBearing(hud, previewContext(ClientGameState.empty()));
+    double bearing = renderBearing(hud, previewContext(HudGameState.empty()));
 
     assertEquals(21.0D, bearing);
   }
 
   @Test
-  void nullPlayerFallsBackToPlaceholderBearing() {
+  void absentDirectionFallsBackToPlaceholderBearing() {
     DirectionHud hud = hud();
-    ClientGameState nullPlayerState = nullPlayerState();
+    HudGameState absentDirectionState = HudGameState.empty();
+
+    assertDoesNotThrow(() -> hud.tick(absentDirectionState));
+    assertEquals(21.0D, renderBearing(hud, context(1.0F, absentDirectionState)));
+    assertEquals(21.0D, renderBearing(hud, previewContext(absentDirectionState)));
+  }
+
+  @Test
+  void nullPlayerHudSnapshotFallsBackToPlaceholderBearing() {
+    DirectionHud hud = hud();
+    HudGameState nullPlayerState =
+        HudGameState.from(60, null, InputState.empty(), CombatSnapshot.empty());
 
     assertDoesNotThrow(() -> hud.tick(nullPlayerState));
     assertEquals(21.0D, renderBearing(hud, context(1.0F, nullPlayerState)));
@@ -169,17 +179,17 @@ class DirectionHudTest {
     return new DirectionHud(CombatLabOptions.load(store), new DebugLogger(() -> false));
   }
 
-  private static HudRenderContext context(float frameDeltaTicks, ClientGameState gameState) {
+  private static HudRenderContext context(float frameDeltaTicks, HudGameState gameState) {
     return new HudRenderContext(
         null, new HudRectangle(0, 0, 112, 22), 320, 180, frameDeltaTicks, gameState);
   }
 
-  private static HudRenderContext previewContext(ClientGameState gameState) {
+  private static HudRenderContext previewContext(HudGameState gameState) {
     return new HudRenderContext(
         null, new HudRectangle(0, 0, 112, 22), 320, 180, true, 1.0F, gameState);
   }
 
-  private static ClientGameState stateWithBearing(int bearingDegrees) {
+  private static HudGameState stateWithBearing(int bearingDegrees) {
     return stateWithPlayer(
         new PlayerState(
             true,
@@ -189,15 +199,11 @@ class DirectionHudTest {
             PlayerEffects.empty()));
   }
 
-  private static ClientGameState nullPlayerState() {
-    return new ClientGameState(null, InputState.empty(), CombatSnapshot.empty(), 60);
-  }
-
-  private static ClientGameState stateWithPlayer(PlayerState player) {
+  private static HudGameState stateWithPlayer(PlayerState player) {
     InputState input = InputState.empty();
     CombatSnapshot combat = CombatSnapshot.empty();
     int fps = 60;
-    return new ClientGameState(player, input, combat, fps);
+    return HudGameState.from(fps, player, input, combat);
   }
 
   private static double renderBearing(DirectionHud hud, HudRenderContext context) {

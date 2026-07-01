@@ -3,7 +3,6 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import java.util.function.Function;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -111,7 +110,7 @@ public abstract class BaseHudModule implements HudModule {
       HudRectangle bounds,
       int screenWidth,
       int screenHeight,
-      ClientGameState gameState) {
+      HudGameState gameState) {
     renderModule(
         graphics,
         new HudRenderContext(
@@ -121,8 +120,9 @@ public abstract class BaseHudModule implements HudModule {
             screenHeight,
             true,
             1.0F,
-            gameState,
-            HudGameState.from(gameState).forEditorPreview()));
+            gameState == null
+                ? HudGameState.empty().forEditorPreview()
+                : gameState.forEditorPreview()));
   }
 
   protected final HudModuleSettings settings() {

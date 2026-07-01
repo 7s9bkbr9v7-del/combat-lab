@@ -42,7 +42,7 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
 
   @Override
   protected void renderModule(GuiGraphicsExtractor graphics, HudRenderContext context) {
-    InputState input = context.gameState().input();
+    InputState input = context.hud().input();
     if (context.editorPreview() && !input.anyMovementKeyDown() && !input.anyMouseButtonDown()) {
       input =
           new InputState(input.cps(), true, true, false, false, true, false, false, true, false);

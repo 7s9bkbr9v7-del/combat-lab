@@ -1,6 +1,5 @@
 package dev.combatlab.client.hud;
 
-import dev.combatlab.client.state.ClientGameState;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,11 +13,7 @@ final class HudFrameSnapshot {
   }
 
   void capture(
-      ClientGameState gameState,
-      Font font,
-      int screenWidth,
-      int screenHeight,
-      float frameDeltaTicks) {
+      HudGameState gameState, Font font, int screenWidth, int screenHeight, float frameDeltaTicks) {
     for (ModuleFrame moduleFrame : moduleFrames) {
       moduleFrame.capture(gameState, font, screenWidth, screenHeight, frameDeltaTicks);
     }
@@ -33,7 +28,8 @@ final class HudFrameSnapshot {
   private static final class ModuleFrame {
     private final HudModule module;
     private final HudRectangle bounds = new HudRectangle(0, 0, 0, 0);
-    private final HudRenderContext context = new HudRenderContext(null, bounds, 0, 0, 1.0F, null);
+    private final HudRenderContext context =
+        new HudRenderContext(null, bounds, 0, 0, 1.0F, HudGameState.empty());
     private boolean active;
 
     private ModuleFrame(HudModule module) {
@@ -41,7 +37,7 @@ final class HudFrameSnapshot {
     }
 
     private void capture(
-        ClientGameState gameState,
+        HudGameState gameState,
         Font font,
         int screenWidth,
         int screenHeight,

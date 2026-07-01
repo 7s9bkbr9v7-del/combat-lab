@@ -2,7 +2,6 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.MovementState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -29,8 +28,8 @@ public final class MovementStatusHud extends TextHudModule {
   }
 
   @Override
-  public void tick(ClientGameState gameState) {
-    MovementState movement = HudGameState.from(gameState).movement();
+  public void tick(HudGameState gameState) {
+    MovementState movement = gameState.movement();
     String status =
         MovementStatusText.resolve(
             movement.crouching(), movement.sprinting(), movement.sprintToggled());

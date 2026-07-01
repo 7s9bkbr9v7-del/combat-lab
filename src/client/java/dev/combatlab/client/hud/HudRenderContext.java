@@ -1,6 +1,5 @@
 package dev.combatlab.client.hud;
 
-import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.client.gui.Font;
 
 public final class HudRenderContext {
@@ -10,15 +9,10 @@ public final class HudRenderContext {
   private int screenHeight;
   private boolean editorPreview;
   private float frameDeltaTicks;
-  private ClientGameState gameState;
   private HudGameState hud;
 
   public HudRenderContext(
-      Font font,
-      HudRectangle bounds,
-      int screenWidth,
-      int screenHeight,
-      ClientGameState gameState) {
+      Font font, HudRectangle bounds, int screenWidth, int screenHeight, HudGameState gameState) {
     this(font, bounds, screenWidth, screenHeight, false, 1.0F, gameState);
   }
 
@@ -28,7 +22,7 @@ public final class HudRenderContext {
       int screenWidth,
       int screenHeight,
       float frameDeltaTicks,
-      ClientGameState gameState) {
+      HudGameState gameState) {
     this(font, bounds, screenWidth, screenHeight, false, frameDeltaTicks, gameState);
   }
 
@@ -39,28 +33,8 @@ public final class HudRenderContext {
       int screenHeight,
       boolean editorPreview,
       float frameDeltaTicks,
-      ClientGameState gameState) {
-    this(
-        font,
-        bounds,
-        screenWidth,
-        screenHeight,
-        editorPreview,
-        frameDeltaTicks,
-        gameState,
-        HudGameState.from(gameState));
-  }
-
-  HudRenderContext(
-      Font font,
-      HudRectangle bounds,
-      int screenWidth,
-      int screenHeight,
-      boolean editorPreview,
-      float frameDeltaTicks,
-      ClientGameState gameState,
       HudGameState hud) {
-    update(font, bounds, screenWidth, screenHeight, editorPreview, frameDeltaTicks, gameState, hud);
+    update(font, bounds, screenWidth, screenHeight, editorPreview, frameDeltaTicks, hud);
   }
 
   void update(
@@ -69,16 +43,8 @@ public final class HudRenderContext {
       int screenWidth,
       int screenHeight,
       float frameDeltaTicks,
-      ClientGameState gameState) {
-    update(
-        font,
-        bounds,
-        screenWidth,
-        screenHeight,
-        false,
-        frameDeltaTicks,
-        gameState,
-        HudGameState.from(gameState));
+      HudGameState hud) {
+    update(font, bounds, screenWidth, screenHeight, false, frameDeltaTicks, hud);
   }
 
   private void update(
@@ -88,7 +54,6 @@ public final class HudRenderContext {
       int screenHeight,
       boolean editorPreview,
       float frameDeltaTicks,
-      ClientGameState gameState,
       HudGameState hud) {
     this.font = font;
     this.bounds = bounds;
@@ -96,8 +61,7 @@ public final class HudRenderContext {
     this.screenHeight = screenHeight;
     this.editorPreview = editorPreview;
     this.frameDeltaTicks = frameDeltaTicks;
-    this.gameState = gameState;
-    this.hud = hud;
+    this.hud = hud == null ? HudGameState.empty() : hud;
   }
 
   public Font font() {
@@ -122,10 +86,6 @@ public final class HudRenderContext {
 
   public float frameDeltaTicks() {
     return frameDeltaTicks;
-  }
-
-  public ClientGameState gameState() {
-    return gameState;
   }
 
   public HudGameState hud() {

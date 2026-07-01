@@ -9,6 +9,7 @@ import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.hud.HudAttachmentSide;
+import dev.combatlab.client.hud.HudGameState;
 import dev.combatlab.client.hud.HudModule;
 import dev.combatlab.client.hud.HudModuleDefinition;
 import dev.combatlab.client.hud.HudModuleDescriptor;
@@ -75,7 +76,6 @@ class CombatLabExternalDataTest {
     UUID targetId = UUID.fromString("0b15b31f-fd8b-4c2e-8fd6-0cd7c11a861d");
     ClientGameState state =
         new ClientGameState(
-            PlayerState.absent(),
             new InputState(12),
             new CombatSnapshot(0.75F, 42, new TargetState(targetId, "Target", 3.5F)),
             144);
@@ -98,7 +98,7 @@ class CombatLabExternalDataTest {
   }
 
   @Test
-  void exportsTelemetrySnapshotEffectsFromState() {
+  void exportsTelemetrySnapshotEffectsFromHudState() {
     PlayerEffectTimer nightVision =
         new PlayerEffectTimer(
             "minecraft:night_vision",
@@ -108,21 +108,21 @@ class CombatLabExternalDataTest {
             false,
             false,
             0x1F1FA1,
-            Identifier.fromNamespaceAndPath(
-                "minecraft", "textures/mob_effect/night_vision.png"));
-    ClientGameState state =
-        new ClientGameState(
+            Identifier.fromNamespaceAndPath("minecraft", "textures/mob_effect/night_vision.png"));
+    ClientGameState state = new ClientGameState(InputState.empty(), CombatSnapshot.empty(), 60);
+    HudGameState hudState =
+        HudGameState.from(
+            state.fps(),
             new PlayerState(
                 true,
                 DirectionState.absent(),
                 MovementState.inactive(),
                 PlayerArmor.empty(),
                 new PlayerEffects(List.of(nightVision))),
-            InputState.empty(),
-            CombatSnapshot.empty(),
-            60);
+            state.input(),
+            state.combat());
 
-    ExternalTelemetrySnapshot snapshot = CombatLabExternalData.telemetrySnapshot(state);
+    ExternalTelemetrySnapshot snapshot = CombatLabExternalData.telemetrySnapshot(state, hudState);
 
     assertEquals(1, snapshot.effects().size());
     assertEquals("minecraft:night_vision", snapshot.effects().getFirst().id());
@@ -225,6 +225,6 @@ class CombatLabExternalDataTest {
         HudRectangle bounds,
         int screenWidth,
         int screenHeight,
-        ClientGameState gameState) {}
+        HudGameState gameState) {}
   }
 }

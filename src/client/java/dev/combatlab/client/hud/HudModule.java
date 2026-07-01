@@ -1,6 +1,5 @@
 package dev.combatlab.client.hud;
 
-import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -49,9 +48,9 @@ public interface HudModule {
       HudRectangle bounds,
       int screenWidth,
       int screenHeight,
-      ClientGameState gameState);
+      HudGameState gameState);
 
-  default void tick(ClientGameState gameState) {}
+  default void tick(HudGameState gameState) {}
 
   default boolean ticksWhenDisabled() {
     return false;

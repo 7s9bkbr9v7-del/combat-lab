@@ -3,7 +3,6 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.feature.FullbrightController;
-import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.PlayerEffectTimer;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -46,8 +45,8 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
   }
 
   @Override
-  public void tick(ClientGameState gameState) {
-    updateSize(HudGameState.from(gameState).effects().active());
+  public void tick(HudGameState gameState) {
+    updateSize(gameState.effects().active());
   }
 
   @Override

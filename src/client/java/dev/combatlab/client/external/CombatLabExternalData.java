@@ -2,6 +2,7 @@ package dev.combatlab.client.external;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
+import dev.combatlab.client.hud.HudGameState;
 import dev.combatlab.client.hud.HudModuleDescriptor;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.state.ClientGameState;
@@ -30,6 +31,12 @@ public final class CombatLabExternalData {
   }
 
   public static ExternalTelemetrySnapshot telemetrySnapshot(ClientGameState state) {
+    return telemetrySnapshot(state, HudGameState.empty());
+  }
+
+  public static ExternalTelemetrySnapshot telemetrySnapshot(
+      ClientGameState state, HudGameState hud) {
+    HudGameState safeHud = hud == null ? HudGameState.empty() : hud;
     return new ExternalTelemetrySnapshot(
         CombatLabExternalSchema.TELEMETRY_SCHEMA_VERSION,
         state.fps(),
@@ -47,7 +54,7 @@ public final class CombatLabExternalData {
             state.input().attack(),
             state.input().use()),
         target(state.combat().target()),
-        state.player().effects().active().stream().map(CombatLabExternalData::effect).toList());
+        safeHud.effects().active().stream().map(CombatLabExternalData::effect).toList());
   }
 
   private static List<ExternalHudModuleSettings> moduleSettings(HudModuleRegistry modules) {

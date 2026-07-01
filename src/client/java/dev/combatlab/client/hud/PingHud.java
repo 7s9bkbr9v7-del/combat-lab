@@ -2,7 +2,6 @@ package dev.combatlab.client.hud;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -25,7 +24,7 @@ public final class PingHud extends TextHudModule {
   }
 
   @Override
-  public void tick(ClientGameState gameState) {
-    setText(PingText.resolve(gameState.combat().ping()));
+  public void tick(HudGameState gameState) {
+    setText(PingText.resolve(gameState.ping()));
   }
 }

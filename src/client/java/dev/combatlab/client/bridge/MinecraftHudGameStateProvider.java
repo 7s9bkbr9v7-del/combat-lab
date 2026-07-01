@@ -1,9 +1,9 @@
 package dev.combatlab.client.bridge;
 
+import dev.combatlab.client.hud.HudGameState;
 import dev.combatlab.client.input.CpsTracker;
 import dev.combatlab.client.model.CombatState;
 import dev.combatlab.client.state.ArmorSlot;
-import dev.combatlab.client.state.ClientGameState;
 import dev.combatlab.client.state.CombatSnapshot;
 import dev.combatlab.client.state.DirectionState;
 import dev.combatlab.client.state.InputState;
@@ -26,14 +26,14 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
 public final class MinecraftHudGameStateProvider {
-  public ClientGameState snapshot(
+  public HudGameState snapshot(
       Minecraft client, CombatState combatState, CpsTracker cpsTracker, long nowNanos) {
     LocalPlayer player = client.player;
     PlayerState playerState = playerState(client, player);
     InputState inputState = inputState(client, cpsTracker, nowNanos);
     CombatSnapshot combatSnapshot = combatSnapshot(combatState);
     int fps = client.getFps();
-    return new ClientGameState(playerState, inputState, combatSnapshot, fps);
+    return HudGameState.from(fps, playerState, inputState, combatSnapshot);
   }
 
   private static PlayerState playerState(Minecraft client, LocalPlayer player) {

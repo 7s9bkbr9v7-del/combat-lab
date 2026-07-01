@@ -12,7 +12,6 @@ import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.screen.hudeditor.HudEditorHistory;
-import dev.combatlab.client.state.ClientGameState;
 import java.nio.file.Path;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -195,6 +194,6 @@ class HudEditorHistoryTest {
         HudRectangle bounds,
         int screenWidth,
         int screenHeight,
-        ClientGameState gameState) {}
+        HudGameState gameState) {}
   }
 }

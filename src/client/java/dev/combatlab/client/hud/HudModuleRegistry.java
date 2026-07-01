@@ -3,7 +3,6 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.state.ClientGameState;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +34,7 @@ public final class HudModuleRegistry implements HudElement {
   private final Map<String, PendingAnchorPromotion> pendingAnchorPromotions = new HashMap<>();
   private boolean frozen;
   private boolean editorOpen;
-  private ClientGameState gameState = ClientGameState.empty();
+  private HudGameState gameState = HudGameState.empty();
   private HudFrameSnapshot frameSnapshot;
 
   public HudModuleRegistry(
@@ -126,16 +125,16 @@ public final class HudModuleRegistry implements HudElement {
     restoreFirstChild(id, screenWidth, screenHeight);
   }
 
-  public void tick(ClientGameState gameState) {
-    this.gameState = gameState;
+  public void tick(HudGameState gameState) {
+    this.gameState = gameState == null ? HudGameState.empty() : gameState;
     for (HudModule module : modules) {
       if (module.enabled() || module.ticksWhenDisabled()) {
-        module.tick(gameState);
+        module.tick(this.gameState);
       }
     }
   }
 
-  public ClientGameState gameState() {
+  public HudGameState gameState() {
     return gameState;
   }
 
