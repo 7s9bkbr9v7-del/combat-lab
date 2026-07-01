@@ -10,10 +10,8 @@ import dev.combatlab.client.event.AttackRecordedEvent;
 import dev.combatlab.client.event.CombatClickEvent;
 import dev.combatlab.client.event.CombatEventBus;
 import dev.combatlab.client.event.TargetChangedEvent;
-import dev.combatlab.client.feature.AchievementToastController;
-import dev.combatlab.client.feature.DynamicFovController;
+import dev.combatlab.client.feature.CombatLabOptionsApplier;
 import dev.combatlab.client.feature.FreelookController;
-import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.feature.PauseMenuFeatureHooks;
 import dev.combatlab.client.feature.VanillaHudFeatureHooks;
 import dev.combatlab.client.feature.ZoomController;
@@ -85,11 +83,11 @@ public final class CombatLabRuntime {
   public static CombatLabRuntime create(
       KeyMapping openOptions, KeyMapping zoom, KeyMapping freelook) {
     CombatLabOptions options = CombatLabOptions.load();
-    FullbrightController.setEnabled(options.fullbrightEnabled());
-    AchievementToastController.setDisabled(options.achievementToastsDisabled());
-    DynamicFovController.setEnabled(options.dynamicFovEnabled());
-
     DebugLogger debug = new DebugLogger(options::debugLoggingEnabled);
+    CombatLabOptionsApplier optionsApplier = new CombatLabOptionsApplier(debug);
+    optionsApplier.applyStartupOptions(options);
+    options.addChangeListener(optionsApplier);
+
     CpsTracker cpsTracker = new CpsTracker();
     CombatState combatState = new CombatState();
     CombatEventBus combatEvents = new CombatEventBus();

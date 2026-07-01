@@ -28,16 +28,16 @@ public final class HudOptionsNavigation {
     Button optionsButton =
         Button.builder(
                 Component.literal("HUD Options"),
-                button -> {
+                ignoredButton -> {
                   debug.info("Opening HUD options screen");
                   ScreenNavigator.open(
-                      minecraft, new CombatLabOptionsScreen(editor, options, modules, debug));
+                      minecraft, new CombatLabOptionsScreen(editor, options, modules));
                 })
             .bounds(screenWidth / 2 - 75, screenHeight / 2 - 10, 150, 20)
             .build();
 
     Button doneButton =
-        Button.builder(Component.literal("Done"), button -> closeEditor.run())
+        Button.builder(Component.literal("Done"), ignoredButton -> closeEditor.run())
             .bounds(screenWidth / 2 - 75, screenHeight - 35, 150, 20)
             .build();
     return List.of(optionsButton, doneButton);

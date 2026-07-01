@@ -1,10 +1,6 @@
 package dev.combatlab.client.screen;
 
 import dev.combatlab.client.config.CombatLabOptions;
-import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.feature.AchievementToastController;
-import dev.combatlab.client.feature.DynamicFovController;
-import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.hud.HudModuleDescriptor;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import java.util.Objects;
@@ -24,14 +20,12 @@ public final class CombatLabOptionsScreen extends OptionsSubScreen {
       Component.translatable("options.combatlab.section.hud");
   private final CombatLabOptions combatLabOptions;
   private final HudModuleRegistry modules;
-  private final DebugLogger debug;
 
   public CombatLabOptionsScreen(
-      Screen parent, CombatLabOptions options, HudModuleRegistry modules, DebugLogger debug) {
+      Screen parent, CombatLabOptions options, HudModuleRegistry modules) {
     super(parent, Minecraft.getInstance().options, TITLE);
     this.combatLabOptions = options;
     this.modules = modules;
-    this.debug = debug;
   }
 
   @Override
@@ -62,11 +56,7 @@ public final class CombatLabOptionsScreen extends OptionsSubScreen {
         "options.combatlab.fullbright",
         tooltip("options.combatlab.fullbright.tooltip"),
         combatLabOptions.fullbrightEnabled(),
-        selected -> {
-          combatLabOptions.setFullbrightEnabled(selected);
-          FullbrightController.setEnabled(selected);
-          debug.info("Fullbright {}", selected ? "enabled" : "disabled");
-        });
+        combatLabOptions::setFullbrightEnabled);
   }
 
   private OptionInstance<Boolean> dynamicFovOption() {
@@ -74,21 +64,14 @@ public final class CombatLabOptionsScreen extends OptionsSubScreen {
         "options.combatlab.dynamic_fov",
         tooltip("options.combatlab.dynamic_fov.tooltip"),
         combatLabOptions.dynamicFovEnabled(),
-        selected -> {
-          combatLabOptions.setDynamicFovEnabled(selected);
-          DynamicFovController.setEnabled(selected);
-          debug.info("Dynamic FOV {}", selected ? "enabled" : "disabled");
-        });
+        combatLabOptions::setDynamicFovEnabled);
   }
 
   private OptionInstance<Boolean> debugLoggingOption() {
     return OptionInstance.createBoolean(
         "options.combatlab.debug_logging",
         combatLabOptions.debugLoggingEnabled(),
-        selected -> {
-          combatLabOptions.setDebugLoggingEnabled(selected);
-          debug.announce(selected);
-        });
+        combatLabOptions::setDebugLoggingEnabled);
   }
 
   private OptionInstance<Boolean> achievementToastOption() {
@@ -96,12 +79,7 @@ public final class CombatLabOptionsScreen extends OptionsSubScreen {
         "options.combatlab.achievement_notification",
         tooltip("options.combatlab.achievement_notification.tooltip"),
         !combatLabOptions.achievementToastsDisabled(),
-        selected -> {
-          boolean disabled = !selected;
-          combatLabOptions.setAchievementToastsDisabled(disabled);
-          AchievementToastController.setDisabled(disabled);
-          debug.info("Achievement notifications {}", selected ? "enabled" : "disabled");
-        });
+        selected -> combatLabOptions.setAchievementToastsDisabled(!selected));
   }
 
   private OptionInstance<Boolean> hudModuleOption(HudModuleDescriptor module) {

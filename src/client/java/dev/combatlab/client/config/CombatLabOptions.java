@@ -1,12 +1,15 @@
 package dev.combatlab.client.config;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class CombatLabOptions {
   private final CombatLabConfig config;
   private final ConfigStore store;
   private final Map<String, HudModuleSettings> hudModuleSettings = new HashMap<>();
+  private final List<CombatLabOptionsChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
   CombatLabOptions(CombatLabConfig config, ConfigStore store) {
     this.config = config;
@@ -22,17 +25,18 @@ public final class CombatLabOptions {
     return new CombatLabOptions(store.load(), store);
   }
 
-  public boolean debugLoggingEnabled() {
-    return config.debugLoggingEnabled;
+  public void addChangeListener(CombatLabOptionsChangeListener listener) {
+    changeListeners.add(listener);
   }
 
-  public int schemaVersion() {
-    return config.schemaVersion;
+  public boolean debugLoggingEnabled() {
+    return config.debugLoggingEnabled;
   }
 
   public void setDebugLoggingEnabled(boolean enabled) {
     config.debugLoggingEnabled = enabled;
     store.save(config);
+    changeListeners.forEach(listener -> listener.onDebugLoggingEnabledChanged(enabled));
   }
 
   public boolean fullbrightEnabled() {
@@ -42,6 +46,7 @@ public final class CombatLabOptions {
   public void setFullbrightEnabled(boolean enabled) {
     config.fullbrightEnabled = enabled;
     store.save(config);
+    changeListeners.forEach(listener -> listener.onFullbrightEnabledChanged(enabled));
   }
 
   public boolean achievementToastsDisabled() {
@@ -51,6 +56,7 @@ public final class CombatLabOptions {
   public void setAchievementToastsDisabled(boolean disabled) {
     config.achievementToastsDisabled = disabled;
     store.save(config);
+    changeListeners.forEach(listener -> listener.onAchievementToastsDisabledChanged(disabled));
   }
 
   public boolean dynamicFovEnabled() {
@@ -60,6 +66,7 @@ public final class CombatLabOptions {
   public void setDynamicFovEnabled(boolean enabled) {
     config.dynamicFovEnabled = enabled;
     store.save(config);
+    changeListeners.forEach(listener -> listener.onDynamicFovEnabledChanged(enabled));
   }
 
   public HudModuleSettings bindHudModule(String id, double defaultX, double defaultY) {
