@@ -10,6 +10,7 @@ import dev.combatlab.client.config.ConfigStore;
 import dev.combatlab.client.debug.DebugLogger;
 import dev.combatlab.client.state.ClientGameState;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -51,6 +52,27 @@ class HudModuleRegistryTest {
 
     assertNull(registry.module("combatlab:enabled"));
     assertEquals(1, registry.descriptors().size());
+  }
+
+  @Test
+  void reportsInitialAndChangedModuleStateToListener() {
+    ConfigStore store =
+        new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());
+    List<String> updates = new ArrayList<>();
+    HudModuleRegistry registry =
+        new HudModuleRegistry(
+            CombatLabOptions.load(store),
+            new DebugLogger(() -> false),
+            (id, enabled) -> updates.add(id + "=" + enabled));
+
+    registry.registerDescriptor(descriptor("effects", false));
+    registry.setEnabled("combatlab:effects", true);
+    registry.setEnabled("combatlab:effects", true);
+    registry.setEnabled("combatlab:effects", false);
+
+    assertEquals(
+        List.of("combatlab:effects=false", "combatlab:effects=true", "combatlab:effects=false"),
+        updates);
   }
 
   @Test

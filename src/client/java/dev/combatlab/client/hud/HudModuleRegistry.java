@@ -3,13 +3,13 @@ package dev.combatlab.client.hud;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
-import dev.combatlab.client.feature.VanillaHudFeatureHooks;
 import dev.combatlab.client.state.ClientGameState;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -23,6 +23,7 @@ public final class HudModuleRegistry implements HudElement {
   private final HudModuleDependencies dependencies;
   private final CombatLabOptions options;
   private final DebugLogger debug;
+  private final HudModuleStateListener stateListener;
   private final List<HudModuleDescriptor> descriptors = new ArrayList<>();
   private final List<HudModuleDescriptor> descriptorView =
       Collections.unmodifiableList(descriptors);
@@ -37,10 +38,16 @@ public final class HudModuleRegistry implements HudElement {
   private ClientGameState gameState = ClientGameState.empty();
   private HudFrameSnapshot frameSnapshot;
 
-  public HudModuleRegistry(CombatLabOptions options, DebugLogger debug) {
+  public HudModuleRegistry(
+      CombatLabOptions options, DebugLogger debug, HudModuleStateListener stateListener) {
     this.options = options;
     this.debug = debug;
+    this.stateListener = Objects.requireNonNull(stateListener, "stateListener");
     this.dependencies = new HudModuleDependencies(options, debug);
+  }
+
+  public HudModuleRegistry(CombatLabOptions options, DebugLogger debug) {
+    this(options, debug, HudModuleStateListener.NONE);
   }
 
   public HudModuleRegistry() {
@@ -61,7 +68,7 @@ public final class HudModuleRegistry implements HudElement {
         id,
         options.bindHudModule(
             id, descriptor.definition().defaultX(), descriptor.definition().defaultY()));
-    VanillaHudFeatureHooks.updateHudModuleState(id, enabled(id));
+    stateListener.onHudModuleStateChanged(id, enabled(id));
     if (enabled(id) || descriptor.loadWhenDisabled()) {
       load(id);
     }
@@ -95,7 +102,7 @@ public final class HudModuleRegistry implements HudElement {
     }
 
     settings.setEnabled(enabled);
-    VanillaHudFeatureHooks.updateHudModuleState(id, enabled);
+    stateListener.onHudModuleStateChanged(id, enabled);
     HudModuleDescriptor descriptor = descriptorsById.get(id);
     if (enabled) {
       load(id);

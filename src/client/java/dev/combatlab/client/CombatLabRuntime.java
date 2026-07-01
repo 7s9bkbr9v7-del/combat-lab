@@ -15,6 +15,7 @@ import dev.combatlab.client.feature.DynamicFovController;
 import dev.combatlab.client.feature.FreelookController;
 import dev.combatlab.client.feature.FullbrightController;
 import dev.combatlab.client.feature.PauseMenuFeatureHooks;
+import dev.combatlab.client.feature.VanillaHudFeatureHooks;
 import dev.combatlab.client.feature.ZoomController;
 import dev.combatlab.client.hud.ArmorHud;
 import dev.combatlab.client.hud.CpsHud;
@@ -102,7 +103,8 @@ public final class CombatLabRuntime {
     combatEvents.subscribePermanent(
         AttackRecordedEvent.class,
         event -> debugTelemetry.onAttackRecorded(event, options.debugLoggingEnabled(), debug));
-    HudModuleRegistry hudModules = new HudModuleRegistry(options, debug);
+    HudModuleRegistry hudModules =
+        new HudModuleRegistry(options, debug, VanillaHudFeatureHooks::updateHudModuleState);
     hudModules.registerDescriptor(FpsHud.descriptor());
     hudModules.registerDescriptor(CpsHud.descriptor());
     hudModules.registerDescriptor(MovementStatusHud.descriptor());
