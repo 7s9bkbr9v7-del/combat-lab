@@ -174,6 +174,10 @@ public final class HudEditorScreen extends Screen {
     history.cancelChange();
     if (clickedModule != null) {
       selectModuleForMouseDown(clickedModule);
+      if (doubleClick) {
+        navigation.openModuleOptions(this, minecraft, clickedModule, width, height);
+        return true;
+      }
     }
     history.beginChange();
     if (dragController.begin(event.x(), event.y(), width, height)) {

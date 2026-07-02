@@ -143,6 +143,26 @@ public final class HudModuleRegistry implements HudElement {
     restoreFirstChild(id, screenWidth, screenHeight);
   }
 
+  public void resetAllPositions() {
+    for (HudModuleDescriptor descriptor : descriptors) {
+      HudModuleSettings settings = requireSettings(descriptor.id());
+      settings.resetPosition(
+          descriptor.definition().defaultX(), descriptor.definition().defaultY());
+      settings.save();
+    }
+  }
+
+  public void resetAllConfig(int screenWidth, int screenHeight) {
+    for (HudModuleDescriptor descriptor : descriptors) {
+      String id = descriptor.id();
+      setEnabled(id, false, screenWidth, screenHeight);
+      HudModuleSettings settings = requireSettings(id);
+      settings.reset(descriptor.definition().defaultX(), descriptor.definition().defaultY());
+      settings.save();
+    }
+    pendingAnchorPromotions.clear();
+  }
+
   public void tick(HudGameState gameState) {
     this.gameState = gameState == null ? HudGameState.empty() : gameState;
     for (HudModule module : modules) {
@@ -295,6 +315,7 @@ public final class HudModuleRegistry implements HudElement {
         settings.normalizedX(),
         settings.normalizedY(),
         settings.scale(),
+        settings.textColorRgb(),
         settings.layout(),
         settings.attachedTo(),
         settings.attachmentSide(),

@@ -69,6 +69,7 @@ public final class CombatLabExternalData {
         settings.normalizedX(),
         settings.normalizedY(),
         settings.scale(),
+        settings.textColor(),
         settings.layout(),
         settings.attachedTo(),
         settings.attachmentSide(),

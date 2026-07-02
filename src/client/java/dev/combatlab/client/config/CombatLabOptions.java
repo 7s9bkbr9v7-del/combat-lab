@@ -69,6 +69,18 @@ public final class CombatLabOptions {
     changeListeners.forEach(listener -> listener.onDynamicFovEnabledChanged(enabled));
   }
 
+  public void resetConfig() {
+    config.debugLoggingEnabled = false;
+    config.fullbrightEnabled = false;
+    config.achievementToastsDisabled = false;
+    config.dynamicFovEnabled = true;
+    store.save(config);
+    changeListeners.forEach(listener -> listener.onDebugLoggingEnabledChanged(false));
+    changeListeners.forEach(listener -> listener.onFullbrightEnabledChanged(false));
+    changeListeners.forEach(listener -> listener.onAchievementToastsDisabledChanged(false));
+    changeListeners.forEach(listener -> listener.onDynamicFovEnabledChanged(true));
+  }
+
   public HudModuleSettings bindHudModule(String id, double defaultX, double defaultY) {
     return hudModuleSettings.computeIfAbsent(
         id,

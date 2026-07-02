@@ -5,6 +5,7 @@ public final class HudModuleConfig {
   double normalizedX;
   double normalizedY;
   double scale = HudModuleSettings.DEFAULT_SCALE;
+  int textColor = HudModuleSettings.DEFAULT_TEXT_COLOR;
   String layout;
   String attachedTo;
   String attachmentSide;

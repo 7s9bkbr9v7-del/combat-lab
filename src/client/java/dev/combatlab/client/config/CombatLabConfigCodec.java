@@ -102,6 +102,7 @@ public final class CombatLabConfigCodec {
     module.normalizedY =
         optionalNormalizedPosition(moduleObject, "normalizedY", "HUD module '" + id + "'");
     module.scale = optionalScale(moduleObject, id);
+    module.textColor = optionalTextColor(moduleObject, id);
     module.layout =
         optionalAllowedString(moduleObject, "layout", VALID_LAYOUTS, "HUD module '" + id + "'");
     module.attachedTo = optionalString(moduleObject, "attachedTo", "HUD module '" + id + "'");
@@ -126,6 +127,14 @@ public final class CombatLabConfigCodec {
       return HudModuleSettings.DEFAULT_SCALE;
     }
     return Math.clamp(scale, HudModuleSettings.MIN_SCALE, HudModuleSettings.MAX_SCALE);
+  }
+
+  private static int optionalTextColor(JsonObject root, String id) {
+    if (!root.has("textColor") || root.get("textColor").isJsonNull()) {
+      return HudModuleSettings.DEFAULT_TEXT_COLOR;
+    }
+    int color = intValue(root, "textColor", "HUD module '" + id + "'");
+    return Math.clamp(color, HudModuleSettings.MIN_TEXT_COLOR, HudModuleSettings.MAX_TEXT_COLOR);
   }
 
   private static boolean optionalBoolean(JsonObject root, String name, boolean fallback) {

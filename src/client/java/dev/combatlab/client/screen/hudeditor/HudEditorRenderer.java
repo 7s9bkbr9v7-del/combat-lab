@@ -408,8 +408,7 @@ public final class HudEditorRenderer {
     }
   }
 
-  static HudRectangle snapGuideLineBounds(
-      HudSnapGuide guide, int screenWidth, int screenHeight) {
+  static HudRectangle snapGuideLineBounds(HudSnapGuide guide, int screenWidth, int screenHeight) {
     if (guide.axis() == HudSnapGuide.Axis.VERTICAL) {
       if (guide.coordinate() <= 0 || guide.coordinate() >= screenWidth - 1 || screenHeight <= 2) {
         return null;

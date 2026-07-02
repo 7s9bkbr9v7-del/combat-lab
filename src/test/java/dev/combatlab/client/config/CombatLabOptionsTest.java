@@ -1,6 +1,8 @@
 package dev.combatlab.client.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,6 +47,50 @@ class CombatLabOptionsTest {
 
     assertEquals(
         List.of("debug=true", "fullbright=true", "toastsDisabled=true", "dynamicFov=false"),
+        changes);
+  }
+
+  @Test
+  void resetConfigRestoresGlobalDefaultsAndPublishesChanges() {
+    CombatLabOptions options = options();
+    List<String> changes = new ArrayList<>();
+    options.addChangeListener(
+        new CombatLabOptionsChangeListener() {
+          @Override
+          public void onDebugLoggingEnabledChanged(boolean enabled) {
+            changes.add("debug=" + enabled);
+          }
+
+          @Override
+          public void onFullbrightEnabledChanged(boolean enabled) {
+            changes.add("fullbright=" + enabled);
+          }
+
+          @Override
+          public void onAchievementToastsDisabledChanged(boolean disabled) {
+            changes.add("toastsDisabled=" + disabled);
+          }
+
+          @Override
+          public void onDynamicFovEnabledChanged(boolean enabled) {
+            changes.add("dynamicFov=" + enabled);
+          }
+        });
+
+    options.setDebugLoggingEnabled(true);
+    options.setFullbrightEnabled(true);
+    options.setAchievementToastsDisabled(true);
+    options.setDynamicFovEnabled(false);
+    changes.clear();
+
+    options.resetConfig();
+
+    assertFalse(options.debugLoggingEnabled());
+    assertFalse(options.fullbrightEnabled());
+    assertFalse(options.achievementToastsDisabled());
+    assertTrue(options.dynamicFovEnabled());
+    assertEquals(
+        List.of("debug=false", "fullbright=false", "toastsDisabled=false", "dynamicFov=true"),
         changes);
   }
 

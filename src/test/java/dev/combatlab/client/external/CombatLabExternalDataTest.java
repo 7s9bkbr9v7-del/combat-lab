@@ -46,6 +46,7 @@ class CombatLabExternalDataTest {
     registry.settings("combatlab:fps").setEnabled(true);
     registry.settings("combatlab:fps").updatePosition(0.25, 0.75);
     registry.settings("combatlab:fps").updateScale(1.5);
+    registry.settings("combatlab:fps").updateTextColor(0x112233);
 
     ExternalCombatLabSettingsDocument settings =
         CombatLabExternalData.settingsDocument(options, registry.moduleSettings());
@@ -61,6 +62,7 @@ class CombatLabExternalDataTest {
     assertEquals(0.25, fps.normalizedX());
     assertEquals(0.75, fps.normalizedY());
     assertEquals(1.5, fps.scale());
+    assertEquals(0x112233, fps.textColor());
 
     assertEquals(CombatLabExternalSchema.MODULE_MANIFEST_SCHEMA_VERSION, manifest.schemaVersion());
     assertEquals("combatlab:combat", manifest.modules().get(1).id());

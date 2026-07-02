@@ -49,7 +49,7 @@ abstract class TextHudModule extends ResizableBaseHudModule {
         bounds.x() + PADDING * moduleScale,
         bounds.y() + PADDING * moduleScale,
         textScale,
-        0xFFF3F4F6,
+        settings().textColor(),
         true);
   }
 }

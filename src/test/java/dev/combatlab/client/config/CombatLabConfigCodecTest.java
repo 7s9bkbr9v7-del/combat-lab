@@ -41,6 +41,7 @@ class CombatLabConfigCodecTest {
     module.normalizedX = 0.2;
     module.normalizedY = 0.8;
     module.scale = 1.75;
+    module.textColor = 0x123456;
     module.layout = "VERTICAL";
     module.attachedTo = "combatlab:cps";
     module.attachmentSide = "BELOW";
@@ -56,6 +57,7 @@ class CombatLabConfigCodecTest {
     assertEquals(0.2, roundTripped.normalizedX, 0.0001);
     assertEquals(0.8, roundTripped.normalizedY, 0.0001);
     assertEquals(1.75, roundTripped.scale, 0.0001);
+    assertEquals(0x123456, roundTripped.textColor);
     assertEquals("VERTICAL", roundTripped.layout);
     assertEquals("combatlab:cps", roundTripped.attachedTo);
     assertEquals("BELOW", roundTripped.attachmentSide);
@@ -81,6 +83,8 @@ class CombatLabConfigCodecTest {
 
     assertEquals(
         HudModuleSettings.DEFAULT_SCALE, decoded.hudModules.get("combatlab:fps").scale, 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_TEXT_COLOR, decoded.hudModules.get("combatlab:fps").textColor);
     assertTrue(decoded.dynamicFovEnabled);
   }
 
@@ -150,6 +154,7 @@ class CombatLabConfigCodecTest {
 				      "normalizedX": -0.5,
 				      "normalizedY": 1.5,
 				      "scale": 99.0,
+				      "textColor": 999999999,
 				      "layout": "SIDEWAYS",
 				      "attachedTo": "combatlab:cps",
 				      "attachmentSide": "NEAR",
@@ -163,6 +168,7 @@ class CombatLabConfigCodecTest {
     assertEquals(0.0, module.normalizedX, 0.0001);
     assertEquals(1.0, module.normalizedY, 0.0001);
     assertEquals(HudModuleSettings.MAX_SCALE, module.scale, 0.0001);
+    assertEquals(HudModuleSettings.MAX_TEXT_COLOR, module.textColor);
     assertNull(module.layout);
     assertNull(module.attachedTo);
     assertNull(module.attachmentSide);

@@ -1,12 +1,14 @@
 package dev.combatlab.client.hud;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import dev.combatlab.client.config.CombatLabConfigCodec;
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.config.ConfigStore;
+import dev.combatlab.client.config.HudModuleSettings;
 import dev.combatlab.client.debug.DebugLogger;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -89,6 +91,48 @@ class HudModuleRegistryTest {
     assertEquals(1, enabled.renderCount);
   }
 
+  @Test
+  void resetAllPositionsRestoresDescriptorDefaultsAndClearsAttachments() {
+    HudModuleRegistry registry = registry();
+    registry.registerDescriptor(descriptor("anchor", false, 0.25, 0.75));
+    registry.registerDescriptor(descriptor("child", false, 0.5, 0.5));
+    registry.setEnabled("combatlab:anchor", true);
+    registry.setEnabled("combatlab:child", true);
+
+    registry.settings("combatlab:anchor").updatePosition(0.9, 0.1);
+    registry.settings("combatlab:child").updateAttachment("combatlab:anchor", "BELOW", 4);
+
+    registry.resetAllPositions();
+
+    assertEquals(0.25, registry.settings("combatlab:anchor").normalizedX(), 0.0001);
+    assertEquals(0.75, registry.settings("combatlab:anchor").normalizedY(), 0.0001);
+    assertEquals(0.5, registry.settings("combatlab:child").normalizedX(), 0.0001);
+    assertEquals(0.5, registry.settings("combatlab:child").normalizedY(), 0.0001);
+    assertNull(registry.settings("combatlab:child").attachedTo());
+  }
+
+  @Test
+  void resetAllConfigRestoresModuleDefaultsAndUnloadsEnabledModules() {
+    HudModuleRegistry registry = registry();
+    registry.registerDescriptor(descriptor("enabled", false, 0.25, 0.75));
+    registry.setEnabled("combatlab:enabled", true);
+    registry.settings("combatlab:enabled").updatePosition(0.9, 0.1);
+    registry.settings("combatlab:enabled").updateScale(2.0);
+    registry.settings("combatlab:enabled").updateTextColor(0x112233);
+
+    registry.resetAllConfig(320, 180);
+
+    assertFalse(registry.enabled("combatlab:enabled"));
+    assertNull(registry.module("combatlab:enabled"));
+    assertEquals(0.25, registry.settings("combatlab:enabled").normalizedX(), 0.0001);
+    assertEquals(0.75, registry.settings("combatlab:enabled").normalizedY(), 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_SCALE, registry.settings("combatlab:enabled").scale(), 0.0001);
+    assertEquals(
+        HudModuleSettings.DEFAULT_TEXT_COLOR,
+        registry.settings("combatlab:enabled").textColorRgb());
+  }
+
   private HudModuleRegistry registry() {
     ConfigStore store =
         new ConfigStore(temporaryDirectory.resolve("combatlab.json"), new CombatLabConfigCodec());
@@ -96,12 +140,17 @@ class HudModuleRegistryTest {
   }
 
   private static HudModuleDescriptor descriptor(String path, boolean loadWhenDisabled) {
+    return descriptor(path, loadWhenDisabled, 0.0, 0.0);
+  }
+
+  private static HudModuleDescriptor descriptor(
+      String path, boolean loadWhenDisabled, double defaultX, double defaultY) {
     HudModuleDefinition definition =
         new HudModuleDefinition(
             Identifier.fromNamespaceAndPath("combatlab", path),
             Component.literal(path),
-            0.0,
-            0.0,
+            defaultX,
+            defaultY,
             false);
     return new HudModuleDescriptor(
         definition,

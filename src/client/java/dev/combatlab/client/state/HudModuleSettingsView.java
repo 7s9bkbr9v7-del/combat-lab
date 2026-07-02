@@ -7,6 +7,7 @@ public record HudModuleSettingsView(
     double normalizedX,
     double normalizedY,
     double scale,
+    int textColor,
     String layout,
     String attachedTo,
     String attachmentSide,

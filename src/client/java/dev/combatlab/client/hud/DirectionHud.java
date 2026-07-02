@@ -191,7 +191,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         moduleScale,
         textScale,
         compassY,
-        bearing);
+        bearing,
+        settings().textColor());
     renderDegree(
         graphics,
         context.font(),
@@ -200,7 +201,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         moduleScale,
         textScale,
         degreeY,
-        degreeText(bearing));
+        degreeText(bearing),
+        settings().textColor());
   }
 
   private CompassRenderFrame renderFrame(HudRenderContext context, DirectionHudLayout layout) {
@@ -345,7 +347,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
       double moduleScale,
       double textScale,
       int compassY,
-      double bearing) {
+      double bearing,
+      int textColor) {
     double labelY = frame.y() + (compassY + LABEL_Y) * moduleScale;
     double contentLeft = frame.x() + CONTENT_LEFT * moduleScale;
     double contentRight = frame.x() + layout.contentRight() * moduleScale;
@@ -363,7 +366,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
       visibleMarks[index] = true;
       markTextXs[index] = textX;
       markTextWidths[index] = textWidth;
-      markColors[index] = mark.degrees() == activeDirection ? ACCENT_COLOR : 0xFFE5E7EB;
+      markColors[index] = mark.degrees() == activeDirection ? ACCENT_COLOR : textColor;
     }
 
     double lastTextRight = Double.NEGATIVE_INFINITY;
@@ -406,7 +409,8 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
       double moduleScale,
       double textScale,
       int y,
-      String text) {
+      String text,
+      int textColor) {
     double centerX = frame.x() + layout.centerX() * moduleScale;
     HudTextScale.draw(
         graphics,
@@ -415,7 +419,7 @@ public final class DirectionHud extends ResizableBaseHudModule implements Adapti
         HudTextScale.centeredX(font, text, centerX, textScale),
         frame.y() + y * moduleScale,
         textScale,
-        0xFFE5E7EB,
+        textColor,
         true);
   }
 

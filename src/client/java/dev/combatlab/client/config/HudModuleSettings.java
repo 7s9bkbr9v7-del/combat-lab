@@ -4,6 +4,9 @@ public final class HudModuleSettings {
   public static final double DEFAULT_SCALE = 0.9;
   public static final double MIN_SCALE = 0.5;
   public static final double MAX_SCALE = 4.0;
+  public static final int DEFAULT_TEXT_COLOR = 0xF3F4F6;
+  public static final int MIN_TEXT_COLOR = 0x000000;
+  public static final int MAX_TEXT_COLOR = 0xFFFFFF;
 
   private final HudModuleConfig config;
   private final Runnable saveAction;
@@ -12,6 +15,7 @@ public final class HudModuleSettings {
     this.config = config;
     this.saveAction = saveAction;
     config.scale = clampScale(config.scale);
+    config.textColor = clampTextColor(config.textColor);
   }
 
   public boolean enabled() {
@@ -36,12 +40,29 @@ public final class HudModuleSettings {
     config.normalizedY = clampPosition(normalizedY);
   }
 
+  public void resetPosition(double defaultX, double defaultY) {
+    updatePosition(defaultX, defaultY);
+    clearAttachment();
+  }
+
   public double scale() {
     return config.scale;
   }
 
   public void updateScale(double scale) {
     config.scale = clampScale(scale);
+  }
+
+  public int textColor() {
+    return 0xFF000000 | config.textColor;
+  }
+
+  public int textColorRgb() {
+    return config.textColor;
+  }
+
+  public void updateTextColor(int textColor) {
+    config.textColor = clampTextColor(textColor);
   }
 
   public static int displayPercent(double scale) {
@@ -73,6 +94,7 @@ public final class HudModuleSettings {
         config.normalizedX,
         config.normalizedY,
         config.scale,
+        config.textColor,
         config.layout,
         config.attachedTo,
         config.attachmentSide,
@@ -83,10 +105,23 @@ public final class HudModuleSettings {
     config.normalizedX = clampPosition(state.normalizedX());
     config.normalizedY = clampPosition(state.normalizedY());
     config.scale = clampScale(state.scale());
+    config.textColor = clampTextColor(state.textColor());
     config.layout = state.layout();
     config.attachedTo = state.attachedTo();
     config.attachmentSide = state.attachmentSide();
     config.attachmentOffset = state.attachmentOffset();
+  }
+
+  public void reset(double defaultX, double defaultY) {
+    config.enabled = false;
+    config.normalizedX = clampPosition(defaultX);
+    config.normalizedY = clampPosition(defaultY);
+    config.scale = DEFAULT_SCALE;
+    config.textColor = DEFAULT_TEXT_COLOR;
+    config.layout = null;
+    config.attachedTo = null;
+    config.attachmentSide = null;
+    config.attachmentOffset = 0;
   }
 
   public void updateAttachment(String targetId, String side, int offset) {
@@ -109,6 +144,7 @@ public final class HudModuleSettings {
       double normalizedX,
       double normalizedY,
       double scale,
+      int textColor,
       String layout,
       String attachedTo,
       String attachmentSide,
@@ -123,5 +159,9 @@ public final class HudModuleSettings {
       return DEFAULT_SCALE;
     }
     return Math.clamp(value, MIN_SCALE, MAX_SCALE);
+  }
+
+  private static int clampTextColor(int value) {
+    return Math.clamp(value, MIN_TEXT_COLOR, MAX_TEXT_COLOR);
   }
 }

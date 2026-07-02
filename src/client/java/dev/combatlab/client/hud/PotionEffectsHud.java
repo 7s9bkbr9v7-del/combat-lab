@@ -92,7 +92,8 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
           moduleScale,
           textScale,
           effects.get(index),
-          index * ROW_HEIGHT);
+          index * ROW_HEIGHT,
+          settings().textColor());
     }
   }
 
@@ -123,7 +124,8 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
       double moduleScale,
       double textScale,
       PlayerEffectTimer effect,
-      int y) {
+      int y,
+      int nameColor) {
     String name = effect.displayName() + amplifierSuffix(effect.amplifier());
     String timer = durationText(effect);
     int textX = PADDING + ICON_SIZE + 4;
@@ -134,7 +136,7 @@ public final class PotionEffectsHud extends ResizableBaseHudModule {
         bounds.x() + textX * moduleScale,
         bounds.y() + (y + 3) * moduleScale,
         textScale,
-        0xFFF3F4F6,
+        nameColor,
         true);
     HudTextScale.draw(
         graphics,

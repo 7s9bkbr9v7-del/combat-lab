@@ -79,7 +79,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         0,
         KEY,
         KEY,
-        input.forward());
+        input.forward(),
+        settings().textColor());
     renderKeyLabel(
         graphics,
         context.font(),
@@ -91,7 +92,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         KEY + GAP,
         KEY,
         KEY,
-        input.left());
+        input.left(),
+        settings().textColor());
     renderKeyLabel(
         graphics,
         context.font(),
@@ -103,7 +105,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         KEY + GAP,
         KEY,
         KEY,
-        input.back());
+        input.back(),
+        settings().textColor());
     renderKeyLabel(
         graphics,
         context.font(),
@@ -115,7 +118,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         KEY + GAP,
         KEY,
         KEY,
-        input.right());
+        input.right(),
+        settings().textColor());
     renderKeyLabel(
         graphics,
         context.font(),
@@ -127,7 +131,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         SPACE_Y,
         WIDTH,
         SPACE_HEIGHT,
-        input.jump());
+        input.jump(),
+        settings().textColor());
     renderKeyLabel(
         graphics,
         context.font(),
@@ -139,7 +144,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         MOUSE_Y,
         mouseWidth,
         MOUSE_HEIGHT,
-        input.attack());
+        input.attack(),
+        settings().textColor());
     renderKeyLabel(
         graphics,
         context.font(),
@@ -151,7 +157,8 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
         MOUSE_Y,
         mouseWidth,
         MOUSE_HEIGHT,
-        input.use());
+        input.use(),
+        settings().textColor());
   }
 
   private static void renderKeyBackground(
@@ -173,8 +180,9 @@ public final class KeystrokesHud extends ResizableBaseHudModule {
       int y,
       int width,
       int height,
-      boolean pressed) {
-    int color = pressed ? 0xFF111827 : 0xFFF3F4F6;
+      boolean pressed,
+      int textColor) {
+    int color = pressed ? 0xFF111827 : textColor;
     double centerX = bounds.x() + (x + width / 2.0D) * moduleScale;
     double centerY = bounds.y() + (y + height / 2.0D) * moduleScale;
     HudTextScale.draw(

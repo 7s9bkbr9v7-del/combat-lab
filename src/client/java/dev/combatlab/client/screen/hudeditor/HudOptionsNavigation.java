@@ -2,8 +2,11 @@ package dev.combatlab.client.screen.hudeditor;
 
 import dev.combatlab.client.config.CombatLabOptions;
 import dev.combatlab.client.debug.DebugLogger;
+import dev.combatlab.client.hud.HudModule;
+import dev.combatlab.client.hud.HudModuleDescriptor;
 import dev.combatlab.client.hud.HudModuleRegistry;
 import dev.combatlab.client.screen.CombatLabOptionsScreen;
+import dev.combatlab.client.screen.HudModuleOptionsScreen;
 import dev.combatlab.client.screen.ScreenNavigator;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -41,5 +44,27 @@ public final class HudOptionsNavigation {
             .bounds(screenWidth / 2 - 75, screenHeight - 35, 150, 20)
             .build();
     return List.of(optionsButton, doneButton);
+  }
+
+  public void openModuleOptions(
+      Screen editor, Minecraft minecraft, HudModule module, int screenWidth, int screenHeight) {
+    HudModuleDescriptor descriptor = descriptor(module);
+    if (descriptor == null) {
+      return;
+    }
+    debug.info("Opening {} HUD options screen", module.displayName().getString());
+    ScreenNavigator.open(
+        minecraft,
+        new HudModuleOptionsScreen(editor, modules, descriptor, screenWidth, screenHeight));
+  }
+
+  private HudModuleDescriptor descriptor(HudModule module) {
+    String id = module.id().toString();
+    for (HudModuleDescriptor descriptor : modules.descriptors()) {
+      if (descriptor.id().equals(id)) {
+        return descriptor;
+      }
+    }
+    return null;
   }
 }
